@@ -1,0 +1,44 @@
+/* Shared DevQuest tokens. Tailwind exposes the color names as utilities too.
+   Use semantic tokens for surfaces/text; reserve accents for emphasis and state. */
+@theme {
+  --font-sans: "Segoe UI", system-ui, sans-serif;
+  --color-background: #0B1020;
+  --color-surface: #111A2E;
+  --color-surface-raised: #17233B;
+  --color-sidebar: #0E1528;
+  --color-border: #2B3B58;
+  --color-border-strong: #48618A;
+  --color-foreground: #F1F5FF;
+  --color-muted: #B0BED5;
+  --color-subtle: #98ABC8;
+  --color-electric-blue: #3B82F6;
+  --color-aqua-teal: #2DD4BF;
+  --color-soft-purple: #A78BFA;
+  --color-mint: #A7F3D0;
+  --color-on-accent: #0B1020;
+  --color-success: #A7F3D0;
+  --color-success-surface: #102D30;
+  --color-success-border: #2C615B;
+  --color-warning: #F5D59A;
+  --color-warning-surface: #2C2530;
+  --color-warning-border: #786249;
+  --color-focus: #2DD4BF;
+}
+
+:root {
+  --gradient-brand: linear-gradient(115deg, var(--color-electric-blue), var(--color-aqua-teal) 53%, var(--color-soft-purple));
+  --gradient-hero: linear-gradient(115deg, rgb(59 130 246 / 19%), rgb(45 212 191 / 10%) 53%, rgb(167 139 250 / 19%));
+  --gradient-card: linear-gradient(120deg, rgb(59 130 246 / 10%), rgb(45 212 191 / 5%) 52%, rgb(167 139 250 / 10%));
+  --gradient-selection: linear-gradient(100deg, rgb(59 130 246 / 20%), rgb(45 212 191 / 10%), rgb(167 139 250 / 10%));
+  /* Reserved styling token only: no progress feature or invented values in M0. */
+  --gradient-progress: var(--gradient-brand);
+  --shadow-accent: 0 4px 20px rgb(59 130 246 / 18%);
+  --shadow-accent-hover: 0 6px 26px rgb(45 212 191 / 22%);
+  --shadow-tile: 0 18px 45px rgb(3 7 18 / 35%);
+  --border-orbit: rgb(167 139 250 / 22%);
+  --duration-interaction: 160ms;
+  --ease-interaction: cubic-bezier(.2, .7, .3, 1);
+  --radius-control: 6px;
+  --radius-card: 9px;
+  --radius-hero: 12px;
+}
