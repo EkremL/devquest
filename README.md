@@ -2,7 +2,7 @@
 
 A local, single-user software engineering learning workspace. Built with Spring Boot, React, TypeScript, and PostgreSQL.
 
-**Current scope: M1 — Interactive learning roadmap.** Browse the imported modules, sessions, module requirements, and final competencies. Save four-state checklist progress in PostgreSQL. The original M0 workspace health view remains available.
+**Current scope: M2.1 — Safe Markdown export.** Browse the imported roadmap, save four-state progress in PostgreSQL, and download a faithful Markdown copy from Data safety. The M0 health view and M1 roadmap remain available. Changed-source reconciliation and backup/recovery work await separate review.
 
 ## Stack
 
@@ -27,6 +27,8 @@ docs/          Setup and verification documentation
 ```
 
 Start with [Windows development instructions](docs/WINDOWS_DEVELOPMENT.md). See [M1 implementation and verification](docs/M1_VERIFICATION.md) for the database model, API, progress rules, test evidence, and limitations. [M0 verification](docs/M0_VERIFICATION.md) remains a historical record.
+
+See [M2.1 export verification](docs/M2_1_VERIFICATION.md) for the export endpoint, integrity checks, actual tests, and limitations. Markdown checkboxes represent completed versus not completed; the database retains richer statuses and event history.
 
 ## Quick start after local database setup
 
@@ -68,4 +70,4 @@ Integration tests use `devquest_test_db` and its own non-superuser role. They ne
 
 On first backend startup, Flyway applies V2 and imports `curriculum/ROADMAP.md` in one transaction. Subsequent starts with the identical source preserve all IDs and progress. Changed source bytes are rejected until a reconciliation workflow is implemented; restore the accepted file rather than deleting the database. Run the backend from `backend/` so the default source path resolves correctly.
 
-Do not commit local credentials, build artifacts, database files, or `.local/`. The curriculum files remain unchanged. DevQuest does not access or modify `secure-task-api`. No M2, authentication, gamification, Markdown export, or synchronization is implemented.
+Do not commit local credentials, build artifacts, database files, or `.local/`. The curriculum files remain unchanged. DevQuest does not access or modify `secure-task-api`. Authentication, gamification, changed-source reconciliation, and synchronization are not implemented.

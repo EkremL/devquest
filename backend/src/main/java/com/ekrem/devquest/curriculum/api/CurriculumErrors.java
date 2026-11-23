@@ -11,6 +11,10 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 @RestControllerAdvice
 public class CurriculumErrors {
+    @ExceptionHandler(MarkdownExportRenderer.ExportIntegrityException.class)
+    ResponseEntity<ApiError> exportIntegrity() {
+        return ResponseEntity.status(409).body(new ApiError("EXPORT_INTEGRITY_ERROR", "Export stopped because the stored source and identity mappings could not be verified. No progress was changed."));
+    }
     @ExceptionHandler(CurriculumReader.MissingItemException.class)
     ResponseEntity<ApiError> missing() { return ResponseEntity.status(404).body(new ApiError("NOT_FOUND", "The requested curriculum item does not exist.")); }
     @ExceptionHandler({ProgressService.StaleProgressException.class, OptimisticLockingFailureException.class})

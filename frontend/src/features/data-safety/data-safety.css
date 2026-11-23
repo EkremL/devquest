@@ -1,0 +1,18 @@
+.data-safety-page { max-width: 950px; padding-bottom: 40px; }
+.export-card { padding: clamp(22px,4vw,36px); border: 1px solid var(--color-border-strong); border-radius: var(--radius-hero); background: var(--gradient-hero),var(--color-surface); }
+.export-icon { display: inline-flex; padding: 12px; color: var(--color-mint); border: 1px solid var(--color-border-strong); border-radius: var(--radius-card); margin-bottom: 20px; }
+.export-card h2 { font-size: 1.5rem; line-height: 1.4; }
+.export-card p, .export-notes li { color: var(--color-muted); line-height: 1.8; }
+.export-source { margin: 24px 0; padding: 18px; background: var(--color-background); border: 1px solid var(--color-border); border-radius: var(--radius-card); }
+.export-source strong { line-height: 1.6; }
+.export-source p { margin: 8px 0 0; font-size: .875rem; }
+.export-source code { color: var(--color-soft-purple); overflow-wrap: anywhere; }
+.export-button { border: 0; min-height: 44px; text-align: left; line-height: 1.5; }
+.export-button svg { flex-shrink: 0; }
+.export-card .export-feedback { color: var(--color-mint); font-size: .875rem; }
+.export-notes { margin-top: 30px; }
+.export-notes h2 { display: flex; align-items: center; gap: 10px; }
+.export-notes h2 svg { color: var(--color-aqua-teal); flex-shrink: 0; }
+.export-notes ul { padding-left: 21px; margin: 20px 0 24px; }
+.export-notes li { padding-left: 5px; margin-bottom: 12px; }
+@media(max-width:800px) { .app-shell .sidebar nav { flex-wrap: wrap; } }

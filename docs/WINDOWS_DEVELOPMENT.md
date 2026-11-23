@@ -137,6 +137,12 @@ Open `http://127.0.0.1:5173`. Vite uses a same-origin `/api` proxy to the backen
 
 The connection button performs a real health request. Missing dependencies produce an explicit error or unverified state. Roadmap is functional: open a module, open a session, select a status, and press Save. A status is saved only after the backend confirms it. Module requirements and final competencies have their own controls. Lesson workspace and security lab remain future features. Direct module and session URLs work through the Vite development/preview server.
 
+## Markdown export (M2.1)
+
+With both servers running, open `http://127.0.0.1:5173/data-safety` or select **Data safety** in the navigation. Select **Export Roadmap as Markdown** and check your browser's downloads for `ROADMAP.md`. The browser may append a number when that filename already exists. DevQuest does not select the source directory or overwrite the original curriculum.
+
+Only saved COMPLETED items are checked. The other three states are unchecked; full statuses, timestamps, and activity history remain in PostgreSQL. This file is not a database backup. It uses the accepted source revision stored in PostgreSQL, preserving UTF-8 and line endings, and does not read or write the working-tree file during export. Integrity failures stop the download with an error. See `M2_1_VERIFICATION.md` for details. Import preview and recovery tooling remain deferred.
+
 ## IntelliJ IDEA
 
 Open `backend/pom.xml` as a Maven project. Set Project SDK and Maven runner JRE to JDK 25.0.3 and use the Maven wrapper. Enable annotation processing for Lombok. Run `com.ekrem.devquest.DevQuestApplication` with working directory `backend/` and database environment variables, or use the ignored local properties file. Keep secrets out of shared run configurations.
