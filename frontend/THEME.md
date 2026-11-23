@@ -1,6 +1,6 @@
 # DevQuest theme
 
-`src/theme.css` is the shared source of truth for colors, gradients, radii, and interaction timing. `src/styles.css` applies them to the existing M0 shell. No page logic or progress feature is added by this theme.
+`src/theme.css` is the shared source of truth for colors, gradients, radii, and interaction timing. `src/styles.css` styles the application shell; `src/features/curriculum/roadmap.css` extends it for M1 without duplicating palette values.
 
 ## Palette and semantics
 
@@ -22,7 +22,7 @@ Tailwind automatically exposes the `@theme` colors, for example `bg-background`,
 - `--gradient-hero`: translucent brand colors over a navy surface, keeping copy readable.
 - `--gradient-card`: restrained tint for selected dashboard cards.
 - `--gradient-selection`: selected navigation background.
-- `--gradient-progress`: reserved alias to the brand gradient for future indicators. It does not display invented progress or implement M1.
+- `--gradient-progress`: alias to the brand gradient for M1 completion bars. Widths and accessible values come from backend completion statistics; no invented values are displayed.
 
 Typography uses rem-based sizes, 16px body copy, and at least 14px primary controls. Smaller 12–13px text is reserved for supporting metadata. Keep native browser scaling, visible focus outlines, and textual status labels.
 

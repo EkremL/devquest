@@ -25,13 +25,13 @@ class FoundationIT {
     @LocalServerPort private int port;
 
     @Test
-    void connectsToDedicatedTestDatabaseAndMigratesOnlyInfrastructure() {
+    void connectsToDedicatedTestDatabaseAndValidatesMigrations() {
         assertThat(jdbc.queryForObject("SELECT current_database()", String.class)).isEqualTo("devquest_test_db");
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("1");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("2");
         assertThat(flyway.validateWithResult().validationSuccessful).isTrue();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         assertThat(jdbc.queryForList("SELECT tablename FROM pg_tables WHERE schemaname = 'devquest'", String.class))
-                .containsExactly("flyway_schema_history");
+                .containsExactlyInAnyOrder("flyway_schema_history", "curriculum", "curriculum_revision", "curriculum_node", "checklist_item", "source_item_mapping", "item_progress", "progress_event");
     }
 
     @Test

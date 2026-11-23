@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { App } from './App'
 
 const healthy = { application: 'DevQuest', status: 'UP', database: 'UP', migrations: 'UP' }
+beforeEach(() => vi.stubGlobal('scrollTo', vi.fn()))
 afterEach(() => vi.unstubAllGlobals())
 
 describe('workspace connection', () => {

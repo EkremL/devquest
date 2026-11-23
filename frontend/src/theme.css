@@ -30,7 +30,7 @@
   --gradient-hero: linear-gradient(115deg, rgb(59 130 246 / 19%), rgb(45 212 191 / 10%) 53%, rgb(167 139 250 / 19%));
   --gradient-card: linear-gradient(120deg, rgb(59 130 246 / 10%), rgb(45 212 191 / 5%) 52%, rgb(167 139 250 / 10%));
   --gradient-selection: linear-gradient(100deg, rgb(59 130 246 / 20%), rgb(45 212 191 / 10%), rgb(167 139 250 / 10%));
-  /* Reserved styling token only: no progress feature or invented values in M0. */
+  /* Progress widths must come from persisted curriculum statistics. */
   --gradient-progress: var(--gradient-brand);
   --shadow-accent: 0 4px 20px rgb(59 130 246 / 18%);
   --shadow-accent-hover: 0 6px 26px rgb(45 212 191 / 22%);

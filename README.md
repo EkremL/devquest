@@ -2,7 +2,7 @@
 
 A local, single-user software engineering learning workspace. Built with Spring Boot, React, TypeScript, and PostgreSQL.
 
-**Current scope: M0 — Foundation.** The application shell checks real backend, database, and Flyway health. Curriculum import and progress tracking begin in M1 and are not implemented here.
+**Current scope: M1 — Interactive learning roadmap.** Browse the imported modules, sessions, module requirements, and final competencies. Save four-state checklist progress in PostgreSQL. The original M0 workspace health view remains available.
 
 ## Stack
 
@@ -20,13 +20,13 @@ A local, single-user software engineering learning workspace. Built with Spring 
 
 ```text
 backend/       Spring Boot application (com.ekrem.devquest)
-frontend/      React application shell
+frontend/      React shell, roadmap routes, and progress controls
 curriculum/    Original learning documents; unchanged
 scripts/       Native Windows PostgreSQL lifecycle and environment helpers
 docs/          Setup and verification documentation
 ```
 
-Start with [Windows development instructions](docs/WINDOWS_DEVELOPMENT.md). See [M0 verification](docs/M0_VERIFICATION.md) for actual validation results and limitations.
+Start with [Windows development instructions](docs/WINDOWS_DEVELOPMENT.md). See [M1 implementation and verification](docs/M1_VERIFICATION.md) for the database model, API, progress rules, test evidence, and limitations. [M0 verification](docs/M0_VERIFICATION.md) remains a historical record.
 
 ## Quick start after local database setup
 
@@ -66,4 +66,6 @@ npm.cmd run build
 
 Integration tests use `devquest_test_db` and its own non-superuser role. They never use `devquest_db` or the separate educational project's database.
 
-Do not commit local credentials, build artifacts, database files, or `.local/`. No data is imported from `curriculum/` in M0. DevQuest does not access or modify `secure-task-api`.
+On first backend startup, Flyway applies V2 and imports `curriculum/ROADMAP.md` in one transaction. Subsequent starts with the identical source preserve all IDs and progress. Changed source bytes are rejected until a reconciliation workflow is implemented; restore the accepted file rather than deleting the database. Run the backend from `backend/` so the default source path resolves correctly.
+
+Do not commit local credentials, build artifacts, database files, or `.local/`. The curriculum files remain unchanged. DevQuest does not access or modify `secure-task-api`. No M2, authentication, gamification, Markdown export, or synchronization is implemented.

@@ -115,7 +115,7 @@ GET /api/health
 
 A healthy response is HTTP 200 with `application: DevQuest`, `status: UP`, `database: UP`, and `migrations: UP`. Dependency failure returns HTTP 503 if the server is still running. Initial database or migration failures prevent startup rather than producing a false success.
 
-Flyway creates the `devquest` schema and applies `V1__foundation.sql`. M0 creates only Flyway infrastructure; there are no business tables or seed data. Hibernate uses `ddl-auto=validate`; Flyway clean and automatic baseline are disabled. Applied migrations must not be edited; add new migrations for later changes.
+Flyway creates the `devquest` schema and applies V1 (foundation) and V2 (curriculum and progress). The startup importer reads `../curriculum/ROADMAP.md` and validates 889 checklist items with 25 original completions. An identical source is a no-op; changed bytes stop startup safely without replacing data. The source location can be overridden with `DEVQUEST_CURRICULUM_PATH` when using another working directory. Hibernate uses `ddl-auto=validate`; Flyway clean and automatic baseline are disabled. Applied migrations must not be edited.
 
 Alternative configuration: copy `backend/config/application-local.properties.example` to `backend/config/application-local.properties`, replace placeholders locally, and set `JAVA_HOME`. The real file is ignored by Git, but because this checkout is inside OneDrive it may still sync there. Prefer the DPAPI/environment helper above. No automatic `.env` loader is configured, and no secrets belong in `VITE_*` variables.
 
@@ -135,7 +135,7 @@ Open `http://127.0.0.1:5173`. Vite uses a same-origin `/api` proxy to the backen
 
 `npm.cmd run preview` serves the production build on `http://127.0.0.1:4173`, with the same API proxy. Preview is a local build check, not a production hosting service.
 
-The connection button performs a real health request. Missing dependencies produce an explicit error or unverified state. Upcoming roadmap, lesson, and security-lab labels are intentionally noninteractive; they are not implemented features.
+The connection button performs a real health request. Missing dependencies produce an explicit error or unverified state. Roadmap is functional: open a module, open a session, select a status, and press Save. A status is saved only after the backend confirms it. Module requirements and final competencies have their own controls. Lesson workspace and security lab remain future features. Direct module and session URLs work through the Vite development/preview server.
 
 ## IntelliJ IDEA
 
@@ -143,7 +143,7 @@ Open `backend/pom.xml` as a Maven project. Set Project SDK and Maven runner JRE 
 
 ## DataGrip
 
-Create a PostgreSQL data source with host `127.0.0.1`, port `55432`, database `devquest_db`, and user `devquest_app`. Retrieve the local credential privately if needed; do not save it in project files. Test Connection, then inspect the `devquest` schema. M0 should show only `flyway_schema_history` there. Use the database owner role for this application, not the cluster administrator.
+Create a PostgreSQL data source with host `127.0.0.1`, port `55432`, database `devquest_db`, and user `devquest_app`. Retrieve the local credential privately if needed; do not save it in project files. Test Connection, then inspect the `devquest` schema: Flyway history and seven M1 tables described in `M1_VERIFICATION.md`. Use the database owner role for this application, not the cluster administrator.
 
 ## Tests
 
@@ -164,10 +164,10 @@ Set-Location backend
 .\mvnw.cmd -Pintegration verify
 ```
 
-The integration profile runs `FoundationIT` against `devquest_test_db`, checks migration validation and no-op reapplication, confirms no business tables exist, and calls the real HTTP endpoint. It does not drop the database or clean schemas. A missing database or password causes a failure, not a skipped test.
+The integration profile runs `FoundationIT` and `CurriculumIT` against `devquest_test_db`. It checks migrations, complete import, idempotency, changed-source rejection, independent duplicate labels, status transitions, validation, cross-origin protection, all read endpoints, and concurrent writes. Transactional tests roll back; the concurrent HTTP test restores its dedicated fixture. Keep this database reserved for tests. The suite does not drop databases or clean schemas. A missing database or password causes failure, not a skipped test. The separate manual restart verification is documented in `M1_VERIFICATION.md`.
 
 ## Backups and shutdown
 
 Stop backend and frontend with Ctrl+C before stopping PostgreSQL. Keep data files out of file-sync tools. Use PostgreSQL `pg_dump` for future application backups rather than copying a running data directory. Store backups outside this repository; do not assume encrypted credential files can be restored on another machine.
 
-No authentication exists in M0. Keep the application local; network hosting requires a separate security design. No commits or pushes are performed by setup scripts.
+No authentication exists in M1. Keep the application local; network hosting requires a separate security design. Mutation requests require JSON, the `X-DevQuest-Request: 1` header, a loopback Host, and an allowed local Origin when present. No CORS grants are enabled. This is browser cross-origin protection, not protection against other local programs. No commits or pushes are performed by setup scripts.
