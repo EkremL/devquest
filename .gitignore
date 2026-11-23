@@ -1,0 +1,21 @@
+# Build outputs and dependencies
+backend/target/
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+*.tsbuildinfo
+
+# Machine-local tools, credentials, and logs
+.local/
+.env
+.env.*
+!.env.example
+backend/config/application-local.properties
+*.log
+
+# Editors and operating systems
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db

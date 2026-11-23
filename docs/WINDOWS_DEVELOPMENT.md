@@ -1,0 +1,173 @@
+# Windows development
+
+## Prerequisites
+
+- Windows 11, PowerShell, Git.
+- Installed JDK **25.0.3**, as approved during M0. Maven enforces this patch version.
+- Maven **3.9.16** via `backend/mvnw.cmd`; a system Maven installation is optional.
+- Node.js 22.12+ (tested with Node 24.22.3 and npm 11.19.1).
+- Native PostgreSQL. Docker is not required.
+
+Use normal user permissions. None of the scripts install a Windows service, alter firewall rules, or request administrator elevation. If Windows requests administrator permissions, stop and review the operation.
+
+## Every time after restarting Windows
+
+Use two normal PowerShell terminals. Do not rerun the initialization script: the existing database and credentials persist on disk.
+
+**Terminal 1 — start PostgreSQL, load the local environment, run Spring Boot:**
+
+```powershell
+Set-Location 'C:\Users\ekrem\OneDrive\Masaüstü\devquest'
+.\scripts\Start-LocalPostgres.ps1
+. .\scripts\Use-LocalEnvironment.ps1
+Set-Location backend
+.\mvnw.cmd spring-boot:run
+```
+
+Leave this terminal open. Wait for `Started DevQuestApplication` and port 8080. The database runs independently after `pg_ctl` starts it; Spring Boot occupies this terminal.
+
+**Terminal 2 — run React/Vite:**
+
+```powershell
+Set-Location 'C:\Users\ekrem\OneDrive\Masaüstü\devquest\frontend'
+npm.cmd run dev
+```
+
+Dependencies are already installed. Run `npm.cmd ci` first only on a fresh checkout, after deleting `node_modules`, or when the lockfile changes. Leave the terminal open and visit `http://127.0.0.1:5173`. Use **Check connection**; all three cards should report healthy status.
+
+If you need to verify without opening the browser, use a third terminal:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8080/api/health
+Invoke-RestMethod http://127.0.0.1:5173/api/health
+```
+
+To stop, press Ctrl+C in the backend and frontend terminals (confirm termination if `cmd` asks), then run this from the repository root:
+
+```powershell
+.\scripts\Stop-LocalPostgres.ps1
+```
+
+Do not delete the `data` directory or rerun `initdb`. No administrator terminal is needed. If local execution policy blocks a helper script, use the equivalent explicit `pg_ctl` command documented below and configure the backend environment in IntelliJ or the ignored local properties file; do not change machine-wide execution policy automatically.
+
+## Dedicated native PostgreSQL
+
+M0 uses a separate user-owned instance:
+
+| Setting | Value |
+| --- | --- |
+| Installation | `%LOCALAPPDATA%\DevQuest\PostgreSQL` |
+| Database files | `%LOCALAPPDATA%\DevQuest\PostgreSQL\data` |
+| Host | `127.0.0.1` only |
+| Port | `55432` |
+| Application database / role | `devquest_db` / `devquest_app` |
+| Test database / role | `devquest_test_db` / `devquest_test` |
+| Cluster administration role | `devquest_admin`, never used by Spring Boot |
+
+This directory must stay outside OneDrive and outside Git. Port 55432 avoids occupying the usual 5432 port that another project may use.
+
+For a new machine, download the Windows x64 **binary ZIP** from the official [PostgreSQL Windows downloads](https://www.postgresql.org/download/windows/) / [EDB binaries](https://www.enterprisedb.com/download-postgresql-binaries) pages. Then, from the repository root:
+
+```powershell
+.\scripts\Initialize-LocalPostgres.ps1 -ArchivePath 'C:\path\to\postgresql-binaries.zip'
+```
+
+The script refuses an existing installation directory. It extracts native binaries, initializes a UTF-8 cluster, requires SCRAM passwords, binds only to IPv4 loopback, and creates the two dedicated databases. It does not alter an existing PostgreSQL installation or database.
+
+Each role gets a randomly generated password. Credentials are stored as Windows DPAPI-encrypted `*.credential.xml` files beside the data directory; they can be decrypted only by the Windows account that created them on that computer. These are not portable backups. The temporary `initdb` password file is deleted in a `finally` block.
+
+Start and stop the instance explicitly:
+
+```powershell
+.\scripts\Start-LocalPostgres.ps1
+.\scripts\Stop-LocalPostgres.ps1
+```
+
+`pg_ctl` manages PostgreSQL directly. There is no automatic start on Windows login. If startup fails, read `%LOCALAPPDATA%\DevQuest\PostgreSQL\postgresql.log` and check port 55432.
+
+Equivalent direct start command (useful if script execution is restricted):
+
+```powershell
+& "$env:LOCALAPPDATA\DevQuest\PostgreSQL\pgsql\bin\pg_ctl.exe" `
+  -D "$env:LOCALAPPDATA\DevQuest\PostgreSQL\data" `
+  -l "$env:LOCALAPPDATA\DevQuest\PostgreSQL\postgresql.log" -w start
+```
+
+## Backend
+
+From the repository root:
+
+```powershell
+. .\scripts\Use-LocalEnvironment.ps1
+Set-Location backend
+.\mvnw.cmd --version
+.\mvnw.cmd verify
+.\mvnw.cmd spring-boot:run
+```
+
+The dot followed by a space loads environment variables into the current PowerShell process. Do not print those variables or paste them into chat. They are inherited by the backend process, not written to Git. The helper sets `JAVA_HOME` explicitly because an Oracle PATH shim may resolve a different Java installation.
+
+The backend must run with `backend/` as its working directory. It listens at `http://127.0.0.1:8080` and exposes:
+
+```text
+GET /api/health
+```
+
+A healthy response is HTTP 200 with `application: DevQuest`, `status: UP`, `database: UP`, and `migrations: UP`. Dependency failure returns HTTP 503 if the server is still running. Initial database or migration failures prevent startup rather than producing a false success.
+
+Flyway creates the `devquest` schema and applies `V1__foundation.sql`. M0 creates only Flyway infrastructure; there are no business tables or seed data. Hibernate uses `ddl-auto=validate`; Flyway clean and automatic baseline are disabled. Applied migrations must not be edited; add new migrations for later changes.
+
+Alternative configuration: copy `backend/config/application-local.properties.example` to `backend/config/application-local.properties`, replace placeholders locally, and set `JAVA_HOME`. The real file is ignored by Git, but because this checkout is inside OneDrive it may still sync there. Prefer the DPAPI/environment helper above. No automatic `.env` loader is configured, and no secrets belong in `VITE_*` variables.
+
+## Frontend
+
+In another terminal:
+
+```powershell
+Set-Location 'C:\path\to\devquest\frontend'
+npm.cmd ci
+npm.cmd test
+npm.cmd run build
+npm.cmd run dev
+```
+
+Open `http://127.0.0.1:5173`. Vite uses a same-origin `/api` proxy to the backend; no permissive CORS configuration is needed. Both dev and preview servers use strict ports and bind to `127.0.0.1`. Do not use `--host 0.0.0.0`.
+
+`npm.cmd run preview` serves the production build on `http://127.0.0.1:4173`, with the same API proxy. Preview is a local build check, not a production hosting service.
+
+The connection button performs a real health request. Missing dependencies produce an explicit error or unverified state. Upcoming roadmap, lesson, and security-lab labels are intentionally noninteractive; they are not implemented features.
+
+## IntelliJ IDEA
+
+Open `backend/pom.xml` as a Maven project. Set Project SDK and Maven runner JRE to JDK 25.0.3 and use the Maven wrapper. Enable annotation processing for Lombok. Run `com.ekrem.devquest.DevQuestApplication` with working directory `backend/` and database environment variables, or use the ignored local properties file. Keep secrets out of shared run configurations.
+
+## DataGrip
+
+Create a PostgreSQL data source with host `127.0.0.1`, port `55432`, database `devquest_db`, and user `devquest_app`. Retrieve the local credential privately if needed; do not save it in project files. Test Connection, then inspect the `devquest` schema. M0 should show only `flyway_schema_history` there. Use the database owner role for this application, not the cluster administrator.
+
+## Tests
+
+Unit/API tests do not require a database:
+
+```powershell
+Set-Location backend
+$env:JAVA_HOME = 'C:\Program Files\Java\jdk-25.0.3'
+.\mvnw.cmd verify
+```
+
+Real PostgreSQL tests, from the repository root:
+
+```powershell
+.\scripts\Start-LocalPostgres.ps1
+. .\scripts\Use-LocalEnvironment.ps1
+Set-Location backend
+.\mvnw.cmd -Pintegration verify
+```
+
+The integration profile runs `FoundationIT` against `devquest_test_db`, checks migration validation and no-op reapplication, confirms no business tables exist, and calls the real HTTP endpoint. It does not drop the database or clean schemas. A missing database or password causes a failure, not a skipped test.
+
+## Backups and shutdown
+
+Stop backend and frontend with Ctrl+C before stopping PostgreSQL. Keep data files out of file-sync tools. Use PostgreSQL `pg_dump` for future application backups rather than copying a running data directory. Store backups outside this repository; do not assume encrypted credential files can be restored on another machine.
+
+No authentication exists in M0. Keep the application local; network hosting requires a separate security design. No commits or pushes are performed by setup scripts.

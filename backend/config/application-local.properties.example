@@ -1,0 +1,5 @@
+# Copy to application-local.properties (ignored by Git), then replace the password.
+# Use only the dedicated devquest_db database and a non-superuser role.
+DEVQUEST_DB_PORT=5432
+DEVQUEST_DB_USERNAME=devquest_app
+DEVQUEST_DB_PASSWORD=replace-with-your-local-password
