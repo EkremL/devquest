@@ -4,7 +4,8 @@ import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { AppRoutes } from '../../App'
 import type { Section, Stats } from '../curriculum/api'
-import { makeAtlas } from './layout'
+import * as layout from './layout'
+import { recallFrame, recenter, rememberFrame } from './camera'
 
 const stats = (percentage: number): Stats => ({
   percentage, total: 4, completed: percentage/25, state: percentage===100?'COMPLETED':percentage?'IN_PROGRESS':'NOT_STARTED',
@@ -26,13 +27,17 @@ beforeEach(()=>{
   vi.stubGlobal('scrollTo',vi.fn())
   vi.stubGlobal('ResizeObserver',class{ observe(){} unobserve(){} disconnect(){} })
 })
-afterEach(()=>vi.unstubAllGlobals())
+afterEach(()=>{vi.restoreAllMocks();vi.unstubAllGlobals()})
 
 it('keeps numbered hub identities and positions while adding a module and session, and follows the actual source order',()=>{
-  const original=makeAtlas([first,second])
+  const original=layout.makeGeometry(layout.layoutInput([first,second]))
   const added=section('extra','MODULE','Additional module',2,[section('more','SESSION','Extra session',0)])
-  const revised=makeAtlas([{...second,title:'Module 1 — Renamed'},first,added])
-  expect(revised.nodes.map(n=>n.id)).toEqual(['module-1','session-id','module-0','extra','more'])
+  const revisedInput=layout.layoutInput([{...second,title:'Module 1 — Renamed',children:[
+    {...session,title:'Session 1.1 — Renamed'},section('new-session','SESSION','Session 1.2 — Extra practice',2),
+  ]},first,added])
+  const revised=layout.makeGeometry(revisedInput)
+  expect(revised).toEqual(layout.makeGeometry(revisedInput))
+  expect(revised.nodes.map(n=>n.id)).toEqual(['module-1','session-id','new-session','module-0','extra','more'])
   expect(revised.edges.some(e=>e.source==='module-1'&&e.target==='module-0'&&e.data?.route)).toBe(true)
   expect(revised.edges.some(e=>e.source==='extra'&&e.target==='more'&&!e.data?.route)).toBe(true)
   for(const node of original.nodes)expect(revised.nodes.find(n=>n.id===node.id)?.position).toEqual(node.position)
@@ -49,9 +54,14 @@ it('opens the real routes from graph and list selection and retains the workspac
   expect(within(inspector).getByRole('link',{name:'Open module'})).toHaveAttribute('href','/roadmap/modules/module-1')
   fireEvent.click(screen.getByRole('button',{name:'Browse'}))
   const browse=screen.getByRole('region',{name:'Browse curriculum'})
-  fireEvent.click(within(browse).getByText(second.title))
-  fireEvent.click(within(browse).getByRole('button',{name:session.title}))
-  expect(browse).not.toBeInTheDocument()
+  expect(within(browse).getByRole('button',{name:'Close browser'})).toHaveFocus()
+  fireEvent.keyDown(window,{key:'Escape'})
+  expect(screen.getByRole('button',{name:'Browse'})).toHaveFocus()
+  fireEvent.click(screen.getByRole('button',{name:'Browse'}))
+  const reopened=screen.getByRole('region',{name:'Browse curriculum'})
+  fireEvent.click(within(reopened).getByText(second.title))
+  fireEvent.click(within(reopened).getByRole('button',{name:session.title}))
+  expect(reopened).not.toBeInTheDocument()
   fireEvent.click(within(inspector).getByRole('link',{name:'Open session'}))
   expect(await screen.findByRole('heading',{name:session.title})).toBeInTheDocument()
   fireEvent.click(screen.getByRole('link',{name:'Data safety'}))
@@ -59,6 +69,7 @@ it('opens the real routes from graph and list selection and retains the workspac
 })
 
 it('reads updated progress using the curriculum API and allows returning from focus mode',async()=>{
+  const geometry=vi.spyOn(layout,'makeGeometry')
   const fetch=vi.fn().mockResolvedValueOnce(envelope()).mockResolvedValueOnce(envelope([{...first,statistics:{...first.statistics,sessionTopics:stats(50)}},second]))
   vi.stubGlobal('fetch',fetch)
   show()
@@ -70,7 +81,15 @@ it('reads updated progress using the curriculum API and allows returning from fo
   expect(screen.getByRole('button',{name:'Focus map'})).toHaveAttribute('aria-pressed','false')
   fireEvent.click(screen.getByRole('button',{name:'Refresh progress'}))
   expect(await within(inspector).findByText('50%')).toBeInTheDocument()
+  expect(geometry).toHaveBeenCalledTimes(1)
   expect(fetch.mock.calls.map(([path, options])=>[path,options.method??'GET'])).toEqual([['/api/curriculum','GET'],['/api/curriculum','GET']])
+})
+
+it('restores a history entry around the same map center even after a resize',()=>{
+  rememberFrame('atlas-entry:r',{x:-420,y:110,zoom:1.3},900,600)
+  const frame=recallFrame('atlas-entry:r')!
+  expect(recenter(frame,frame,{width:400,height:450})).toEqual({x:-670,y:35,zoom:1.3})
+  expect(recallFrame('atlas-entry:new-revision')).toBeUndefined()
 })
 
 it('shows loading and an actionable error until a retry succeeds',async()=>{

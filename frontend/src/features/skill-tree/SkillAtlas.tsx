@@ -1,11 +1,12 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { Link, useLocation, useNavigationType, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
-import { Background, BaseEdge, Handle, Position, ReactFlow, ReactFlowProvider, useReactFlow, useViewport, type NodeProps, type EdgeProps } from '@xyflow/react'
+import { Background, BaseEdge, Handle, Position, ReactFlow, ReactFlowProvider, useReactFlow, useViewportStore, type NodeProps, type EdgeProps, type OnInit, type Viewport } from '@xyflow/react'
 import { ArrowUpRight, Check, ChevronRight, CircleAlert, Compass, Crosshair, Expand, Fingerprint, Flag, Focus, GitBranch, KeyRound, Layers3, List, LockKeyhole, Maximize, Minus, Network, Plus, Radar, ScanLine, Shield, ShieldCheck, Workflow, X } from 'lucide-react'
 import '@xyflow/react/dist/style.css'
 import { getCurriculum, statusLabels, type Section } from '../curriculum/api'
-import { accents, codeOf, makeAtlas, ordered, titleOf, type AtlasNode, type Trail } from './layout'
+import { accents, codeOf, layoutInput, makeGeometry, ordered, paintAtlas, titleOf, type AtlasNode, type Marker, type Trail } from './layout'
+import { recallFrame, recenter, rememberFrame } from './camera'
 import './atlas.css'
 
 const symbols=[Compass,Fingerprint,Layers3,KeyRound,ScanLine,LockKeyhole,Workflow,Shield,Radar,Network,Flag]
@@ -22,25 +23,24 @@ function Sigil({index}:{index:number}){
       <path d="m40 8 3 4-3 4-3-4z" fill="currentColor"/>
     </svg><Icon className="atlas-glyph" strokeWidth={1.55}/></span>
 }
-function Skill({data}:NodeProps<AtlasNode>){
+function Skill({id,data}:NodeProps<AtlasNode>){
   const {owner,selected,pick}=useContext(Selection)
-  const {zoom}=useViewport()
-  const {section,hub,index}=data
-  const stats=section.statistics.sessionTopics
-  const active=selected===section.id
+  const {title,state,hub,index}=data
+  const detailed=useViewportStore(view => !hub && data.owner===owner && view.transform[2]>=.95)
+  const active=selected===id
   return <>
     <Handle type="source" position={Position.Right}/><Handle type="target" position={Position.Left}/>
     <button className={'atlas-point nodrag '+(hub?'hub':'minor')} style={colorStyle(accents[index%accents.length])}
-      data-lit={stats.state==='COMPLETED'} data-progress={stats.state} data-cluster={data.owner===owner}
-      data-label-above={[2,5,6,8,9].includes(index%11)} aria-pressed={active}
-      title={section.title} aria-label={`${section.title}, ${statusLabels[stats.state]}`} onClick={()=>pick(data.owner,section.id)}>
+      data-lit={state==='COMPLETED'} data-progress={state} data-cluster={data.owner===owner}
+      data-label-above={hub?[2,5,6,8,9].includes(index%11):data.ordinal%3===1} aria-pressed={active}
+      title={title} aria-label={`${title}, ${statusLabels[state]}`} onClick={()=>pick(data.owner,id)}>
       {hub?<><svg viewBox="-100 -100 200 200" className="atlas-engraving" aria-hidden="true">
         <g transform={`rotate(${index*41})`} fill="none" stroke="currentColor">
           <circle r="83" strokeDasharray="132 17 70 55" opacity=".38"/><circle r="77" strokeDasharray="1 8" strokeWidth="3" opacity=".5"/>
           <path d="M-96 0h12m168 0h12M0-96v12m0 168v12" opacity=".65"/>
-        </g></svg><Sigil index={index}/></>:<span className={'atlas-gem cut-'+data.ordinal%3}>{stats.state==='COMPLETED'?<Check size={14}/>:<i/>}</span>}
-      {stats.state==='NEEDS_REVIEW'&&<CircleAlert className="atlas-review" size={14} aria-hidden="true"/>}
-      {(hub||active||(zoom>=.95&&data.owner===owner))&&<span className="atlas-label"><small>{codeOf(section)}</small>{hub&&<b>{titleOf(section)}</b>}</span>}
+      </g></svg><Sigil index={index}/></>:<span className={'atlas-gem cut-'+data.ordinal%3}>{state==='COMPLETED'?<Check size={14}/>:<i/>}</span>}
+      {state==='NEEDS_REVIEW'&&<CircleAlert className="atlas-review" size={14} aria-hidden="true"/>}
+      {(hub||active||detailed)&&<span className="atlas-label"><small>{hub?codeOf(data):codeOf(data).replace(/^Session\s+/i,'')}</small>{hub&&<b>{titleOf(data)}</b>}</span>}
     </button>
   </>
 }
@@ -54,36 +54,84 @@ function Thread({id,data}:EdgeProps<Trail>){
   </g>
 }
 const nodeTypes={skill:Skill},edgeTypes={trail:Thread}
+function MapControls({fit}:{fit:()=>void}){
+  const flow=useReactFlow()
+  const zoom=useViewportStore(view=>Math.round(view.transform[2]*100))
+  return <div className="atlas-controls">
+    <button aria-label="Zoom out" onClick={()=>void flow.zoomOut()}><Minus/></button>
+    <span aria-label="Current zoom">{zoom}%</span>
+    <button aria-label="Zoom in" onClick={()=>void flow.zoomIn()}><Plus/></button>
+    <button aria-label="Fit whole atlas" onClick={fit}><Maximize/></button>
+  </div>
+}
 export default function SkillAtlas(){
   const query=useQuery({queryKey:['curriculum'],queryFn:getCurriculum})
   if(!query.data) return <section className="atlas-wait"><h1>Skill atlas</h1><p role={query.isError?'alert':'status'}>{query.error?.message??'Loading curriculum…'}</p>{query.isError&&<button onClick={()=>void query.refetch()}>Retry</button>}<Link to="/roadmap">Open Roadmap</Link></section>
-  return <ReactFlowProvider><Atlas root={query.data.root} refreshing={query.isFetching} refresh={()=>void query.refetch()} refreshError={query.error?.message}/></ReactFlowProvider>
+  return <ReactFlowProvider key={query.data.revisionId}><Atlas root={query.data.root} revision={query.data.revisionId} refreshing={query.isFetching} refresh={()=>void query.refetch()} refreshError={query.error?.message}/></ReactFlowProvider>
 }
-function Atlas({root, refreshing, refresh, refreshError}:{
-  root:Section; refreshing:boolean; refresh:()=>void; refreshError?:string
+function Atlas({root, revision, refreshing, refresh, refreshError}:{
+  root:Section; revision:string; refreshing:boolean; refresh:()=>void; refreshError?:string
 }){
   const modules=useMemo(()=>ordered(root.children,'MODULE'),[root])
-  const graph=useMemo(()=>makeAtlas(modules),[modules])
+  const sections=useMemo(()=>new Map(modules.flatMap(m=>[m,...ordered(m.children,'SESSION')]).map(s=>[s.id,s])),[modules])
+  const layoutKey=useMemo(()=>JSON.stringify(layoutInput(modules)),[modules])
+  const paintKey=useMemo(()=>JSON.stringify([...sections.values()].map(s=>[s.id,s.title,s.statistics.sessionTopics.state])),[sections])
+  const geometry=useMemo(()=>makeGeometry(JSON.parse(layoutKey)),[layoutKey])
+  const graph=useMemo(()=>paintAtlas(geometry,JSON.parse(paintKey) as Marker[]),[geometry,paintKey])
   const flow=useReactFlow()
-  const {zoom}=useViewport()
+  const navigation=useNavigationType()
+  const entry=useLocation().key+':'+revision
+  const [restored]=useState(()=>navigation==='POP'?recallFrame(entry):undefined)
   const [params,setParams]=useSearchParams()
   const id=params.get('node')
   const [focus,setFocus]=useState(false),[browse,setBrowse]=useState(false)
   const map=useRef<HTMLElement>(null)
   const browseButton=useRef<HTMLButtonElement>(null)
+  const browseClose=useRef<HTMLButtonElement>(null)
   const current=graph.nodes.find(n=>n.id===id)??graph.nodes[0]
   const module=modules.find(m=>m.id===current?.data.owner)
-  const fitCluster=(owner:string)=>void flow.fitView({nodes:graph.nodes.filter(n=>n.data.owner===owner),padding:map.current && map.current.clientWidth<500?'51px':'66px',maxZoom:1.65})
-  const select=(owner:string,next:string,force=false)=>{
+  const fitCluster=useCallback((owner:string)=>void flow.fitView({nodes:geometry.nodes.filter(n=>n.data.owner===owner),padding:map.current && map.current.clientWidth<500?'51px':'66px',maxZoom:1.65}),[flow,geometry])
+  const select=useCallback((owner:string,next:string,force=false)=>{
     const target=graph.nodes.find(n=>n.id===next)
     if(!target) return
-    setParams(previous=>{const updated=new URLSearchParams(previous);updated.set('node',next);return updated},{replace:true,preventScrollReset:true})
+    if(next!==id) setParams(previous=>{const updated=new URLSearchParams(previous);updated.set('node',next);return updated},{replace:true,preventScrollReset:true})
     const viewport=flow.getViewport()
     const x=target.position.x*viewport.zoom+viewport.x
     const y=target.position.y*viewport.zoom+viewport.y
     const canvas=map.current
     if(force||owner!==module?.id||viewport.zoom<.8||!canvas||x<45||y<63||x>canvas.clientWidth-45||y>canvas.clientHeight-58) fitCluster(owner)
-  }
+  },[graph.nodes,flow,id,setParams,module?.id,fitCluster])
+  const selection=useMemo(()=>({owner:module?.id??'',selected:current?.id??'',pick:select}),[module?.id,current?.id,select])
+  const [entryOptions]=useState(()=>({nodes:geometry.nodes.filter(n=>id?n.data.owner===module?.id:n.data.index<(window.innerWidth<850?2:4)),padding:'56px' as const,maxZoom:1}))
+  const init=useCallback<OnInit>(instance=>{
+    const canvas=map.current
+    if(restored && canvas){
+      const target=recenter(restored,restored,{width:canvas.clientWidth,height:canvas.clientHeight})
+      void instance.setViewport(target)
+    }
+  },[restored])
+  const saveFrame=useCallback((_event: unknown, viewport:Viewport)=>{
+    const canvas=map.current
+    if(canvas) rememberFrame(entry,viewport,canvas.clientWidth,canvas.clientHeight)
+  },[entry])
+  const saveBeforeLeaving=()=>saveFrame(null,flow.getViewport())
+  const fitAll=useCallback(()=>void flow.fitView({padding:'42px'}),[flow])
+  useEffect(()=>{
+    const canvas=map.current
+    if(!canvas) return
+    let before={width:canvas.clientWidth,height:canvas.clientHeight}
+    const observer=new ResizeObserver(()=>{
+      const after={width:canvas.clientWidth,height:canvas.clientHeight}
+      if(before.width===after.width&&before.height===after.height)return
+      const previous=before
+      before=after
+      if(!flow.viewportInitialized || !previous.width || !previous.height || !after.width || !after.height)return
+      void flow.setViewport(recenter(flow.getViewport(),previous,after))
+    })
+    observer.observe(canvas)
+    return()=>observer.disconnect()
+  },[flow])
+  useEffect(()=>{if(browse) browseClose.current?.focus()},[browse])
   function closeBrowse(){setBrowse(false);browseButton.current?.focus()}
   useEffect(()=>{
     const escape=(e:KeyboardEvent)=>{
@@ -95,7 +143,7 @@ function Atlas({root, refreshing, refresh, refreshError}:{
     return()=>window.removeEventListener('keydown',escape)
   },[browse,focus])
   if(!module||!current)return <section className="atlas-wait"><h1>No modules available</h1><Link to="/roadmap">Open Roadmap</Link></section>
-  const section=current.data.section
+  const section=sections.get(current.id)!
   const topics=section.statistics.sessionTopics
   const sessions=ordered(module.children,'SESSION')
   const ink=accents[current.data.index%accents.length]
@@ -105,21 +153,21 @@ function Atlas({root, refreshing, refresh, refreshError}:{
     <div className="atlas-body">
       <section ref={map} className="atlas-map" aria-label="Skill atlas map">
       <div className="atlas-map-tools"><button ref={browseButton} onClick={()=>setBrowse(!browse)} aria-expanded={browse} aria-controls={browse?'atlas-browser':undefined}><List size={16}/> Browse</button><button onClick={()=>setFocus(!focus)} aria-pressed={focus}><Expand size={15}/>{focus?'Exit focus':'Focus map'}</button></div>
-      <div className="atlas-controls"><button aria-label="Zoom out" onClick={()=>void flow.zoomOut()}><Minus/></button><output>{Math.round(zoom*100)}%</output><button aria-label="Zoom in" onClick={()=>void flow.zoomIn()}><Plus/></button><button aria-label="Fit whole atlas" onClick={()=>void flow.fitView({padding:'42px'})}><Maximize/></button></div>
-      {browse&&<section className="atlas-browser" id="atlas-browser" aria-label="Browse curriculum"><header><strong>Browse curriculum</strong><button aria-label="Close browser" onClick={closeBrowse}><X size={16}/></button></header>{modules.map(m=><details key={m.id}><summary>{m.title}</summary>{[m,...ordered(m.children,'SESSION')].map(s=><button key={s.id} onClick={()=>{select(m.id,s.id,true);closeBrowse()}}>{s===m?'Inspect module':s.title}</button>)}</details>)}</section>}
-      <Selection.Provider value={{owner:module.id,selected:section.id,pick:select}}>
-        <ReactFlow {...graph} nodeTypes={nodeTypes} edgeTypes={edgeTypes} fitView fitViewOptions={{nodes:graph.nodes.filter(n=>id?n.data.owner===module.id:n.data.index<4),padding:'56px',maxZoom:1}} minZoom={.07} maxZoom={2.6}
+      <MapControls fit={fitAll}/>
+      {browse&&<section className="atlas-browser" id="atlas-browser" aria-label="Browse curriculum"><header><strong>Browse curriculum</strong><button ref={browseClose} aria-label="Close browser" onClick={closeBrowse}><X size={16}/></button></header>{modules.map(m=><details key={m.id}><summary>{m.title}</summary>{[m,...ordered(m.children,'SESSION')].map(s=><button key={s.id} onClick={()=>{select(m.id,s.id,true);closeBrowse()}}>{s===m?'Inspect '+m.title:s.title}</button>)}</details>)}</section>}
+      <Selection.Provider value={selection}>
+        <ReactFlow {...graph} nodeTypes={nodeTypes} edgeTypes={edgeTypes} fitView={!restored} fitViewOptions={entryOptions} onInit={init} onMoveEnd={saveFrame} minZoom={.07} maxZoom={2.6}
           nodesDraggable={false} nodesConnectable={false} elementsSelectable={false} nodesFocusable={false} edgesFocusable={false}
           zoomOnDoubleClick={false} zoomOnScroll={false}><Background gap={35} size={1} color="#56708e"/></ReactFlow>
       </Selection.Provider>
-      {focus&&<Link className="atlas-focus-link" to={'/roadmap/'+(current.data.hub?'modules/':'sessions/')+section.id}>{codeOf(section)} <ArrowUpRight size={15}/></Link>}
+      {focus&&<Link className="atlas-focus-link" onClick={saveBeforeLeaving} to={'/roadmap/'+(current.data.hub?'modules/':'sessions/')+section.id}>{codeOf(section)} <ArrowUpRight size={15}/></Link>}
       </section>
       <aside className="atlas-inspector" aria-label="Selection details"><p className="atlas-kicker"><Crosshair size={14}/> SELECTION</p><div className="atlas-seal"><Sigil index={current.data.index}/></div><p className="atlas-index">{codeOf(section)}</p><h2 aria-live="polite">{titleOf(section)}</h2><p className="atlas-state">{statusLabels[topics.state]} <b>{topics.percentage}%</b></p><div className="atlas-meter"><i style={{width:topics.percentage+'%'}}/></div><p className="atlas-caption">{topics.completed} of {topics.total} {current.data.hub?'session topics':'topics'} complete</p>
       {current.data.hub&&<p className="atlas-caption">Module requirements: {section.statistics.moduleRequirements.total ? `${section.statistics.moduleRequirements.completed} / ${section.statistics.moduleRequirements.total} complete` : 'None'}</p>}
-      <button className="atlas-locate" onClick={()=>fitCluster(module.id)}><Focus size={16}/> Zoom to cluster</button><Link className="atlas-open" to={'/roadmap/'+(current.data.hub?'modules/':'sessions/')+section.id}>Open {current.data.hub?'module':'session'} <ArrowUpRight size={16}/></Link>
+      <button className="atlas-locate" onClick={()=>fitCluster(module.id)}><Focus size={16}/> Zoom to cluster</button><Link className="atlas-open" onClick={saveBeforeLeaving} to={'/roadmap/'+(current.data.hub?'modules/':'sessions/')+section.id}>Open {current.data.hub?'module':'session'} <ArrowUpRight size={16}/></Link>
       <h3><GitBranch size={14}/> Sessions <span>{sessions.length}</span></h3><ul>{sessions.map(s=><li key={s.id}><button aria-pressed={s.id===section.id} onClick={()=>select(module.id,s.id)}>{s.statistics.sessionTopics.state==='COMPLETED'?<ShieldCheck size={15}/>:<ChevronRight size={15}/>}<span>{titleOf(s)}</span></button></li>)}</ul>
       </aside>
     </div>
-    <footer className="atlas-footer"><span><i/> Curriculum order</span><span><i/> Module branch</span><span><i/> Completed</span><button disabled={refreshing} onClick={refresh}>{refreshing?'Refreshing…':'Refresh progress'}</button></footer>
+    <footer className="atlas-footer"><span><i/> Curriculum order</span><span><i/> Module branch</span><span><i/> Completed</span><button aria-disabled={refreshing} onClick={()=>{if(!refreshing)refresh()}}>{refreshing?'Refreshing…':'Refresh progress'}</button></footer>
   </div>
 }

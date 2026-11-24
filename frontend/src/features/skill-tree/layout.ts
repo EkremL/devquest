@@ -1,12 +1,23 @@
 import type { Edge, Node, XYPosition } from '@xyflow/react'
-import type { Section } from '../../features/curriculum/api'
+import type { ProgressStatus, Section } from '../curriculum/api'
 
 export const accents = ['#69e6ce','#77baff','#af9ef6','#68d5ea','#c49afa','#73b5ff','#76ded0','#ae99ff','#61d1e9','#95a5f9','#a5e6cb']
 export const ordered = (sections: Section[], kind: string) => sections.filter(s => s.kind === kind).sort((a,b) => a.position-b.position)
-export const titleOf = (s: Section) => s.title.split(' — ').slice(1).join(' — ') || s.title
-export const codeOf = (s: Section) => s.title.split(' — ')[0]
-export type AtlasNode = Node<{section: Section; hub: boolean; index: number; owner: string; ordinal: number}, 'skill'>
+type Caption = {title: string}
+export const titleOf = (s: Caption) => s.title.split(' — ').slice(1).join(' — ') || s.title
+export const codeOf = (s: Caption) => s.title.split(' — ')[0]
+type MarkerData = {hub: boolean; index: number; owner: string; ordinal: number}
+export type AtlasNode = Node<MarkerData & {title: string; state: ProgressStatus}, 'skill'>
 export type Trail = Edge<{path: string; owner: string; color: string; completed: boolean; route: boolean}, 'trail'>
+type LayoutModule = { id: string; number: number; sessions: string[] }
+type LayoutTrail = Omit<Trail, 'data'> & {data: Omit<NonNullable<Trail['data']>, 'completed'>}
+
+export function layoutInput(modules: Section[]): LayoutModule[] {
+  return modules.map(module => {
+    const number = /^Module (\d+)$/i.exec(codeOf(module))
+    return {id:module.id, number:number ? Number(number[1]) : -1, sessions:ordered(module.children,'SESSION').map(s=>s.id)}
+  })
+}
 
 // Hand-placed waypoints give the course a readable route at atlas scale.
 // Each session arm is constructed below from the actual children, in source order.
@@ -16,16 +27,15 @@ const point = (c: XYPosition, degrees: number, r: number) => ({
   x:c.x+Math.cos(degrees*Math.PI/180)*r, y:c.y+Math.sin(degrees*Math.PI/180)*r,
 })
 
-export function makeAtlas(modules: Section[]) {
-  const nodes: AtlasNode[] = []
-  const edges: Trail[] = []
+export function makeGeometry(modules: LayoutModule[]) {
+  const nodes: Node<MarkerData, 'skill'>[] = []
+  const edges: LayoutTrail[] = []
   // Existing numbered modules keep their placement if their titles or source order change.
   // Unknown or duplicate numbers receive additional slots beyond the approved atlas.
   const slots = new Map<string, number>()
   const used = new Set<number>()
   for (const module of [...modules].sort((a,b)=>a.id.localeCompare(b.id))) {
-    const number = /^Module (\d+)$/i.exec(codeOf(module))
-    const slot = number ? Number(number[1]) : -1
+    const slot = module.number
     if(slot>=0 && slot<terrain.length && !used.has(slot)){
       used.add(slot)
       slots.set(module.id,slot)
@@ -39,21 +49,21 @@ export function makeAtlas(modules: Section[]) {
     ? {x:terrain[slot][0],y:terrain[slot][1]}
     : {x:2010+(slot-terrain.length)*440,y:210+((slot-terrain.length)%3)*105}
   const occupied = [...slots.values()].map(slot=>({point:position(slot),radius:54}))
-  function trail(source: string,target: string,path: string,index: number,owner: string,completed: boolean,route=false) {
+  function trail(source: string,target: string,path: string,index: number,owner: string,route=false) {
     edges.push({id:source+'-'+target,source,target,type:'trail',selectable:false,
-      data:{path,color:accents[index%accents.length],owner,completed,route}})
+      data:{path,color:accents[index%accents.length],owner,route}})
   }
   modules.forEach((module,sequence) => {
     const i=slots.get(module.id)!
     const center=position(i)
-    const data = {section:module,hub:true,index:i,owner:module.id,ordinal:0}
+    const data = {hub:true,index:i,owner:module.id,ordinal:0}
     nodes.push({id:module.id, type:'skill',origin:[0.5,0.5],position:center,width:76,height:76,data})
     if(sequence) {
       const previous=modules[sequence-1]
       const prev=position(slots.get(previous.id)!), dx=center.x-prev.x, dy=center.y-prev.y
-      trail(previous.id,module.id,`M ${prev.x} ${prev.y} C ${prev.x+dx*.53} ${prev.y+dy*.06}, ${center.x-dx*.47} ${center.y-dy*.1}, ${center.x} ${center.y}`,i,module.id,module.statistics.sessionTopics.state==='COMPLETED' && previous.statistics.sessionTopics.state==='COMPLETED',true)
+      trail(previous.id,module.id,`M ${prev.x} ${prev.y} C ${prev.x+dx*.53} ${prev.y+dy*.06}, ${center.x-dx*.47} ${center.y-dy*.1}, ${center.x} ${center.y}`,i,module.id,true)
     }
-    const sessions=ordered(module.children,'SESSION')
+    const sessions=module.sessions
     // Each arm has a shared trunk, then forks to at most three distinct terminals.
     const arms=Math.ceil(sessions.length/3)
     sessions.forEach((session,j)=>{
@@ -70,10 +80,24 @@ export function makeAtlas(modules: Section[]) {
       }
       occupied.push({point:tip,radius:19})
       const curve=point(joint,bearing+(leaf-1)*19,34+seed)
-      nodes.push({id:session.id,type:'skill',origin:[0.5,0.5],position:tip,width:30,height:30,
-        data:{...data,section:session,hub:false,ordinal:j}})
-      trail(module.id,session.id,`M ${center.x} ${center.y} Q ${(center.x+joint.x)/2+7} ${(center.y+joint.y)/2-8} ${joint.x} ${joint.y} Q ${curve.x} ${curve.y} ${tip.x} ${tip.y}`,i,module.id,session.statistics.sessionTopics.state==='COMPLETED')
+      nodes.push({id:session,type:'skill',origin:[0.5,0.5],position:tip,width:30,height:30,
+        data:{...data,hub:false,ordinal:j}})
+      trail(module.id,session,`M ${center.x} ${center.y} Q ${(center.x+joint.x)/2+7} ${(center.y+joint.y)/2-8} ${joint.x} ${joint.y} Q ${curve.x} ${curve.y} ${tip.x} ${tip.y}`,i,module.id)
     })
   })
+  return {nodes,edges}
+}
+
+export type Marker = [id: string, title: string, state: ProgressStatus]
+export function paintAtlas(geometry: ReturnType<typeof makeGeometry>, markers: Marker[]) {
+  const byId = new Map(markers.map(marker => [marker[0], marker]))
+  const completed = (id:string) => byId.get(id)?.[2]==='COMPLETED'
+  const nodes: AtlasNode[] = geometry.nodes.map(node => {
+    const [,title,state] = byId.get(node.id)!
+    return {...node,data:{...node.data,title,state}}
+  })
+  const edges: Trail[] = geometry.edges.map(edge=>({...edge,data:{
+    ...edge.data,completed:completed(edge.target)&&(!edge.data.route||completed(edge.source)),
+  }}))
   return {nodes,edges}
 }
