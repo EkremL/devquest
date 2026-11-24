@@ -11,6 +11,8 @@ import java.util.*;
 public class CurriculumController {
     private final CurriculumReader reader;
     private final ProgressService progress;
+    private final ActivityReader activity;
+    @GetMapping("/curriculum/activity") public List<ActivityEntry> recentActivity() { return activity.recent(); }
     @GetMapping("/curriculum") public Overview overview() { return reader.overview(); }
     @GetMapping("/curriculum/statistics") public Statistics statistics() { return reader.overview().getRoot().getStatistics(); }
     @GetMapping("/modules") public List<Section> modules() { return reader.sections("MODULE"); }

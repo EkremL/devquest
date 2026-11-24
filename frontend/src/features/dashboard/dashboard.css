@@ -1,0 +1,52 @@
+.learning-dashboard { padding-bottom: 36px; }
+.learning-dashboard .page-heading { align-items: center; gap: 18px; }
+.dashboard-refresh[aria-disabled="true"] { opacity: .75; }
+.dashboard-summary,.dashboard-panel,.dashboard-continue { border:1px solid var(--color-border); border-radius:var(--radius-hero); padding:20px; background:var(--color-surface); min-width:0; }
+.dashboard-summary { background:var(--gradient-card),var(--color-surface); }
+.dashboard-summary h2,.dashboard-panel h2 { display:flex; align-items:center; gap:9px; margin:0 0 14px; font-size:1.13rem; }
+.dashboard-summary svg,.dashboard-panel h2 svg { color:var(--color-aqua-teal); }
+.dashboard-tiles { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin:0; }
+.dashboard-tiles div { display:flex; flex-direction:column; gap:4px; padding:10px; border:1px solid var(--color-border); border-radius:8px; background:rgb(11 16 32 / 43%); }
+.dashboard-tiles dt,.dashboard-breakdown span { color:var(--color-muted); font-size:.79rem; }
+.dashboard-tiles dd { margin:0; color:var(--color-foreground); font-size:1.55rem; font-weight:700; font-variant-numeric:tabular-nums; }
+.dashboard-tiles div:nth-child(4) dd { color:var(--color-mint); }
+.dashboard-tiles div:nth-child(5) dd { color:#9dc2ff; }
+.dashboard-tiles div:nth-child(6) dd { color:var(--color-soft-purple); }
+.dashboard-breakdown { display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px; margin-top:14px; }
+.dashboard-breakdown > div { display:grid; gap:4px; padding:10px; border-top:1px solid var(--color-border); }
+.dashboard-breakdown strong { color:var(--color-foreground); font-size:1.1rem; }
+.dashboard-overall strong { color:var(--color-mint); }
+.dashboard-meter { border-radius:999px; height:5px; background:#263856; overflow:hidden; }
+.dashboard-meter > span { display:block; height:100%; background:var(--gradient-progress); }
+.dashboard-continue { margin-top:16px; display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:15px; background:var(--gradient-hero),var(--color-surface); }
+.continue-icon { width:49px; height:49px; display:grid; place-items:center; border:1px solid var(--color-border-strong); border-radius:13px; color:var(--color-aqua-teal); background:#12213a; }
+.dashboard-continue h2 { font-size:1.05rem; margin:0; }.dashboard-continue h3 { font-size:1.12rem; margin:3px 0; }
+.dashboard-continue p,.dashboard-section-heading p,.focus-remaining p,.focus-list p,.dashboard-empty p { color:var(--color-muted); margin:3px 0; font-size:.86rem; }
+.dashboard-continue .continue-reason { color:var(--color-mint); font-size:.79rem; }
+.dashboard-section { margin-top:24px; }
+.dashboard-section-heading { display:flex; justify-content:space-between; align-items:end; flex-wrap:wrap; gap:12px; margin-bottom:12px; }.dashboard-section-heading h2 { margin:0; }
+.dashboard-modules { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.dashboard-module { display:grid; grid-template-rows:auto 1fr auto auto; gap:8px; border:1px solid var(--color-border); border-radius:var(--radius-card); padding:13px; background:var(--gradient-card),var(--color-surface); color:var(--color-foreground); transition:border-color var(--duration-interaction); }
+.dashboard-module:hover { border-color:var(--color-aqua-teal); }.dashboard-module h3 { font-size:.94rem; margin:0; overflow-wrap:anywhere; }
+.dashboard-module-top,.dashboard-module-stats { display:flex; justify-content:space-between; gap:5px; align-items:center; color:var(--color-muted); font-size:.83rem; }
+.dashboard-module-top svg { color:var(--color-aqua-teal); }.dashboard-module-stats b { color:var(--color-foreground); }
+.dashboard-state { border:1px solid var(--color-border-strong); border-radius:999px; font-size:.73rem; padding:2px 7px; color:var(--color-muted); }
+.dashboard-state.state-COMPLETED { color:var(--color-mint); }.dashboard-state.state-IN_PROGRESS { color:#9dc2ff; }.dashboard-state.state-NEEDS_REVIEW { color:var(--color-soft-purple); }
+.dashboard-lower { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:20px; align-items:start; }
+.focus-remaining { padding:0 0 12px; border-bottom:1px solid var(--color-border); }.focus-remaining a,.focus-list p a { color:var(--color-aqua-teal); }
+.focus-list h3 { margin:12px 0 5px; font-size:.92rem; }.focus-list h3 span { color:var(--color-muted); padding-left:4px; }.focus-list ul,.activity-list { padding:0; list-style:none; margin:0; }
+.focus-list li a,.activity-entry { display:flex; align-items:center; gap:8px; padding:8px 0; min-height:44px; color:var(--color-foreground); }
+.focus-list li + li,.activity-list li + li { border-top:1px solid var(--color-border); }.focus-list li svg,.activity-empty svg { color:var(--color-aqua-teal); flex-shrink:0; }
+.focus-list li a > span { flex:1; min-width:0; }.focus-list li small,.activity-entry small,.activity-entry time { display:block; color:var(--color-muted); font-size:.77rem; }.focus-list li strong,.activity-entry strong { font-size:.87rem; overflow-wrap:anywhere; }
+.activity-entry { display:grid; gap:2px; }.activity-entry span { font-size:.82rem; color:var(--color-mint); }
+.dashboard-empty { padding:12px; background:#0e1729; border:1px dashed var(--color-border); border-radius:8px; }.dashboard-empty h3 { font-size:.96rem; margin:4px 0; }
+.learning-dashboard .connection-section { margin-top:26px; }.learning-dashboard a:focus-visible,.learning-dashboard button:focus-visible { outline:2px solid var(--color-focus); outline-offset:3px; }
+@media (max-width:1120px) { .dashboard-tiles { grid-template-columns:repeat(3,minmax(0,1fr)); } .dashboard-modules { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:620px) {
+  .learning-dashboard .page-heading { align-items:flex-start; flex-direction:column; }
+  .learning-dashboard :is(.primary-button,.secondary-button) { min-height:44px; }
+  .dashboard-summary,.dashboard-panel,.dashboard-continue { padding:13px; }
+  .dashboard-breakdown { grid-template-columns:1fr 1fr; gap:4px; }.dashboard-overall { grid-column:1/-1; }
+  .dashboard-continue { grid-template-columns:auto 1fr; gap:10px; }.dashboard-continue .primary-button { grid-column:1/-1; justify-self:start; }
+  .dashboard-modules,.dashboard-lower { grid-template-columns:1fr; }
+}

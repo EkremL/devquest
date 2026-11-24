@@ -26,7 +26,27 @@ class CurriculumIT {
     @Autowired CurriculumImporter importer;
     @Autowired CurriculumReader reader;
     @Autowired ProgressService progress;
+    @Autowired ActivityReader activity;
     @LocalServerPort int port;
+
+    @Test @Transactional void recentActivityReadsOnlyRecordedTransitionsAndCurrentLinks() {
+        var id = firstId();
+        var session = reader.sections("SESSION").stream()
+                .filter(s -> s.getItems().stream().anyMatch(item -> item.getId().equals(id))).findFirst().orElseThrow();
+        assertThat(activity.recent()).noneMatch(event -> event.getItemId().equals(id));
+        progress.update(id, new UpdateProgress(ProgressStatus.IN_PROGRESS, version(id)));
+        progress.update(id, new UpdateProgress(ProgressStatus.NEEDS_REVIEW, version(id)));
+        var afterWrites = eventCount(id);
+        var entries = activity.recent().stream().filter(event -> event.getItemId().equals(id)).toList();
+        assertThat(entries).hasSize(2);
+        assertThat(entries.getFirst().getFromStatus()).isEqualTo(ProgressStatus.IN_PROGRESS);
+        assertThat(entries.getFirst().getToStatus()).isEqualTo(ProgressStatus.NEEDS_REVIEW);
+        assertThat(entries.getFirst().getSectionId()).isEqualTo(session.getId());
+        assertThat(entries.getFirst().getModuleId()).isEqualTo(session.getParentId());
+        assertThat(entries.getFirst().getTopic()).isEqualTo("Configure PostgreSQL");
+        assertThat(entries.getFirst().getOccurredAt()).isNotNull();
+        assertThat(eventCount(id)).isEqualTo(afterWrites);
+    }
 
     @Test void importsExactHierarchyAndHistoricalCompletions() {
         var root = reader.overview().getRoot();

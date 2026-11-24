@@ -5,6 +5,11 @@ export interface Stats { total: number; completed: number; inProgress: number; n
 export interface Statistics { sessionTopics: Stats; moduleRequirements: Stats; finalCompetencies: Stats }
 export interface Section { id: string; parentId: string | null; kind: string; title: string; position: number; children: Section[]; items: Item[]; statistics: Statistics }
 export interface Curriculum { curriculumId: string; revisionId: string; sourceSha256: string; root: Section }
+export interface ActivityEntry {
+  id: string; itemId: string; topic: string; fromStatus: ProgressStatus; toStatus: ProgressStatus
+  occurredAt: string; sectionId: string; sectionTitle: string; sectionKind: string
+  moduleId: string | null; moduleTitle: string | null
+}
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message) }
 }
@@ -19,6 +24,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 export const getCurriculum = () => request<Curriculum>('/curriculum')
+export const getRecentActivity = () => request<ActivityEntry[]>('/curriculum/activity')
 export const updateProgress = (item: Item, status: ProgressStatus) => request<Progress>(`/items/${item.id}/progress`, {
   method: 'PATCH', headers: { 'Content-Type': 'application/json', 'X-DevQuest-Request': '1' },
   body: JSON.stringify({ status, version: item.progress.version }),
