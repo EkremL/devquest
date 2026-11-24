@@ -5,7 +5,7 @@ import { BookOpen, CodeXml, GitBranch, LayoutDashboard, Map, Network, ShieldChec
 import { Overview } from './Overview'
 import { RoadmapPage } from './features/curriculum/RoadmapPage'
 import { DataSafetyPage } from './features/data-safety/DataSafetyPage'
-const SkillTreePage = lazy(() => import('./features/skill-tree/SkillTreePage').then(module => ({ default: module.SkillTreePage })))
+const SkillTreePage = lazy(() => import('./features/skill-tree/SkillAtlas'))
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 15_000 } } })
 export function App() {
