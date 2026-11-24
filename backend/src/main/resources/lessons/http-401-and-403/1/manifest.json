@@ -1,0 +1,24 @@
+{
+  "key": "http-401-and-403",
+  "release": 1,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 2 — Spring Security Foundations",
+    "sessionTitle": "Session 2.6 — 401 and 403"
+  },
+  "objectives": {
+    "predict-status": "Predict when a protected endpoint returns 401, 403, or 200 under the stated policy.",
+    "explain-evidence": "Explain what a Basic challenge tells the client and why valid credentials alone may be insufficient."
+  },
+  "sections": [
+    {
+      "anchor": "predict-the-response",
+      "title": "Predict the response",
+      "objectives": [
+        "predict-status",
+        "explain-evidence"
+      ]
+    }
+  ]
+}

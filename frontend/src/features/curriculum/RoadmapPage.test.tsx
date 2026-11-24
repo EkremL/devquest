@@ -30,6 +30,92 @@ beforeEach(() => vi.stubGlobal('scrollTo', vi.fn()))
 afterEach(() => vi.unstubAllGlobals())
 
 describe('interactive roadmap', () => {
+  it('opens authored reading from a bookmarked checklist and returns without writes', async () => {
+    const fetch = vi.fn(async (path: string, _options?: RequestInit) => {
+      if (path === '/api/learning/catalog') return ok(['session-a'])
+      if (path.startsWith('/api/learning/sessions/')) return ok({
+        session: { id: 'session-a', title: 'Session 0.1 — Test session', moduleId: 'module-a', moduleTitle: 'Module 0 — Test foundations' },
+        key: 'test', release: 1,
+        sections: [{ anchor: 'predict-the-response', title: 'Predict the response', objectives: ['Predict the response status.'],
+          blocks: [{ kind: 'code', language: 'http', text: 'HTTP/1.1 401 Unauthorized', spans: [] }] }],
+      })
+      return ok(fixture())
+    })
+    vi.stubGlobal('fetch', fetch)
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={client}><MemoryRouter initialEntries={['/roadmap/sessions/session-a#topic-item-1']}><AppRoutes /><HistoryControls /></MemoryRouter></QueryClientProvider>)
+    fireEvent.click(await screen.findByRole('link', { name: 'Read lesson' }))
+    const heading = await screen.findByRole('heading', { name: 'Predict the response' })
+    fireEvent.click(screen.getByRole('link', { name: 'Predict the response' }))
+    await waitFor(() => expect(heading).toHaveFocus())
+    expect(screen.getByLabelText('Illustrative HTTP message')).toHaveTextContent('401 Unauthorized')
+    fireEvent.click(screen.getByRole('button', { name: 'Browser back' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Browser back' }))
+    const topic = (await screen.findByRole('link', { name: 'Second concept' })).closest('li')
+    await waitFor(() => expect(topic).toHaveFocus())
+    expect(fetch.mock.calls.every(([, options]) => !options?.method || options.method === 'GET')).toBe(true)
+  })
+
+  it('opens a mapped passage, keeps both chapters mounted and returns to the same item', async () => {
+    const fetch = vi.fn(async (path: string, _options?: RequestInit) => {
+      if (path.endsWith('/catalog')) return ok(['session-a'])
+      if (path.endsWith('/topics')) return ok({ 'item-1': 'study-second' })
+      if (path.endsWith('/lesson')) return ok({
+        session: { id: 'session-a', title: 'Test lesson', moduleId: 'module-a', moduleTitle: 'Test module' },
+        key: 'test', release: 4, sections: [
+          { anchor: 'first', title: 'First chapter', objectives: ['Compare'], blocks: [] },
+          { anchor: 'second', title: 'Second chapter', objectives: ['Explain'], blocks: [
+            { kind: 'passage', text: 'study-second', spans: [{ kind: 'text', text: 'Exact explanation' }] },
+          ] },
+        ],
+      })
+      return ok(fixture())
+    })
+    vi.stubGlobal('fetch', fetch)
+    mount('/roadmap/sessions/session-a')
+    const study = await screen.findByRole('link', { name: 'Study topic: Second concept' })
+    expect(study).toHaveAttribute('href', '/learn/session-a/read#study-second')
+    const card = within(study.closest('li')!)
+    expect(card.getByRole('link', { name: 'Second concept' })).toHaveAttribute('href', '/learn/session-a/read#study-second')
+    expect(card.getByText('Topic 02')).toBeVisible()
+    expect(card.getByText('Not started', { selector: '.progress-status' })).toBeVisible()
+    expect(card.getByText('Self-reported progress', { exact: false })).toBeVisible()
+    const select = card.getByRole('combobox', { name: /Status for Second concept/ })
+    expect(within(select).getAllByRole('option')).toHaveLength(4)
+    fireEvent.change(select, { target: { value: 'NEEDS_REVIEW' } })
+    expect(card.getByRole('status')).toHaveTextContent('Unsaved changes')
+    expect(card.getByText('Not started', { selector: '.progress-status' })).toBeVisible()
+    expect(study).toBeVisible()
+    fireEvent.change(select, { target: { value: 'NOT_STARTED' } })
+    expect(screen.getByRole('link', { name: 'First concept' })).toHaveAttribute('href', '#topic-item-0')
+    expect(screen.getByRole('button', { name: 'Save progress for Second concept' })).toBeDisabled()
+    fireEvent.click(study)
+    const passage = await screen.findByRole('heading', { name: 'Exact explanation' })
+    await waitFor(() => expect(passage).toHaveFocus())
+    expect(screen.getByRole('heading', { name: 'First chapter' })).toBeVisible()
+    fireEvent.click(screen.getByRole('link', { name: 'First chapter' }))
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'First chapter' })).toHaveFocus())
+    expect(passage).toBeVisible()
+    fireEvent.click(screen.getByRole('link', { name: 'Return to session checklist' }))
+    await waitFor(() => expect(document.getElementById('topic-item-1')).toHaveFocus())
+    expect(fetch.mock.calls.every(([, options]) => !options?.method || options.method === 'GET')).toBe(true)
+  })
+
+  it('keeps the checklist usable when reading is unavailable', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (path: string) => {
+      if (path === '/api/learning/catalog') return ok([])
+      if (path.startsWith('/api/learning/sessions/')) return { ...ok({}), ok: false, status: 404 }
+      return ok(fixture())
+    }))
+    mount('/learn/session-a/read#predict-the-response')
+    expect(await screen.findByRole('heading', { name: 'Lesson unavailable' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('link', { name: 'Back to checklist' }))
+    expect(await screen.findByRole('link', { name: 'Second concept' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Read lesson' })).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.getAllByText('Reading not yet available')).toHaveLength(2))
+    expect(screen.queryByRole('link', { name: /^Study topic:/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: /Status for Second concept/ })).toBeEnabled()
+  })
   it('renders backend module counts and navigates to session topics', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok(fixture())))
     mount()
@@ -40,8 +126,8 @@ describe('interactive roadmap', () => {
     expect(await screen.findByRole('heading', { name: 'Module 0 — Test foundations' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('link', { name: /Session 0.1 — Test session/ }))
     expect(await screen.findByRole('heading', { name: 'Session 0.1 — Test session' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Status for First concept')).toHaveValue('COMPLETED')
-    expect(screen.getByLabelText('Status for Second concept')).toHaveValue('NOT_STARTED')
+    expect(screen.getByLabelText(/Status for First concept/)).toHaveValue('COMPLETED')
+    expect(screen.getByLabelText(/Status for Second concept/)).toHaveValue('NOT_STARTED')
     expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toHaveTextContent('RoadmapModule 0Session 0.1')
   })
   it('supports direct session and final competency links', async () => {
@@ -113,7 +199,7 @@ describe('interactive roadmap', () => {
     const fetch = vi.fn((_path: string, options?: RequestInit) => options?.method === 'PATCH' ? new Promise(r => { resolve = r }) : Promise.resolve(ok(data)))
     vi.stubGlobal('fetch', fetch)
     mount('/roadmap/sessions/session-a')
-    const select = await screen.findByLabelText('Status for Second concept')
+    const select = await screen.findByLabelText(/Status for Second concept/)
     fireEvent.change(select, { target: { value: 'IN_PROGRESS' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save progress for Second concept' }))
     expect(screen.queryByText('Saved to PostgreSQL.')).not.toBeInTheDocument()
@@ -134,7 +220,7 @@ describe('interactive roadmap', () => {
     const data = fixture()
     vi.stubGlobal('fetch', vi.fn((_path: string, options?: RequestInit) => Promise.resolve(options?.method === 'PATCH' ? { ok: false, status, json: async () => ({ message: 'Update rejected.' }) } : ok(data))))
     mount('/roadmap/sessions/session-a')
-    fireEvent.change(await screen.findByLabelText('Status for Second concept'), { target: { value: 'COMPLETED' } })
+    fireEvent.change(await screen.findByLabelText(/Status for Second concept/), { target: { value: 'COMPLETED' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save progress for Second concept' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(status === 409 ? 'Conflict:' : 'Update rejected.')
     expect(screen.queryByText('Saved to PostgreSQL.')).not.toBeInTheDocument()

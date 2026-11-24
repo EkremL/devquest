@@ -1,0 +1,179 @@
+{
+  "key": "http-401-and-403",
+  "release": 3,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 2 — Spring Security Foundations",
+    "sessionTitle": "Session 2.6 — 401 and 403"
+  },
+  "objectives": {
+    "predict-status": "Predict when a protected endpoint returns 401, 403, or 200 under the stated policy.",
+    "explain-evidence": "Explain what a Basic challenge tells the client and why valid credentials alone may be insufficient.",
+    "interpret-challenge": "Use the status and challenge together to explain the client's next decision.",
+    "compare-exchanges": "Identify which change to a request explains a different outcome.",
+    "trace-handlers": "Trace three failure paths to their configured response handlers.",
+    "limit-disclosure": "Design a consistent response that preserves protocol evidence and limits disclosure.",
+    "diagnose-challenge": "Distinguish handler selection from response-writing faults and propose a discriminating check."
+  },
+  "sections": [
+    {
+      "anchor": "predict-the-response",
+      "title": "Predict the response",
+      "objectives": [
+        "predict-status",
+        "explain-evidence"
+      ],
+      "practice": {
+        "prompt": "A task creator sends valid Basic credentials but has only TASK_CREATE. What comes back?",
+        "choices": [
+          {
+            "label": "401 Unauthorized",
+            "reason": "A 401 would challenge the client for credentials. This client already supplied valid proof; the missing read authority leads to 403."
+          },
+          {
+            "label": "403 Forbidden",
+            "reason": "The identity is known. TASK_CREATE does not satisfy the read rule, so authorization refuses access before the controller."
+          },
+          {
+            "label": "200 OK",
+            "reason": "Valid credentials establish identity. Only an identity with TASK_READ can reach this controller. Here the result is 403."
+          }
+        ]
+      }
+    },
+    {
+      "anchor": "http-semantics",
+      "title": "Read the status and the challenge",
+      "objectives": [
+        "interpret-challenge"
+      ]
+    },
+    {
+      "anchor": "request-evidence",
+      "title": "Compare four exchanges",
+      "objectives": [
+        "compare-exchanges"
+      ]
+    },
+    {
+      "anchor": "spring-failure-flow",
+      "title": "Follow the Spring Security decision",
+      "objectives": [
+        "trace-handlers"
+      ],
+      "practice": {
+        "prompt": "A wrong password fails inside BasicAuthenticationFilter. Which component writes the challenge in this configuration?",
+        "choices": [
+          {
+            "label": "AuthenticationEntryPoint",
+            "reason": "The Basic filter invokes its configured entry point immediately. That entry point writes the 401 and the Basic challenge."
+          },
+          {
+            "label": "AccessDeniedHandler",
+            "reason": "This handler writes the refusal for an authenticated identity lacking authority. A wrong password fails earlier and invokes the Basic filter’s entry point."
+          },
+          {
+            "label": "MVC controller",
+            "reason": "The request stops in the filter chain. The Basic filter’s entry point writes the challenge before MVC runs."
+          }
+        ]
+      }
+    },
+    {
+      "anchor": "error-contract",
+      "title": "Design the public error contract",
+      "objectives": [
+        "limit-disclosure"
+      ],
+      "practice": {
+        "prompt": "Which response breaks the pilot contract? Inspect the status, headers and public body together.",
+        "choices": [
+          {
+            "label": "Missing credentials → 401, Basic challenge, authentication_required",
+            "reason": "These fields fit the contract. The client receives the scheme and the same public code used for invalid credentials."
+          },
+          {
+            "label": "Wrong password → 401, no challenge, account-exists detail",
+            "reason": "This is the defective response. Set the Basic challenge before serialization and use authentication_required. The public body should not confirm that the account exists."
+          },
+          {
+            "label": "Insufficient authority → 403, no challenge, access_denied",
+            "reason": "These fields fit an authenticated refusal in this pilot. Retrying the same credentials would leave the authority decision unchanged."
+          }
+        ]
+      }
+    },
+    {
+      "anchor": "debug-the-challenge",
+      "title": "Diagnose a missing challenge",
+      "observations": [
+        { "request": "No credentials", "status": "401", "challenge": null },
+        { "request": "Wrong password", "status": "401", "challenge": "Basic realm=\"Task API\"" }
+      ],
+      "objectives": [
+        "diagnose-challenge"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "label": "Missing credentials",
+      "authentication": "No Basic header",
+      "authorization": "Anonymous request denied",
+      "translation": "ExceptionTranslationFilter",
+      "destination": "AuthenticationEntryPoint",
+      "status": "401",
+      "explanation": "The Basic filter continues without credentials. The protected route denies anonymous access, so exception translation starts authentication."
+    },
+    {
+      "label": "Invalid credentials",
+      "authentication": "Basic verification fails",
+      "authorization": null,
+      "translation": null,
+      "destination": "AuthenticationEntryPoint",
+      "status": "401",
+      "explanation": "The Basic filter invokes its own entry point after authentication fails. This request stops before downstream authorization."
+    },
+    {
+      "label": "Insufficient authority",
+      "authentication": "Identity accepted",
+      "authorization": "TASK_READ absent",
+      "translation": "ExceptionTranslationFilter",
+      "destination": "AccessDeniedHandler",
+      "status": "403",
+      "explanation": "Authorization refuses the authenticated identity. Exception translation delegates the refusal to the access-denied handler."
+    },
+    {
+      "label": "Permitted reader",
+      "authentication": "Identity accepted",
+      "authorization": "TASK_READ granted",
+      "translation": null,
+      "destination": "MVC controller",
+      "status": "200",
+      "explanation": "Authentication and the authority check succeed. The controller can now read and return the summary."
+    }
+  ],
+  "request": "GET /api/tasks/summary",
+  "transport": "HTTP Basic over HTTPS",
+  "outcomes": [
+    {
+      "status": "401",
+      "title": "Challenge",
+      "detail": "No valid credentials for the resource.",
+      "action": "Send a Basic challenge"
+    },
+    {
+      "status": "403",
+      "title": "Refuse access",
+      "detail": "Known identity lacks read authority.",
+      "action": "Return a safe refusal"
+    },
+    {
+      "status": "200",
+      "title": "Serve the summary",
+      "detail": "Identity and read authority accepted.",
+      "action": "Continue to the controller"
+    }
+  ]
+}

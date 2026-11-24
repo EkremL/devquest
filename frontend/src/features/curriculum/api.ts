@@ -13,7 +13,7 @@ export interface ActivityEntry {
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message) }
 }
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
+export async function request<T>(path: string, options?: RequestInit): Promise<T> {
   let response: Response
   try { response = await fetch(`/api${path}`, { ...options, signal: AbortSignal.timeout(10_000) }) }
   catch { throw new ApiError(0, 'The backend could not be reached. Check the local services, then retry.') }

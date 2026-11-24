@@ -57,3 +57,80 @@
 .save-error { color: var(--color-warning); }
 @media (max-width: 1100px) { .roadmap-stats { gap: 10px; }.progress-summary { padding: 18px; }.module-card { padding: 20px; } }
 @media (max-width: 600px) { .module-grid, .roadmap-stats { grid-template-columns: minmax(0,1fr); }.roadmap-stats .progress-summary { padding: 20px; }.roadmap-section-heading { flex-wrap: wrap; }.topic-actions { width: 100%; }.topic-actions select { flex: 1; min-width: 0; }.topic-row { padding: 17px; }.session-card { padding: 18px; gap: 12px; }.module-card-top { flex-wrap: wrap; }.roadmap-page .section-heading p { max-width: none; } }
+.roadmap-reading-link {
+  min-height: 2.75rem;
+  margin-block: 0 1rem;
+}
+
+.learning-topic {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: .65rem;
+  padding: 1rem clamp(1rem, 2.2vw, 1.5rem);
+}
+.learning-topic.has-passage { background: var(--gradient-card), var(--color-surface); }
+.learning-topic:focus-within { border-color: var(--color-border-strong); }
+.learning-topic:target { border-color: var(--color-aqua-teal); }
+.topic-meta, .topic-learning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .5rem 1.25rem;
+}
+.topic-meta > span:first-child {
+  color: var(--color-muted);
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .045em;
+}
+.topic-meta .progress-status {
+  padding: .22rem .65rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-surface);
+}
+.topic-learning h2 {
+  flex: 1 1 16rem;
+  min-width: 0;
+  font-weight: 650;
+  font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+}
+.topic-learning .topic-title {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 44px;
+  margin: 0;
+  line-height: 1.35;
+}
+.has-passage .topic-title { text-decoration: underline; text-decoration-color: var(--color-border-strong); text-underline-offset: .22em; }
+.has-passage .topic-title:hover { text-decoration-color: currentColor; }
+.topic-study {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  min-height: 44px;
+  padding: .45rem .85rem;
+  border: 1px solid color-mix(in srgb, var(--color-aqua-teal) 45%, var(--color-border));
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--color-aqua-teal) 10%, var(--color-surface));
+  color: var(--color-mint);
+  font-size: .875rem;
+  font-weight: 600;
+}
+.topic-study:hover { border-color: var(--color-aqua-teal); background: color-mix(in srgb, var(--color-aqua-teal) 18%, var(--color-surface)); }
+.topic-study svg { flex: none; }
+.topic-availability, .topic-progress-label { color: var(--color-muted); font-size: .8125rem; }
+.learning-topic .topic-actions {
+  align-items: center;
+  flex-wrap: wrap;
+  padding-top: .75rem;
+  border-top: 1px solid var(--color-border);
+}
+.topic-progress-label { margin-inline-end: .35rem; }
+.save-draft { color: var(--color-muted); }
+.learning-topic :is(a, select, button):focus { scroll-margin-block: 1rem; }
+@media (max-width: 600px) {
+  .topic-learning h2, .topic-progress-label { flex-basis: 100%; }
+}

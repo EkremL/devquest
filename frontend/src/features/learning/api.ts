@@ -1,0 +1,35 @@
+import { request } from '../curriculum/api'
+
+export interface Span { kind: 'text' | 'code' | 'link'; text: string; href: string | null }
+export type Language = 'http' | 'text' | 'java' | 'json'
+interface Block { kind: 'paragraph' | 'passage' | 'heading' | 'code' | 'note' | 'outcomes' | 'request-flow' | 'practice' | 'evidence'; spans: Span[]; language: Language | null; text: string | null }
+export interface Practice { prompt: string; choices: { label: string; reason: string }[] }
+export interface Outcome { status: '401' | '403' | '200'; title: string; detail: string; action: string }
+export interface FlowCase {
+  label: string; authentication: string; authorization: string | null; translation: string | null
+  destination: string; status: string; explanation: string
+}
+export interface ReadingSection {
+  anchor: string
+  title: string
+  objectives: string[]
+  practice?: Practice
+  observations?: { request: string; status: string; challenge: string | null }[]
+  blocks: Block[]
+}
+interface Lesson {
+  session: { id: string; title: string; moduleId: string; moduleTitle: string }
+  key: string
+  release: number
+  cases: FlowCase[]
+  outcomes: Outcome[]
+  request: string
+  transport: string
+  sections: ReadingSection[]
+}
+
+export const getLessonCatalog = () => request<string[]>('/learning/catalog')
+export const getLesson = (sessionId: string) => request<Lesson>(`/learning/sessions/${encodeURIComponent(sessionId)}/lesson`)
+
+export const getTopicLinks = (sessionId: string) =>
+  request<Record<string, string>>(`/learning/sessions/${encodeURIComponent(sessionId)}/topics`)

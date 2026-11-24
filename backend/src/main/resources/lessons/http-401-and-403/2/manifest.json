@@ -1,0 +1,64 @@
+{
+  "key": "http-401-and-403",
+  "release": 2,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 2 — Spring Security Foundations",
+    "sessionTitle": "Session 2.6 — 401 and 403"
+  },
+  "objectives": {
+    "predict-status": "Predict when a protected endpoint returns 401, 403, or 200 under the stated policy.",
+    "explain-evidence": "Explain what a Basic challenge tells the client and why valid credentials alone may be insufficient.",
+    "interpret-challenge": "Use the status and challenge together to explain the client's next decision.",
+    "compare-exchanges": "Identify which change to a request explains a different outcome.",
+    "trace-handlers": "Trace three failure paths to their configured response handlers.",
+    "limit-disclosure": "Design a consistent response that preserves protocol evidence and limits disclosure.",
+    "diagnose-challenge": "Distinguish handler selection from response-writing faults and propose a discriminating check."
+  },
+  "sections": [
+    {
+      "anchor": "predict-the-response",
+      "title": "Predict the response",
+      "objectives": [
+        "predict-status",
+        "explain-evidence"
+      ]
+    },
+    {
+      "anchor": "http-semantics",
+      "title": "Read the status and the challenge",
+      "objectives": [
+        "interpret-challenge"
+      ]
+    },
+    {
+      "anchor": "request-evidence",
+      "title": "Compare four exchanges",
+      "objectives": [
+        "compare-exchanges"
+      ]
+    },
+    {
+      "anchor": "spring-failure-flow",
+      "title": "Follow the Spring Security decision",
+      "objectives": [
+        "trace-handlers"
+      ]
+    },
+    {
+      "anchor": "error-contract",
+      "title": "Design the public error contract",
+      "objectives": [
+        "limit-disclosure"
+      ]
+    },
+    {
+      "anchor": "debug-the-challenge",
+      "title": "Diagnose a missing challenge",
+      "objectives": [
+        "diagnose-challenge"
+      ]
+    }
+  ]
+}
