@@ -141,7 +141,7 @@ The connection button performs a real health request. Missing dependencies produ
 
 With both servers running, open `http://127.0.0.1:5173/data-safety` or select **Data safety** in the navigation. Select **Export Roadmap as Markdown** and check your browser's downloads for `ROADMAP.md`. The browser may append a number when that filename already exists. DevQuest does not select the source directory or overwrite the original curriculum.
 
-Only saved COMPLETED items are checked. The other three states are unchecked; full statuses, timestamps, and activity history remain in PostgreSQL. This file is not a database backup. It uses the accepted source revision stored in PostgreSQL, preserving UTF-8 and line endings, and does not read or write the working-tree file during export. Integrity failures stop the download with an error. See `M2_1_VERIFICATION.md` for details. Import preview and recovery tooling remain deferred.
+Only saved COMPLETED items are checked. The other three states are unchecked; full statuses, timestamps, and activity history remain in PostgreSQL. This file is not a database backup. It uses the accepted source revision stored in PostgreSQL, preserving UTF-8 and line endings, and does not read or write the working-tree file during export. Integrity failures stop the download with an error. See `M2_1_VERIFICATION.md` for details. See the Data safety page for import preview and the [Windows recovery guide](WINDOWS_RECOVERY.md) for full database backups.
 
 ## IntelliJ IDEA
 
@@ -174,6 +174,6 @@ The integration profile runs `FoundationIT` and `CurriculumIT` against `devquest
 
 ## Backups and shutdown
 
-Stop backend and frontend with Ctrl+C before stopping PostgreSQL. Keep data files out of file-sync tools. Use PostgreSQL `pg_dump` for future application backups rather than copying a running data directory. Store backups outside this repository; do not assume encrypted credential files can be restored on another machine.
+Stop backend and frontend with Ctrl+C before stopping PostgreSQL. Keep data files out of file-sync tools. Use the [backup and restore verification commands](WINDOWS_RECOVERY.md) for application backups. Store backups outside this repository; do not assume encrypted credential files can be restored on another machine.
 
 No authentication exists in M1. Keep the application local; network hosting requires a separate security design. Mutation requests require JSON, the `X-DevQuest-Request: 1` header, a loopback Host, and an allowed local Origin when present. No CORS grants are enabled. This is browser cross-origin protection, not protection against other local programs. No commits or pushes are performed by setup scripts.

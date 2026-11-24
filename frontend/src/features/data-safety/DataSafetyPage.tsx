@@ -31,5 +31,10 @@ export function DataSafetyPage() {
       <ul><li>Completed items become <code>[x]</code>. Not started, In progress, and Needs review become <code>[ ]</code>.</li><li>Your four-state progress, timestamps, and activity history remain in PostgreSQL. Markdown is not a full database backup.</li><li>Each download reads freshly saved progress. Unsaved selections are not included.</li><li>DevQuest does not overwrite the original curriculum file, change progress, or commit or push the download.</li></ul>
       <Link className="secondary-button" to="/roadmap">Return to roadmap</Link>
     </section>
+    <section className="export-notes" aria-labelledby="backup-heading">
+      <h2 id="backup-heading">Backup &amp; recovery</h2>
+      <p>Markdown records completed checkboxes. A full PostgreSQL backup also preserves revisions, item identities, all four progress states, and activity history.</p>
+      <p>Keep an encrypted copy on a separate drive. Follow <code>docs/WINDOWS_RECOVERY.md</code> in your DevQuest repository to create a backup and test it in a new database.</p>
+    </section>
   </div>
 }
