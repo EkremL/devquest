@@ -1,10 +1,11 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, NavLink, Route, Routes, Link, useLocation } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BookOpen, CodeXml, GitBranch, LayoutDashboard, Map, ShieldCheck, Waypoints } from 'lucide-react'
+import { BookOpen, CodeXml, GitBranch, LayoutDashboard, Map, Network, ShieldCheck, Waypoints } from 'lucide-react'
 import { Overview } from './Overview'
 import { RoadmapPage } from './features/curriculum/RoadmapPage'
 import { DataSafetyPage } from './features/data-safety/DataSafetyPage'
+const SkillTreePage = lazy(() => import('./features/skill-tree/SkillTreePage').then(module => ({ default: module.SkillTreePage })))
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 15_000 } } })
 export function App() {
@@ -24,6 +25,7 @@ export function AppRoutes() {
       <nav aria-label="Main navigation">
         <NavLink className={({ isActive }) => `nav-item ${isActive ? 'selected' : ''}`} to="/" end><LayoutDashboard size={18} />Overview</NavLink>
         <NavLink className={({ isActive }) => `nav-item ${isActive ? 'selected' : ''}`} to="/roadmap"><Map size={18} />Roadmap</NavLink>
+        <NavLink className={({ isActive }) => `nav-item ${isActive ? 'selected' : ''}`} to="/skill-tree"><Network size={18} />Skill tree</NavLink>
         <NavLink className={({ isActive }) => `nav-item ${isActive ? 'selected' : ''}`} to="/data-safety"><ShieldCheck size={18} />Data safety</NavLink>
         <div className="nav-item upcoming"><BookOpen size={18} />Lesson workspace</div>
         <div className="nav-item upcoming"><Waypoints size={18} />Security lab</div>
@@ -32,11 +34,12 @@ export function AppRoutes() {
       <div className="profile"><div className="avatar">E</div><div><strong>Ekrem’s workspace</strong><span>Local · Single user</span></div><ShieldCheck size={17} /></div>
     </aside>
     <div className="main-area">
-      <header className="topbar"><span className="breadcrumb">Workspace / {location.pathname.startsWith('/roadmap') ? 'Learning roadmap' : location.pathname === '/data-safety' ? 'Data safety' : 'Overview'}</span><span className="local-badge"><ShieldCheck size={14} />Local environment</span></header>
+      <header className="topbar"><span className="breadcrumb">Workspace / {location.pathname.startsWith('/roadmap') ? 'Learning roadmap' : location.pathname === '/skill-tree' ? 'Skill tree' : location.pathname === '/data-safety' ? 'Data safety' : 'Overview'}</span><span className="local-badge"><ShieldCheck size={14} />Local environment</span></header>
       <main id="main" tabIndex={-1}>
         <Routes>
           <Route path="/" element={<Overview />} />
           <Route path="/data-safety" element={<DataSafetyPage />} />
+          <Route path="/skill-tree" element={<Suspense fallback={<p className="empty-state" role="status">Loading skill tree…</p>}><SkillTreePage /></Suspense>} />
           <Route path="/roadmap" element={<RoadmapPage />} />
           <Route path="/roadmap/modules/:moduleId" element={<RoadmapPage />} />
           <Route path="/roadmap/sessions/:sessionId" element={<RoadmapPage />} />
