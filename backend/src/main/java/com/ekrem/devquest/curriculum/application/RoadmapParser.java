@@ -93,6 +93,20 @@ public class RoadmapParser {
                 || parsed.items.stream().filter(i -> kinds.get(i.nodeId).equals("FINAL_COMPETENCIES")).count() != 17)
             throw new IllegalArgumentException("Roadmap counts differ from the approved baseline; no import performed");
     }
+    public void validateUpdate(Parsed parsed) {
+        if (countSections(parsed,"ROOT") != 1 || countSections(parsed,"MODULE") == 0 || countSections(parsed,"SESSION") == 0
+                || parsed.getItems().isEmpty() || parsed.getItems().size()>5000 || parsed.getSections().size()>500)
+            throw new IllegalArgumentException("Provide a complete roadmap with modules, sessions, and 1–5000 checklist items (at most 500 headings).");
+        Map<UUID,Section> sections=new HashMap<>();
+        parsed.getSections().forEach(s->sections.put(s.getId(),s));
+        for(var section:parsed.getSections()) {
+            if(Set.of("SESSION","MODULE_COMPLETION").contains(section.getKind())) {
+                String moduleNumber=sections.get(section.getParentId()).getTitle().split(" ")[1];
+                String number=section.getTitle().split(" ")[1].split("\\.")[0];
+                if(!number.equals(moduleNumber)) throw new IllegalArgumentException("Session/completion numbering must match its parent module: "+section.getTitle());
+            }
+        }
+    }
     private long countSections(Parsed parsed, String kind) {
         return parsed.sections.stream().filter(s -> s.kind.equals(kind)).count();
     }

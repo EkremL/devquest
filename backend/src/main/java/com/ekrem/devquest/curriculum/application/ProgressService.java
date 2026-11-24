@@ -16,6 +16,8 @@ public class ProgressService {
 
     @Transactional
     public Progress update(UUID id, UpdateProgress request) {
+        var active = jdbc.queryForList("SELECT c.id FROM devquest.curriculum c JOIN devquest.source_item_mapping m ON m.revision_id=c.current_revision_id WHERE m.item_id=? FOR UPDATE OF c", UUID.class, id);
+        if (active.isEmpty()) throw new CurriculumReader.MissingItemException();
         var progress = repository.findById(id).orElseThrow(CurriculumReader.MissingItemException::new);
         if (request.getVersion() != progress.getVersion()) throw new StaleProgressException();
         if (request.getStatus() != progress.getStatus()) {

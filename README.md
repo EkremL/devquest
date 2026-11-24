@@ -2,7 +2,7 @@
 
 A local, single-user software engineering learning workspace. Built with Spring Boot, React, TypeScript, and PostgreSQL.
 
-**Current scope: M2.1 — Safe Markdown export.** Browse the imported roadmap, save four-state progress in PostgreSQL, and download a faithful Markdown copy from Data safety. The M0 health view and M1 roadmap remain available. Changed-source reconciliation and backup/recovery work await separate review.
+**Current scope: M2.2 — Safe curriculum re-import.** Browse the roadmap, save progress in PostgreSQL, and export or preview an updated Markdown roadmap from Data safety. Supported changes require explicit confirmation. See [M2.2 verification](docs/M2_2_VERIFICATION.md) for matching rules and test results.
 
 ## Stack
 
@@ -68,6 +68,6 @@ npm.cmd run build
 
 Integration tests use `devquest_test_db` and its own non-superuser role. They never use `devquest_db` or the separate educational project's database.
 
-On first backend startup, Flyway applies V2 and imports `curriculum/ROADMAP.md` in one transaction. Subsequent starts with the identical source preserve all IDs and progress. Changed source bytes are rejected until a reconciliation workflow is implemented; restore the accepted file rather than deleting the database. Run the backend from `backend/` so the default source path resolves correctly.
+On startup, Flyway applies pending migrations. An empty curriculum database is seeded from `curriculum/ROADMAP.md` in one transaction. After seeding, PostgreSQL supplies the current revision on startup. Use Data safety to preview and confirm source changes. Run the backend from `backend/` so the default seed path resolves correctly.
 
-Do not commit local credentials, build artifacts, database files, or `.local/`. The curriculum files remain unchanged. DevQuest does not access or modify `secure-task-api`. Authentication, gamification, changed-source reconciliation, and synchronization are not implemented.
+Do not commit local credentials, build artifacts, database files, or `.local/`. The curriculum files remain unchanged. DevQuest does not access or modify `secure-task-api`. Authentication, gamification, and synchronization are outside this scope.

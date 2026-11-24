@@ -4,6 +4,7 @@ import { Download, FileText, ShieldCheck } from 'lucide-react'
 import { getCurriculum } from '../curriculum/api'
 import { downloadRoadmap } from './export'
 import './data-safety.css'
+import { ImportRoadmap } from './ImportRoadmap'
 
 export function DataSafetyPage() {
   const curriculum = useQuery({ queryKey: ['curriculum'], queryFn: getCurriculum })
@@ -12,7 +13,7 @@ export function DataSafetyPage() {
   const total = stats ? stats.sessionTopics.total + stats.moduleRequirements.total + stats.finalCompetencies.total : 0
   const completed = stats ? stats.sessionTopics.completed + stats.moduleRequirements.completed + stats.finalCompetencies.completed : 0
   return <div className="data-safety-page">
-    <div className="page-heading"><div><p className="eyebrow">YOUR LEARNING, PRESERVED</p><h1>Data safety.</h1><p className="subtitle">Take a readable copy of your progress with you.</p></div><span className="milestone-badge">M2.1 <span>Markdown export</span></span></div>
+    <div className="page-heading"><div><p className="eyebrow">YOUR LEARNING, PRESERVED</p><h1>Data safety.</h1><p className="subtitle">Export your progress. Review curriculum changes with confidence.</p></div><span className="milestone-badge">M2.2 <span>Safe re-import</span></span></div>
     <section className="export-card" aria-labelledby="export-heading">
       <div className="export-icon"><FileText size={26} /></div>
       <h2 id="export-heading">Your roadmap, ready for Markdown.</h2>
@@ -25,6 +26,7 @@ export function DataSafetyPage() {
       {download.isSuccess && <p className="export-feedback" role="status">Download requested. Check your browser’s downloads for ROADMAP.md.</p>}
       {download.isError && <p className="error-message" role="alert">{download.error instanceof TypeError || download.error.name === 'TimeoutError' ? 'The backend could not be reached or the download timed out. Check the local services and retry.' : download.error.message}</p>}
     </section>
+    {curriculum.data && !curriculum.isError && <ImportRoadmap curriculumId={curriculum.data.curriculumId} />}
     <section className="export-notes" aria-labelledby="export-notes-heading"><h2 id="export-notes-heading"><ShieldCheck size={19} />What this copy preserves</h2>
       <ul><li>Completed items become <code>[x]</code>. Not started, In progress, and Needs review become <code>[ ]</code>.</li><li>Your four-state progress, timestamps, and activity history remain in PostgreSQL. Markdown is not a full database backup.</li><li>Each download reads freshly saved progress. Unsaved selections are not included.</li><li>DevQuest does not overwrite the original curriculum file, change progress, or commit or push the download.</li></ul>
       <Link className="secondary-button" to="/roadmap">Return to roadmap</Link>

@@ -11,6 +11,8 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 @RestControllerAdvice
 public class CurriculumErrors {
+    @ExceptionHandler(ImportProblem.class)
+    ResponseEntity<ApiError> importProblem(ImportProblem problem) { return ResponseEntity.status(problem.getStatus()).body(new ApiError(problem.getCode(),problem.getMessage())); }
     @ExceptionHandler(MarkdownExportRenderer.ExportIntegrityException.class)
     ResponseEntity<ApiError> exportIntegrity() {
         return ResponseEntity.status(409).body(new ApiError("EXPORT_INTEGRITY_ERROR", "Export stopped because the stored source and identity mappings could not be verified. No progress was changed."));

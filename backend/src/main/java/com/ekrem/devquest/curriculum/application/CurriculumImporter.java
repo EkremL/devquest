@@ -32,18 +32,19 @@ public class CurriculumImporter {
         jdbc.update("INSERT INTO devquest.curriculum(id,source_key,title) VALUES (?,?,?)", curriculum, "spring-security-roadmap", parsed.getSections().getFirst().getTitle());
         jdbc.update("INSERT INTO devquest.curriculum_revision(id,curriculum_id,sha256,source_markdown) VALUES (?,?,?,?)", revision, curriculum, hash, markdown);
         for (var node : parsed.getSections()) {
-            jdbc.update("INSERT INTO devquest.curriculum_node(id,revision_id,parent_id,kind,title,position,source_line) VALUES (?,?,?,?,?,?,?)",
-                    node.getId(), revision, node.getParentId(), node.getKind(), node.getTitle(), node.getPosition(), node.getSourceLine());
+            jdbc.update("INSERT INTO devquest.curriculum_node(id,revision_id,parent_id,kind,title,position,source_line,stable_id) VALUES (?,?,?,?,?,?,?,?)",
+                    node.getId(), revision, node.getParentId(), node.getKind(), node.getTitle(), node.getPosition(), node.getSourceLine(), node.getId());
         }
         List<Object[]> items = new ArrayList<>(), mappings = new ArrayList<>(), progress = new ArrayList<>();
         for (var item : parsed.getItems()) {
             items.add(new Object[]{item.getId(), item.getNodeId(), item.getLabel(), item.getPosition(), item.isCompleted()});
-            mappings.add(new Object[]{item.getId(), revision, mappings.size(), item.getSourceLine()});
+            mappings.add(new Object[]{item.getId(), revision, mappings.size(), item.getSourceLine(), item.getNodeId(), item.getLabel(), item.getPosition(), item.isCompleted()});
             progress.add(new Object[]{item.getId(), item.isCompleted() ? "COMPLETED" : "NOT_STARTED"});
         }
         jdbc.batchUpdate("INSERT INTO devquest.checklist_item(id,node_id,label,position,initially_completed) VALUES (?,?,?,?,?)", items);
-        jdbc.batchUpdate("INSERT INTO devquest.source_item_mapping(item_id,revision_id,occurrence,source_line) VALUES (?,?,?,?)", mappings);
+        jdbc.batchUpdate("INSERT INTO devquest.source_item_mapping(item_id,revision_id,occurrence,source_line,node_id,label,position,initially_completed) VALUES (?,?,?,?,?,?,?,?)", mappings);
         jdbc.batchUpdate("INSERT INTO devquest.item_progress(item_id,status) VALUES (?,?)", progress);
+        jdbc.update("UPDATE devquest.curriculum SET current_revision_id=? WHERE id=?", revision, curriculum);
         return true;
     }
 }

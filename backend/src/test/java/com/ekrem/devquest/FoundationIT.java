@@ -27,7 +27,7 @@ class FoundationIT {
     @Test
     void connectsToDedicatedTestDatabaseAndValidatesMigrations() {
         assertThat(jdbc.queryForObject("SELECT current_database()", String.class)).isEqualTo("devquest_test_db");
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("2");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("3");
         assertThat(flyway.validateWithResult().validationSuccessful).isTrue();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         assertThat(jdbc.queryForList("SELECT tablename FROM pg_tables WHERE schemaname = 'devquest'", String.class))
