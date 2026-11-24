@@ -45,6 +45,8 @@
 @media (max-width:620px) {
   .learning-dashboard .page-heading { align-items:flex-start; flex-direction:column; }
   .learning-dashboard :is(.primary-button,.secondary-button) { min-height:44px; }
+  .dashboard-tiles { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .dashboard-tiles dt { overflow-wrap:normal; text-wrap:pretty; }
   .dashboard-summary,.dashboard-panel,.dashboard-continue { padding:13px; }
   .dashboard-breakdown { grid-template-columns:1fr 1fr; gap:4px; }.dashboard-overall { grid-column:1/-1; }
   .dashboard-continue { grid-template-columns:auto 1fr; gap:10px; }.dashboard-continue .primary-button { grid-column:1/-1; justify-self:start; }

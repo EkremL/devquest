@@ -55,8 +55,5 @@
 .topic-actions button:disabled { cursor: default; }
 .save-feedback { flex-basis: 100%; margin: 0; font-size: .875rem; line-height: 1.6; color: var(--color-mint); }
 .save-error { color: var(--color-warning); }
-.empty-state { padding: 44px 0; color: var(--color-muted); line-height: 1.8; }
-.empty-state a { color: var(--color-aqua-teal); }
 @media (max-width: 1100px) { .roadmap-stats { gap: 10px; }.progress-summary { padding: 18px; }.module-card { padding: 20px; } }
-@media (max-width: 800px) { .app-shell .sidebar nav { display: flex; margin-top: 15px; gap: 8px; }.sidebar nav .upcoming { display: none; }.sidebar .nav-item { margin: 0; }.app-shell .sidebar { padding-bottom: 12px; } }
 @media (max-width: 600px) { .module-grid, .roadmap-stats { grid-template-columns: minmax(0,1fr); }.roadmap-stats .progress-summary { padding: 20px; }.roadmap-section-heading { flex-wrap: wrap; }.topic-actions { width: 100%; }.topic-actions select { flex: 1; min-width: 0; }.topic-row { padding: 17px; }.session-card { padding: 18px; gap: 12px; }.module-card-top { flex-wrap: wrap; }.roadmap-page .section-heading p { max-width: none; } }

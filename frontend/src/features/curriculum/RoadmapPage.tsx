@@ -9,6 +9,15 @@ export function RoadmapPage() {
   const { moduleId, sessionId } = useParams()
   const location = useLocation()
   const query = useQuery({ queryKey: ['curriculum'], queryFn: getCurriculum })
+  useEffect(() => {
+    if (!query.isSuccess || !location.hash.startsWith('#topic-')) return
+    const frame = requestAnimationFrame(() => {
+      const topic = document.getElementById(location.hash.slice(1))
+      topic?.focus({ preventScroll: true })
+      topic?.scrollIntoView?.({ block: 'start', behavior: 'instant' })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [query.isSuccess, location.key, location.hash])
   if (query.isPending) return <div className="empty-state" role="status"><RefreshCw className="refreshing" /> Loading your learning roadmap…</div>
   if (query.isError) return <div className="empty-state"><h1>Roadmap unavailable</h1><p role="alert">{query.error.message}</p><button className="secondary-button" onClick={() => void query.refetch()}>Retry loading roadmap</button></div>
   const root = query.data.root
@@ -76,7 +85,7 @@ function TopicRow({ item }: { item: Item }) {
       setFeedback(error instanceof ApiError && error.status === 409 ? 'Conflict: latest progress loaded. Review the status and choose again.' : `${error.message} Reload the latest status before retrying if needed.`)
     },
   })
-  return <li className={`topic-row status-${item.progress.status.toLowerCase()}`} id={`topic-${item.id}`}>
+  return <li className={`topic-row status-${item.progress.status.toLowerCase()}`} id={`topic-${item.id}`} tabIndex={-1}>
     <div className="topic-content"><span className="topic-order">{item.position + 1}</span><div><a className="topic-title" href={`#topic-${item.id}`}>{item.label}</a><span className="progress-status">{item.progress.status === 'COMPLETED' && <Check size={13} />}{statusLabels[item.progress.status]}</span></div></div>
     <div className="topic-actions"><label className="sr-only" htmlFor={`status-${item.id}`}>Status for {item.label}</label><select id={`status-${item.id}`} value={selected} disabled={mutation.isPending} onChange={e => { setSelected(e.target.value as ProgressStatus); setFeedback(''); mutation.reset() }}>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><button className="secondary-button" disabled={mutation.isPending || selected === item.progress.status} onClick={() => { setFeedback(''); mutation.mutate() }} aria-label={`Save progress for ${item.label}`}>{mutation.isPending ? 'Saving…' : 'Save'}</button></div>
     {(feedback || mutation.isPending) && <p className={`save-feedback ${mutation.isError ? 'save-error' : ''}`} role={mutation.isError ? 'alert' : 'status'}>{mutation.isPending ? 'Saving progress…' : feedback}</p>}

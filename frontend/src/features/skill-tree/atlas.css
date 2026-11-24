@@ -29,11 +29,6 @@
   .atlas-footer { flex-direction:row; flex-wrap:wrap; padding-block:7px; }
   .atlas-map-tools button,.atlas-controls button { min-height:44px; min-width:44px; }
 }
-@media(max-width:800px) {
-  .app-shell:has(.atlas) .sidebar nav { display:flex; overflow:auto; max-width:100%; gap:4px; margin-top:10px; }
-  .app-shell:has(.atlas) .sidebar nav .nav-item { flex-shrink:0; min-height:40px; }
-  .app-shell:has(.atlas) .sidebar nav .upcoming { display:none; }
-}
 
 /* Keep map gestures on the canvas and the surrounding page scrollable. */
 .atlas-map .react-flow__pane { touch-action:none; }
