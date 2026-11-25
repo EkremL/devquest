@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useBlocker, useNavigate, useParams } from 'react-router'
-import { Check, Trash2 } from 'lucide-react'
-import { DestructiveDialog } from '../../components/DestructiveDialog'
+import { Check, History, Trash2 } from 'lucide-react'
+import { ConfirmationDialog, DestructiveDialog } from '../../components/DestructiveDialog'
 import { ApiError, request } from '../curriculum/api'
 import type { SavedAttempt } from './AssessmentHistory'
 import { Practice, type Answer, type Feedback, type Paper } from './AssessmentPage'
@@ -78,7 +78,7 @@ function DraftEntry({session}: {session:string}) {
           <Trash2 size={15} aria-hidden="true"/>Discard draft</button></div></> :
       <><p>Save your answers and return to the same question later.</p>
         <button ref={startButton} className="primary-button" onClick={start}>Start assessment draft</button></>}
-    <Link to={'/learn/'+session+'/assessment/history'}>Past attempts</Link>
+    <Link className="as-action" to={'/learn/'+session+'/assessment/history'}><History size={16} aria-hidden="true"/>Past attempts</Link>
     {confirming && <DestructiveDialog title="Discard saved draft?"
       description="This will remove the saved answers, written response, and question position for this assessment draft. This action cannot be undone."
       cancelLabel="Keep draft" confirmLabel="Discard draft" pending={discarding} onCancel={cancelDiscard} onConfirm={discard}/>}
@@ -102,6 +102,8 @@ function SavedPractice({initial,path,reload}:{initial:Draft;path:string;reload:(
   const [saving,setSaving] = useState(false)
   const [error,setError] = useState('')
   const [conflict,setConflict] = useState(false)
+  const [confirmReload,setConfirmReload] = useState(false)
+  const reloadTrigger = useRef<HTMLButtonElement>(null)
   const retryAvailable = useRef(true)
   const [retryPending,setRetryPending] = useState(false)
   const [ended,setEnded] = useState(false)
@@ -158,8 +160,12 @@ function SavedPractice({initial,path,reload}:{initial:Draft;path:string;reload:(
     answers,guided,index,setAnswers,setIndex:i=>setPosition(questions[i]?.id??'@review'),
     check:async a=>(await save(a.question)).guided[a.question],submit,restart:reload,busy:saving||conflict,ended,
     panel:<section className="as-controls"><span role="status">{conflict?'Save conflict · Another tab changed this draft.':error?'Save failed · '+error:saving?'Saving…':dirty?'Unsaved changes':'Saved · '+stamp(confirmed.current.updatedAt)}</span>
-      {conflict?<button onClick={()=>{if(window.confirm('Replace local edits with the latest saved draft?'))reload()}}>Reload saved draft</button>:
+      {conflict?<button ref={reloadTrigger} className="secondary-button" aria-haspopup="dialog" onClick={()=>setConfirmReload(true)}>Reload saved draft</button>:
         <button className="secondary-button" disabled={saving||(!dirty&&!error)} onClick={retry}>Save now</button>}
+      {confirmReload && <ConfirmationDialog title="Reload saved draft?"
+        description="This will replace your local edits with the latest saved draft."
+        cancelLabel="Keep local edits" confirmLabel="Reload saved draft" pending={false} returnFocus={reloadTrigger}
+        onCancel={()=>setConfirmReload(false)} onConfirm={()=>{setConfirmReload(false);reload()}}/>}
       {blocker.state==='blocked' && <div role="alert">You have pending changes.
         <button onClick={()=>blocker.reset()}>Stay here</button>
         <button disabled={saving} onClick={()=>blocker.proceed()}>Leave with last saved draft</button></div>}

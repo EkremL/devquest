@@ -1,5 +1,16 @@
 .assessment { display:grid; gap:1.15rem; max-width:850px; }
-.assessment nav a,.as-panel a {color:var(--color-mint);text-decoration:underline;text-underline-offset:.2em}
+.assessment nav a:not(.as-action),.as-panel a:not(.as-action) {color:var(--color-mint);text-decoration:underline;text-underline-offset:.2em}
+.as-nav-actions {display:flex;flex-wrap:wrap;gap:.5rem}
+.assessment .as-action {
+  display:inline-flex;align-items:center;justify-self:start;gap:.5rem;min-height:44px;
+  padding:.45rem .75rem;border:1px solid var(--color-border-strong);border-radius:var(--radius-control);
+  background:var(--color-surface-raised);color:var(--color-foreground);font-size:.875rem;font-weight:600;
+  text-decoration:none;
+}
+.as-action svg {flex:none;color:var(--color-aqua-teal)}
+.assessment .as-action:hover {border-color:var(--color-aqua-teal);color:var(--color-mint)}
+.assessment .as-action:focus-visible {outline:2px solid var(--color-mint);outline-offset:3px}
+.assessment [role=alert] .as-action {margin-top:.5rem}
 .as-panel {background:var(--color-surface);border:1px solid var(--color-border-strong);border-radius:var(--radius-card);padding:clamp(1rem,3vw,2rem);display:grid;gap:1rem;min-width:0}
 .assessment h2,.as-panel h3 {font-size:clamp(1.15rem,2vw,1.5rem);line-height:1.4;font-weight:650}
 .as-panel p,.as-panel li {line-height:1.65}

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { it, expect, vi } from 'vitest'
@@ -47,6 +47,8 @@ it('opens historical evidence read-only and returns to the independent draft',as
     expect(nav.getByRole('button',{name:'Question 1, correct, guided practice'})).toBeVisible()
     expect(nav.getByRole('button',{name:'Question 2, incorrect'})).toBeVisible()
     expect(nav.getByRole('button',{name:'Question 3, skipped'})).toBeVisible()
+    expect(screen.getAllByRole('link',{name:'Review the relevant passage'})[0]).toHaveAttribute('href','/learn/pilot/read#'+results[0].guide.anchor)
+    expect(screen.getAllByRole('link',{name:'Revisit this objective'}).every(link=>link.getAttribute('href')?.startsWith('/learn/pilot/read#'))).toBe(true)
     fireEvent.click(screen.getByRole('link',{name:'Past attempts'}))
     await screen.findAllByRole('link',{name:/Open result/})
     fireEvent.click(screen.getByRole('link',{name:'Assessment workspace'}))
@@ -56,22 +58,51 @@ it('opens historical evidence read-only and returns to the independent draft',as
 
 it('retries a lost submission receipt with the same draft version and opens its durable result',async()=>{
   const operations:unknown[]=[]
+  let releaseResponse!:()=>void
+  const responseReady=new Promise<void>(resolve=>{releaseResponse=resolve})
   const fetcher=vi.spyOn(globalThis,'fetch').mockImplementation(async(url,init)=>{
     if(String(url).endsWith('/draft'))return Response.json({draft:active})
     if(String(url).endsWith('/submit')){
       operations.push(JSON.parse(init!.body as string))
-      if(operations.length===1)throw new Error('Response lost')
+      if(operations.length===1){await responseReady;throw new Error('Response lost')}
     }
     return Response.json({summary,snapshot})
   })
-  const confirm=vi.spyOn(window,'confirm').mockReturnValue(true)
+  HTMLDialogElement.prototype.showModal=function(){this.open=true}
+  HTMLDialogElement.prototype.close=function(){this.open=false}
+  const confirm=vi.spyOn(window,'confirm').mockReturnValue(false)
   try{
     mount(base)
     fireEvent.click(await screen.findByRole('button',{name:'Resume assessment'}))
     fireEvent.change(screen.getByRole('combobox'),{target:{value:'Needs review'}})
-    fireEvent.click(screen.getByRole('button',{name:'Submit anyway'}))
+    const submit=screen.getByRole('button',{name:'Submit anyway'})
+    const openDialog=()=>{
+      fireEvent.click(submit)
+      return screen.getByRole('dialog',{name:'Submit assessment?'})
+    }
+    let dialog=openDialog()
+    expect(dialog).toHaveAccessibleDescription(/9 questions are unanswered and will be recorded as skipped\./)
+    const keep=within(dialog).getByRole('button',{name:'Continue assessment'})
+    expect(keep).toHaveFocus()
+    fireEvent.click(keep)
+    expect(submit).toHaveFocus()
+    dialog=openDialog()
+    fireEvent(dialog,new Event('cancel',{cancelable:true,bubbles:true}))
+    expect(dialog).not.toBeInTheDocument()
+    expect(submit).toHaveFocus()
+    expect(operations).toHaveLength(0)
+    expect(confirm).not.toHaveBeenCalled()
+    dialog=openDialog()
+    const confirmButton=within(dialog).getByRole('button',{name:'Submit assessment'})
+    fireEvent.click(confirmButton)
+    fireEvent.click(confirmButton)
+    await waitFor(()=>expect(operations).toHaveLength(1))
+    expect(await within(dialog).findByRole('button',{name:'Submitting…'})).toHaveAttribute('aria-disabled','true')
+    releaseResponse()
     expect(await screen.findByRole('alert')).toHaveTextContent('Retry submission')
-    fireEvent.click(screen.getByRole('button',{name:'Submit anyway'}))
+    await waitFor(()=>expect(submit).toHaveFocus())
+    expect(screen.getByRole('combobox')).toHaveValue('Needs review')
+    fireEvent.click(within(openDialog()).getByRole('button',{name:'Submit assessment'}))
     await screen.findByRole('heading',{name:'Saved assessment result'})
     expect(await screen.findByText('Inspect both challenge paths.')).toBeVisible()
     expect(operations).toEqual(Array(2).fill({id:'first',version:5,rating:'Needs review'}))

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
+import { ArrowLeft, ArrowRight, History } from 'lucide-react'
 import { request } from '../curriculum/api'
 import type { Answer, Feedback, Paper } from './AssessmentPage'
 import { PracticeResults } from './AssessmentFeedback'
@@ -29,8 +30,9 @@ export function AssessmentHistory() {
   const query=attemptId?detail:list
   const result=detail.data
   return <section className="assessment reading-page">
-    <nav aria-label="Assessment navigation"><Link to={workspace}>Assessment workspace</Link>
-      {attemptId && <> / <Link to={listUrl}>Past attempts</Link></>}</nav>
+    <nav className="as-nav-actions" aria-label="Assessment navigation">
+      <Link className="as-action" to={workspace}><ArrowLeft size={16} aria-hidden="true"/>Assessment workspace</Link>
+      {attemptId && <Link className="as-action" to={listUrl}><History size={16} aria-hidden="true"/>Past attempts</Link>}</nav>
     <h1 tabIndex={-1} ref={heading}>{attemptId?'Saved assessment result':'Past attempts'}</h1>
     {query.isPending?<p role="status">Loading…</p>:query.isError?<p role="alert">{query.error.message} <button onClick={()=>query.refetch()}>Retry</button></p>:
       attemptId && result ? <>
@@ -39,16 +41,16 @@ export function AssessmentHistory() {
           answers={Object.fromEntries(result.snapshot.answers.map(a=>[a.question,a]))}
           guided={Object.fromEntries(result.snapshot.results.filter(f=>result.snapshot.revealed.includes(f.question)).map(f=>[f.question,f]))}
           session={sessionId} historicalRating={result.summary.rating}/>
-        <Link to={workspace}>Return to assessment workspace</Link>
+        <Link className="as-action" to={workspace}><ArrowLeft size={16} aria-hidden="true"/>Return to assessment workspace</Link>
       </> : <>
         {list.data?.length===0 && <p>{page?'No more attempts.':'Your submitted assessments will appear here.'}</p>}
         {list.data?.map(item=><article className="as-panel" key={item.id}>
           <h2>{time(item.submittedAt)}</h2><p>Release {item.release} · {item.correct} independent correct · {item.incorrect} independent incorrect</p>
           <p>{item.guided} guided · {item.skipped} skipped · Written self-review {item.written?'provided':'unanswered'}</p>
-          <Link to={workspace+'/history/'+item.id+(page?'?page='+page:'')}>Open result<span className="sr-only"> from {time(item.submittedAt)}</span></Link>
+          <Link className="as-action" to={workspace+'/history/'+item.id+(page?'?page='+page:'')}>Open result<span className="sr-only"> from {time(item.submittedAt)}</span><ArrowRight size={16} aria-hidden="true"/></Link>
         </article>)}
-        <nav className="as-controls" aria-label="History pages">{page>0 && <Link to={'?page='+(page-1)}>Newer attempts</Link>}
-          {list.data?.length===20 && <Link to={'?page='+(page+1)}>Older attempts</Link>}</nav>
+        <nav className="as-nav-actions" aria-label="History pages">{page>0 && <Link className="as-action" to={'?page='+(page-1)}>Newer attempts</Link>}
+          {list.data?.length===20 && <Link className="as-action" to={'?page='+(page+1)}>Older attempts</Link>}</nav>
       </>}
   </section>
 }

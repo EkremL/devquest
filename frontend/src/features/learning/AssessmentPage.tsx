@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { BookOpen } from 'lucide-react'
+import { ConfirmationDialog } from '../../components/DestructiveDialog'
 import { request } from '../curriculum/api'
 import { CodeSample } from './CodeSample'
 import type { Language } from './api'
@@ -46,9 +48,19 @@ export function Practice({paper,path,session,draft}: {paper: Paper; path: string
   const check = useMutation({mutationFn:(response: Answer)=>draft ? draft.check(response) : evaluate<Feedback>('check',[response]),
     onSuccess:feedback=>setGuided(previous=>({...previous,[feedback.question]:feedback})), retry:false})
   const [rating,setRating]=useState('')
+  const [confirming,setConfirming]=useState(false)
+  const submitTrigger=useRef<HTMLButtonElement>(null)
+  const submitting=useRef(false)
   const written=paper.questions.find(item=>item.type==='written')!
   const submit = useMutation({mutationFn:()=>draft ? draft.submit(answers[written.id]?.text?.trim() && rating ? rating : null) : evaluate<Feedback[]>('submit',Object.values(answers)),retry:false})
   const busy = submit.isPending || check.isPending || !!draft?.busy
+  async function confirmSubmission() {
+    if (busy || submitting.current) return
+    submitting.current=true
+    try { await submit.mutateAsync() }
+    catch { /* The mutation displays its error in the review panel. */ }
+    finally { submitting.current=false; setConfirming(false) }
+  }
   const heading = useRef<HTMLHeadingElement>(null)
   const previousView = useRef('0:false')
   useEffect(() => {
@@ -60,6 +72,7 @@ export function Practice({paper,path,session,draft}: {paper: Paper; path: string
   const answer = q && answers[q.id]
   const answered = (id:string) => !!(answers[id]?.choices.length || answers[id]?.text?.trim())
   const count = paper.questions.filter(q => answered(q.id)).length
+  const unanswered = paper.questions.length-count
   const checked = q && guided[q.id]
   useEffect(() => {
     if (check.isSuccess) heading.current?.focus({ preventScroll: true })
@@ -100,7 +113,7 @@ export function Practice({paper,path,session,draft}: {paper: Paper; path: string
           })}</fieldset>}
         {q.type!=='written' && <div className="as-guided">
           {checked && checkedState ? <><h3>Feedback revealed · {checkedState.label}</h3><p>This selection is locked for this practice.</p>
-            <SelectionFeedback question={q} response={answer} feedback={guided[q.id]}/><Link to={'/learn/'+session+'/read#'+checked.guide.anchor}>Review the relevant passage</Link></> :
+            <SelectionFeedback question={q} response={answer} feedback={guided[q.id]}/><Link className="as-action" to={'/learn/'+session+'/read#'+checked.guide.anchor}><BookOpen size={16} aria-hidden="true"/>Review the relevant passage</Link></> :
             <><p>Check answer reveals feedback and locks your selection. Checked answers count as guided practice.</p>
             <button className="secondary-button" disabled={!answered(q.id) || busy} onClick={()=>check.mutate(answer)}>Check answer</button></>}
           <span role="status">{check.isPending?'Checking selection…':checkedState?'Guided feedback available. '+checkedState.label+'.':''}</span>
@@ -116,8 +129,15 @@ export function Practice({paper,path,session,draft}: {paper: Paper; path: string
           <small>Your own reflection is recorded with this submission.</small></label>}
         {firstUnanswered>=0 && <p>Unanswered questions will be recorded in this result as skipped.</p>}
         <div className="as-controls">{firstUnanswered>=0 && <button disabled={busy} className="secondary-button" onClick={()=>setIndex(firstUnanswered)}>Return to unanswered questions</button>}
-          <button className="primary-button" disabled={busy} onClick={()=>{if(!draft || window.confirm('Submit this draft and save your assessment result?'))submit.mutate()}}>{submit.isPending?'Checking answers…':firstUnanswered>=0?'Submit anyway':'Submit Assessment'}</button></div>
-        {submit.isError && <p role="alert">{submit.error.message} {draft && <>Retry submission or <Link to={'/learn/'+session+'/assessment/history'}>check Past attempts</Link>.</>}</p>}</>}</section>
+          <button ref={submitTrigger} className="primary-button" disabled={busy} aria-haspopup={draft?'dialog':undefined}
+            onClick={()=>{if(draft)setConfirming(true);else submit.mutate()}}>{submit.isPending?'Checking answers…':firstUnanswered>=0?'Submit anyway':'Submit Assessment'}</button></div>
+        {confirming && <ConfirmationDialog title="Submit assessment?"
+          description="Your answers will be submitted and saved to Past attempts. This attempt will become read-only. You can start a new assessment afterward."
+          note={unanswered===0?undefined:unanswered===1?'1 question is unanswered and will be recorded as skipped.':`${unanswered} questions are unanswered and will be recorded as skipped.`}
+          cancelLabel="Continue assessment" confirmLabel="Submit assessment" pending={submit.isPending} confirmDisabled={busy}
+          returnFocus={submitTrigger} fallbackFocus={heading} onCancel={()=>setConfirming(false)} onConfirm={confirmSubmission}/>}
+        {submit.isError && <div role="alert"><p>{submit.error.message}{draft && ' Retry submission or check whether it was saved.'}</p>
+          {draft && <Link className="as-action" to={'/learn/'+session+'/assessment/history'}>Past attempts</Link>}</div>}</>}</section>
     </>}
     <nav aria-label="Technical references"><a href="https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.2">RFC 9110 · HTTP status codes</a> · <a href="https://docs.spring.io/spring-security/reference/7.1/servlet/authentication/passwords/basic.html">Spring Security 7.1 · HTTP Basic</a></nav>
   </div>

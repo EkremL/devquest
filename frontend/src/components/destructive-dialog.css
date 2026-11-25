@@ -1,4 +1,4 @@
-.dq-danger-dialog {
+.dq-confirm-dialog {
   margin: auto;
   width: min(27rem, calc(100% - 2rem));
   max-height: calc(100dvh - 2rem);
@@ -9,10 +9,13 @@
   border-radius: var(--radius-card);
   box-shadow: 0 24px 80px #05081499;
 }
-.dq-danger-dialog::backdrop { background: rgb(4 8 18 / 78%); backdrop-filter: blur(3px) }
+.dq-confirm-dialog::backdrop { background: rgb(4 8 18 / 78%); backdrop-filter: blur(3px) }
 .dq-danger-icon { display: inline-flex; padding: .65rem; border-radius: var(--radius-control); background: #392331; color: #ffb7c0 }
-.dq-danger-dialog h2 { margin: 1rem 0 .5rem; font-size: 1.35rem; font-weight: 650 }
-.dq-danger-dialog p { line-height: 1.6; color: var(--color-muted) }
+.dq-confirm-dialog h2 { margin: 0 0 .5rem; font-size: 1.35rem; font-weight: 650 }
+.dq-danger-icon + h2 { margin-top: 1rem }
+.dq-confirm-dialog p { line-height: 1.6; color: var(--color-muted) }
+.dq-confirm-dialog .dq-dialog-note { margin-top: .75rem; color: var(--color-foreground) }
+.dq-dialog-actions button[aria-disabled=true] { cursor: wait; opacity: .7; transform: none }
 .dq-dialog-actions,.dq-draft-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem }
 .dq-dialog-actions { justify-content: flex-end; margin-top: 1.5rem }
 .dq-dialog-actions button,.dq-danger-trigger { min-height: 44px; padding: .6rem .95rem; border-radius: var(--radius-control); font-size: .875rem }

@@ -1,10 +1,16 @@
 import { fireEvent, render, screen, within, waitFor } from '@testing-library/react'
 import { createMemoryRouter, Link, RouterProvider } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { expect, it, vi } from 'vitest'
+import { beforeEach, expect, it, vi } from 'vitest'
 import { DraftWorkspace } from './DraftWorkspace'
 import type { Answer, Feedback } from './AssessmentPage'
 import release from '../../../../backend/src/main/resources/assessments/http-401-and-403/3/assessment.json'
+
+beforeEach(()=>{
+  // jsdom does not implement top-layer dialog presentation.
+  HTMLDialogElement.prototype.showModal=function(){this.open=true}
+  HTMLDialogElement.prototype.close=function(){this.open=false}
+})
 
 function setup(existing = false) {
   const base = {id:'test-draft',session:'pilot',paper:release.paper,position:'reader-policy',answers:[] as Answer[],
@@ -61,9 +67,6 @@ it('saves, restores position and guided feedback, and confirms discard', async()
     view.unmount()
     test.mount()
     const discard=await screen.findByRole('button',{name:'Discard draft'})
-    // jsdom does not implement top-layer dialog presentation.
-    HTMLDialogElement.prototype.showModal=function(){this.open=true}
-    HTMLDialogElement.prototype.close=function(){this.open=false}
     fireEvent.click(discard)
     expect(screen.getByRole('button',{name:'Keep draft'})).toHaveFocus()
     fireEvent.click(screen.getByRole('button',{name:'Keep draft'}))
@@ -93,11 +96,17 @@ it('warns on navigation, reports save failures and reloads a conflict explicitly
     test.failNext(409)
     fireEvent.click(screen.getByRole('button',{name:'Save now'}))
     await screen.findByText(/Save conflict/)
-    const confirm=vi.spyOn(window,'confirm').mockReturnValue(true)
-    fireEvent.click(screen.getByRole('button',{name:'Reload saved draft'}))
+    const reload=screen.getByRole('button',{name:'Reload saved draft'})
+    fireEvent.click(reload)
+    let dialog=screen.getByRole('dialog',{name:'Reload saved draft?'})
+    fireEvent.click(within(dialog).getByRole('button',{name:'Keep local edits'}))
+    expect(reload).toHaveFocus()
+    expect(screen.getByRole('radio',{name:/403 with/})).toBeChecked()
+    fireEvent.click(reload)
+    dialog=screen.getByRole('dialog',{name:'Reload saved draft?'})
+    fireEvent.click(within(dialog).getByRole('button',{name:'Reload saved draft'}))
     fireEvent.click(await screen.findByRole('button',{name:'Resume assessment'}))
     expect(screen.getByRole('radio',{name:/403 with/})).not.toBeChecked()
-    confirm.mockRestore()
   } finally {test.fetcher.mockRestore()}
 })
 
