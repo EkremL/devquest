@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, ArrowRight, BookOpen, ChevronDown, ChevronRight, Flag, Layers, Lightbulb, ListTree, LockKeyhole, MessageCircle, ShieldAlert, Target } from 'lucide-react'
 import { ApiError } from '../curriculum/api'
-import { getLesson, type FlowCase, type Outcome, type ReadingSection, type Span } from './api'
+import { getAssessmentCatalog, getLesson, type FlowCase, type Outcome, type ReadingSection, type Span } from './api'
 import { OutcomeCards, ReadingPractice, RequestFlow } from './ReadingActivities'
 import { CodeSample } from './CodeSample'
 import './reading.css'
@@ -21,6 +21,7 @@ export function ReadingPage() {
     retry: false,
   })
   const anchor = location.hash.slice(1)
+  const assessments = useQuery({ queryKey: ['learning','assessment-catalog'], queryFn: getAssessmentCatalog })
   const chapters = query.data?.sections
   const target = chapters?.some(s => s.anchor === anchor ||
     s.blocks.some(b => b.kind === 'passage' && b.text === anchor)) ? anchor : undefined
@@ -125,7 +126,7 @@ export function ReadingPage() {
           <h2 id="reading-next">From reading to practice</h2>
           <p>Try explaining these decisions from memory. Then revisit the passage where your explanation needs more evidence.</p>
           <ul>{[...new Set(sections.flatMap(section => section.objectives))].map(goal => <li key={goal}>{goal}</li>)}</ul>
-          <p>In the upcoming Coding Lab you’ll verify the response contract. The upcoming Assessment will ask you to justify your decisions. Reading and predictions here leave your saved checklist as you set it.</p>
+          <p>{Array.isArray(assessments.data) && assessments.data.includes(session.id) && <>Try the <Link to={`/learn/${session.id}/assessment`}>practice assessment</Link> to explain and check your decisions. </>}In the upcoming Coding Lab you’ll verify the response contract.</p>
           <nav className="rd-turn" aria-label="After reading">
             <Link to={{ hash: '' }} state={location.state}>Back to top</Link>
             <Link className="rd-next" to={checklist}>Return to session checklist<ArrowRight size={16}/></Link>

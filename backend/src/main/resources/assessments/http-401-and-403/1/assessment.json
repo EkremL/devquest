@@ -1,0 +1,172 @@
+{
+  "paper": {
+    "key": "http-401-and-403",
+    "release": 1,
+    "objectives": {
+      "response": "Explain the response using identity and policy evidence",
+      "trace": "Trace where the request stops",
+      "contract": "Implement a consistent, safe failure contract",
+      "debug": "Diagnose a response and verify the correction"
+    },
+    "questions": [
+      {
+        "id": "reader-policy",
+        "objective": "response",
+        "type": "single",
+        "prompt": "A password reset succeeds. A fresh Basic request authenticates the same task creator, whose only authority is TASK_CREATE. Predict the protected summary response.",
+        "choices": {
+          "challenge": "401 with a Basic challenge",
+          "refusal": "403 with the public denial code",
+          "summary": "200 with the summary"
+        },
+        "sample": "",
+        "language": "http"
+      },
+      {
+        "id": "challenge-evidence",
+        "objective": "response",
+        "type": "multiple",
+        "prompt": "Two clients receive this response. What can you infer from the response alone? Select every supported inference.",
+        "choices": {
+          "scheme": "The server offers Basic for this protection space.",
+          "account": "Both requests named an existing account.",
+          "proof": "Neither request supplied credentials the resource accepted.",
+          "filter": "Both requests failed inside the Basic filter."
+        },
+        "sample": "HTTP/1.1 401 Unauthorized\nWWW-Authenticate: Basic realm=\"Task API\"",
+        "language": "http"
+      },
+      {
+        "id": "handler-selection",
+        "objective": "trace",
+        "type": "single",
+        "prompt": "With no existing session, one request omits Authorization and another supplies a wrong Basic password. Which entry points handle them, in that order?",
+        "choices": {
+          "both": "basicWriter, basicWriter",
+          "split": "anonymousWriter, basicWriter",
+          "denied": "refusalWriter, anonymousWriter"
+        },
+        "sample": "http.httpBasic(b -> b.authenticationEntryPoint(basicWriter))\n    .exceptionHandling(e -> e\n        .authenticationEntryPoint(anonymousWriter)\n        .accessDeniedHandler(refusalWriter));",
+        "language": "java"
+      },
+      {
+        "id": "public-contract",
+        "objective": "contract",
+        "type": "multiple",
+        "prompt": "A shared serializer currently emits this public authentication error. Which changes preserve a usable and safe API contract?",
+        "choices": {
+          "generic": "Use the same public code for unknown users and rejected passwords.",
+          "header": "Set the 401 and Basic challenge before the serializer commits the response.",
+          "always": "Return 200 so clients always parse the body.",
+          "detail": "Return the exception type for client-side diagnosis."
+        },
+        "sample": "{\"error\":\"Known user, wrong password\",\"provider\":\"LocalDirectory\"}",
+        "language": "json"
+      },
+      {
+        "id": "missing-challenge",
+        "objective": "debug",
+        "type": "single",
+        "prompt": "After a JSON redesign, a direct request without credentials gets 401 with no challenge. A wrong password still gets the expected Basic challenge. Which investigation best isolates the regression?",
+        "choices": {
+          "rule": "Relax the authorization rule and repeat the request.",
+          "writer": "Trace the entry point used after anonymous denial and inspect the header before the body is flushed.",
+          "controller": "Inspect the summary controller’s response serializer first."
+        },
+        "sample": "",
+        "language": "http"
+      },
+      {
+        "id": "regression-plan",
+        "objective": "debug",
+        "type": "written",
+        "prompt": "Explain to a teammate how you would verify the repair. Include a control case, how you distinguish the two 401 paths, and what a failing assertion would tell you.",
+        "choices": {},
+        "sample": "",
+        "language": "http"
+      }
+    ]
+  },
+  "keys": {
+    "reader-policy": {
+      "anchor": "study-insufficient-authority",
+      "correct": [
+        "refusal"
+      ],
+      "feedback": {
+        "challenge": "Password verification succeeded on this request. A second challenge would ask for proof the server already accepted.",
+        "refusal": "The read rule checks TASK_READ independently of the ability to create tasks.",
+        "summary": "Creating and reading are distinct operations in this policy."
+      },
+      "reason": "Authentication supplies a principal. The configured authorization rule still denies the read before MVC.",
+      "rubric": []
+    },
+    "challenge-evidence": {
+      "anchor": "http-semantics",
+      "correct": [
+        "scheme",
+        "proof"
+      ],
+      "feedback": {
+        "scheme": "The challenge names a scheme and realm that the client can use.",
+        "account": "A missing header can produce the same public response as a rejected password.",
+        "proof": "401 communicates missing valid authentication credentials for this resource.",
+        "filter": "The anonymous denial can reach an entry point through exception translation instead."
+      },
+      "reason": "The public contract tells a client how to authenticate. It does not identify the internal failure path.",
+      "rubric": []
+    },
+    "handler-selection": {
+      "anchor": "spring-failure-flow",
+      "correct": [
+        "split"
+      ],
+      "feedback": {
+        "both": "No header gives the Basic filter nothing to authenticate.",
+        "split": "The anonymous request continues to authorization. The failed password stops during Basic authentication.",
+        "denied": "The denial handler serves authenticated refusals here. A failed password takes the earlier Basic failure path."
+      },
+      "reason": "Exception translation starts authentication for an anonymous denial. Basic authentication has its own failure entry point.",
+      "rubric": []
+    },
+    "public-contract": {
+      "anchor": "study-safe-error-details",
+      "correct": [
+        "generic",
+        "header"
+      ],
+      "feedback": {
+        "generic": "A stable code lets clients recover without learning account state.",
+        "header": "The JSON body supplements the protocol fields. Headers must be set before commit.",
+        "always": "Status-aware clients would treat a failed protected operation as successful.",
+        "detail": "Internal exception details can expose implementation and account information."
+      },
+      "reason": "Share the serializer while allowing each handler to own status and headers. An authenticated denial uses its own 403 contract.",
+      "rubric": []
+    },
+    "missing-challenge": {
+      "anchor": "debug-the-challenge",
+      "correct": [
+        "writer"
+      ],
+      "feedback": {
+        "rule": "Relaxing the rule changes access policy and can conceal the broken writer.",
+        "writer": "Only the anonymous path lost its header. Compare its writer and commit point with the working path.",
+        "controller": "Neither failing request reaches the controller in this configuration."
+      },
+      "reason": "Compare the same endpoint and client conditions while varying only credential delivery. A status assertion alone misses this defect.",
+      "rubric": []
+    },
+    "regression-plan": {
+      "anchor": "debug-the-challenge",
+      "correct": [],
+      "feedback": {},
+      "reason": "Send fresh requests with absent and invalid credentials. Expect the same safe JSON and Basic challenge for both. If only the absent case loses the header, inspect the exception-translation entry point before it commits the body. A verified creator should receive 403 without protected data. A verified reader should receive 200 and the summary.",
+      "rubric": [
+        "Describe an observation that distinguishes the two authentication paths.",
+        "Connect the observation to a specific handler or response-writing decision.",
+        "Specify status, header and body assertions, including a denied principal and a successful control."
+      ]
+    }
+  }
+}

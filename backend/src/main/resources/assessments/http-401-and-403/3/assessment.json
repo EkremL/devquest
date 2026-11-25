@@ -1,0 +1,410 @@
+{
+  "paper": {
+    "key": "http-401-and-403",
+    "release": 3,
+    "objectives": {
+      "response": "Explain the response using identity and policy evidence",
+      "trace": "Trace where the request stops",
+      "contract": "Implement a consistent, safe failure contract",
+      "debug": "Diagnose a response and verify the correction"
+    },
+    "questions": [
+      {
+        "id": "reader-policy",
+        "objective": "response",
+        "type": "single",
+        "prompt": "A password reset succeeds. A fresh Basic request authenticates the same task creator, whose only authority is TASK_CREATE. Predict the protected summary response.",
+        "choices": {
+          "challenge": "401 with a Basic challenge",
+          "refusal": "403 with the public denial code",
+          "summary": "200 with the summary",
+          "retry": "401 until the client authenticates against the read realm."
+        },
+        "sample": "",
+        "language": "http",
+        "difficulty": "Foundation"
+      },
+      {
+        "id": "interpret-challenge",
+        "objective": "response",
+        "type": "single",
+        "prompt": "A client records only this response. Which incident note is supported by the wire evidence?",
+        "choices": {
+          "rejected": "The directory rejected a password submitted by this client.",
+          "offered": "The server challenged the client to authenticate using Basic in the Task API realm.",
+          "authorized": "The client authenticated but lacks the read authority.",
+          "anonymous": "The client omitted Authorization and reached exception translation.",
+          "account": "The realm identifies the directory account used for the request."
+        },
+        "sample": "HTTP/1.1 401 Unauthorized\nWWW-Authenticate: Basic realm=\"Task API\"",
+        "language": "http",
+        "difficulty": "Foundation"
+      },
+      {
+        "id": "interpret-refusal",
+        "objective": "response",
+        "prompt": "An unfamiliar HTTP service returns this exchange. You have no server trace or configuration. Which conclusion can you defend?",
+        "sample": "HTTP/1.1 403 Forbidden\nContent-Type: application/json\n\n{\"code\":\"access_denied\"}",
+        "language": "http",
+        "choices": {
+          "identified": "The service verified the caller's identity.",
+          "authority": "The account lacks TASK_READ.",
+          "retry": "The next request must present Basic credentials.",
+          "refused": "The server understood the request and refused it."
+        },
+        "type": "single",
+        "difficulty": "Foundation"
+      },
+      {
+        "id": "handler-selection",
+        "objective": "trace",
+        "type": "single",
+        "prompt": "With no existing session, one request omits Authorization and another supplies a wrong Basic password. Which entry points handle them, in that order?",
+        "choices": {
+          "both": "basicWriter, basicWriter",
+          "split": "anonymousWriter, basicWriter",
+          "denied": "refusalWriter, anonymousWriter",
+          "same": "anonymousWriter, anonymousWriter"
+        },
+        "sample": "http.httpBasic(b -> b.authenticationEntryPoint(basicWriter))\n    .exceptionHandling(e -> e\n        .authenticationEntryPoint(anonymousWriter)\n        .accessDeniedHandler(refusalWriter));",
+        "language": "java",
+        "difficulty": "Intermediate"
+      },
+      {
+        "id": "silent-controller",
+        "objective": "trace",
+        "prompt": "The following trace is from one request. What should happen next in the pilot chain?",
+        "sample": "Basic authentication: accepted\nGranted authorities: TASK_CREATE\nAuthorizationFilter: access denied\nMVC handler invocations: 0",
+        "language": "text",
+        "choices": {
+          "controller": "MVC translates the exception into the public JSON body.",
+          "basic": "The Basic filter invokes its entry point.",
+          "denial": "Exception translation delegates to the access-denied handler.",
+          "anonymous": "Exception translation starts authentication for an anonymous caller."
+        },
+        "type": "single",
+        "difficulty": "Intermediate"
+      },
+      {
+        "id": "policy-change",
+        "objective": "trace",
+        "prompt": "Both synthetic users authenticate. One has TASK_CREATE, the other TASK_READ. Only the summary rule changes as shown. Predict the ordered pair of statuses (creator, reader).",
+        "sample": "http.authorizeHttpRequests(r -> r\n    .requestMatchers(HttpMethod.GET, \"/api/tasks/summary\")\n    .hasAuthority(\"TASK_CREATE\")\n    .anyRequest().denyAll());",
+        "language": "java",
+        "choices": {
+          "reversed": "200, 403",
+          "original": "403, 200",
+          "none": "403, 403",
+          "both": "200, 200"
+        },
+        "type": "single",
+        "difficulty": "Intermediate"
+      },
+      {
+        "id": "public-error-schema",
+        "objective": "contract",
+        "type": "single",
+        "prompt": "The writer already sets 401 and the Basic challenge before flushing JSON. Clients need one stable code for every credential failure. Which public body meets that contract without disclosing account or provider details?",
+        "choices": {
+          "cause": "Return login_failed with the provider exception class.",
+          "account": "Return unknown_account or invalid_password with a common message.",
+          "message": "Return a localized generic message as the only field.",
+          "stable": "Return login_failed for every credential failure, with no diagnostic fields.",
+          "provider": "Return login_failed and the name of the authentication provider."
+        },
+        "sample": "{\"code\":\"login_failed\",\"reason\":\"Account exists; password mismatch\",\"provider\":\"DirectoryProvider\"}",
+        "language": "json",
+        "difficulty": "Intermediate"
+      },
+      {
+        "id": "committed-response",
+        "objective": "contract",
+        "prompt": "The fixture's serializer flushes its output. Which ordering reliably sends the challenge and JSON together?",
+        "sample": "response.setStatus(401);\nwriteAndFlushJson(response, error);\nresponse.setHeader(\"WWW-Authenticate\", challenge);",
+        "language": "java",
+        "choices": {
+          "mvc": "Have MVC append the header after the filter returns.",
+          "before": "Set status, challenge and JSON content type before calling the serializer.",
+          "second": "Call sendError after the serializer to finish the 401.",
+          "body": "Include the scheme in a JSON field after serialization."
+        },
+        "type": "single",
+        "difficulty": "Intermediate"
+      },
+      {
+        "id": "missing-challenge",
+        "objective": "debug",
+        "type": "single",
+        "prompt": "After a JSON redesign, a direct request without credentials gets 401 with no challenge. A wrong password still gets the expected Basic challenge. Which investigation best isolates the regression?",
+        "choices": {
+          "rule": "Relax the authorization rule and repeat the request.",
+          "writer": "Trace the entry point used after anonymous denial and inspect the header before the body is flushed.",
+          "controller": "Inspect the summary controller's response serializer first.",
+          "provider": "Inspect the password provider for a missing challenge."
+        },
+        "sample": "",
+        "language": "http",
+        "difficulty": "Advanced"
+      },
+      {
+        "id": "writer-commit-trace",
+        "objective": "debug",
+        "prompt": "Both requests reach the same entry point and call setHeader with the same nonempty challenge. Which observation explains why only the first direct response lacks that header?",
+        "sample": "No header: writer=apiEntry, status=401, challenge=absent\nWrong password: writer=apiEntry, status=401, challenge=Basic",
+        "language": "text",
+        "choices": {
+          "principal": "Only the second request supplied a username to the authentication provider.",
+          "late": "Only the first invocation flushes the JSON stream before assigning the challenge.",
+          "cache": "The two requests create different authentication exceptions before entering the writer.",
+          "context": "Only the second request passes through Basic password verification.",
+          "length": "Only the first invocation sets the JSON content length before assigning the challenge."
+        },
+        "type": "single",
+        "difficulty": "Advanced"
+      },
+      {
+        "id": "regression-matrix",
+        "objective": "debug",
+        "prompt": "Which test plan would catch both a Basic failure entry point that still returns 401 but drops the challenge and an authorization rule accidentally opened to every authenticated user? Keep the same protected GET and use fresh requests.",
+        "sample": "",
+        "language": "http",
+        "choices": {
+          "mock": "Inject anonymous, creator and reader principals. Check the challenge, denial body and successful payload.",
+          "status": "Send absent, invalid, creator and reader requests through Basic. Verify each status and that only the reader reaches MVC.",
+          "pair": "Exercise both authentication failures and a permitted reader through Basic. Check headers, public codes and the summary.",
+          "matrix": "Exercise both credential failures, a creator and a reader through Basic. Check challenges, safe failure bodies, status and protected payload."
+        },
+        "type": "single",
+        "difficulty": "Advanced"
+      },
+      {
+        "id": "regression-plan",
+        "objective": "debug",
+        "type": "written",
+        "prompt": "Explain to a teammate how you would verify the repair. Include a control case, how you distinguish the two 401 paths, and what a failing assertion would tell you.",
+        "choices": {},
+        "sample": "Direct API probe after a JSON writer change\nAbsent credentials: 401, JSON, no challenge\nRejected password: 401, JSON, Basic challenge\nThe protected controller saw neither request.",
+        "language": "text",
+        "difficulty": "Advanced"
+      }
+    ]
+  },
+  "keys": {
+    "reader-policy": {
+      "anchor": "study-insufficient-authority",
+      "correct": [
+        "refusal"
+      ],
+      "feedback": {
+        "challenge": "Password verification succeeded on this request. A second challenge would ask for proof the server already accepted.",
+        "refusal": "The read rule checks TASK_READ independently of the ability to create tasks.",
+        "summary": "Creating and reading are distinct operations in this policy.",
+        "retry": "A realm identifies a protection space. It cannot supply missing authorities."
+      },
+      "reason": "Authentication supplies a principal. The configured authorization rule still denies the read before MVC.",
+      "rubric": [],
+      "topics": [
+        "study-insufficient-authority"
+      ]
+    },
+    "handler-selection": {
+      "anchor": "spring-failure-flow",
+      "correct": [
+        "split"
+      ],
+      "feedback": {
+        "both": "No header gives the Basic filter nothing to authenticate.",
+        "split": "The anonymous request continues to authorization. The failed password stops during Basic authentication.",
+        "denied": "The denial handler serves authenticated refusals here. A failed password takes the earlier Basic failure path.",
+        "same": "Exception translation wraps downstream authorization. A failed Basic verification occurs earlier."
+      },
+      "reason": "Exception translation starts authentication for an anonymous denial. Basic authentication has its own failure entry point.",
+      "rubric": [],
+      "topics": [
+        "study-authentication-entry-point",
+        "study-missing-credentials",
+        "study-invalid-credentials"
+      ]
+    },
+    "missing-challenge": {
+      "anchor": "debug-the-challenge",
+      "correct": [
+        "writer"
+      ],
+      "feedback": {
+        "rule": "Relaxing the rule changes access policy and can conceal the broken writer.",
+        "writer": "Only the anonymous path lost its header. Compare its writer and commit point with the working path.",
+        "controller": "Neither failing request reaches the controller in this configuration.",
+        "provider": "The failing request supplied no credentials. Header generation belongs to the selected response writer."
+      },
+      "reason": "Compare the same endpoint and client conditions while varying only credential delivery. A status assertion alone misses this defect.",
+      "rubric": [],
+      "topics": [
+        "study-missing-credentials",
+        "study-authentication-entry-point"
+      ]
+    },
+    "regression-plan": {
+      "anchor": "debug-the-challenge",
+      "correct": [],
+      "feedback": {},
+      "reason": "Send fresh requests with absent and invalid credentials. Expect the same safe JSON and Basic challenge for both. If only the absent case loses the header, inspect the exception-translation entry point before it commits the body. A verified creator should receive 403 without protected data. A verified reader should receive 200 and the summary.",
+      "rubric": [
+        "Describe an observation that distinguishes the two authentication paths.",
+        "Connect the observation to a specific handler or response-writing decision.",
+        "Specify status, header and body assertions, including a denied principal and a successful control."
+      ],
+      "topics": [
+        "study-missing-credentials",
+        "study-invalid-credentials",
+        "study-access-denied-handler"
+      ]
+    },
+    "interpret-refusal": {
+      "anchor": "study-http-403",
+      "correct": [
+        "refused"
+      ],
+      "feedback": {
+        "identified": "The status alone cannot establish whether authentication ran.",
+        "authority": "This service has no documented task policy. A public code does not identify the rule.",
+        "retry": "There is no Basic challenge here, and credentials need not resolve the refusal.",
+        "refused": "This is the HTTP meaning of 403. The cause needs further evidence."
+      },
+      "reason": "Separate the HTTP observation from the policy specific to the pilot.",
+      "rubric": [],
+      "topics": [
+        "study-http-403"
+      ]
+    },
+    "silent-controller": {
+      "anchor": "study-access-denied-handler",
+      "correct": [
+        "denial"
+      ],
+      "feedback": {
+        "controller": "The denial occurs before MVC dispatch.",
+        "basic": "The Basic filter has already accepted the credentials.",
+        "denial": "A verified caller denied by downstream authorization takes the configured refusal path.",
+        "anonymous": "The trace identifies an accepted named principal."
+      },
+      "reason": "A silent controller is expected when the security chain owns the response.",
+      "rubric": [],
+      "topics": [
+        "study-access-denied-handler"
+      ]
+    },
+    "policy-change": {
+      "anchor": "study-insufficient-authority",
+      "correct": [
+        "reversed"
+      ],
+      "feedback": {
+        "reversed": "The specific matcher now requires the creator authority.",
+        "original": "That pair assumes the original TASK_READ rule.",
+        "none": "The later catch-all does not override the matching GET rule.",
+        "both": "Successful authentication alone does not satisfy an authority matcher."
+      },
+      "reason": "Handler wiring determines how refusals are expressed. The selected matcher determines who may continue.",
+      "rubric": [],
+      "topics": [
+        "study-insufficient-authority"
+      ]
+    },
+    "committed-response": {
+      "anchor": "study-json-errors",
+      "correct": [
+        "before"
+      ],
+      "feedback": {
+        "mvc": "The failure path ends before MVC.",
+        "before": "The protocol fields must be final when the first body flush commits the response.",
+        "second": "A second error dispatch cannot reliably amend an already committed response.",
+        "body": "A JSON field cannot replace an HTTP authentication challenge."
+      },
+      "reason": "Trace the moment the response becomes committed, including implicit flushes inside a shared writer.",
+      "rubric": [],
+      "topics": [
+        "study-json-errors",
+        "study-authentication-entry-point"
+      ]
+    },
+    "regression-matrix": {
+      "anchor": "request-evidence",
+      "correct": [
+        "matrix"
+      ],
+      "feedback": {
+        "mock": "Injected principals exercise authorization but skip Basic password verification.",
+        "status": "A broken entry point that drops its challenge can still return 401.",
+        "pair": "Both entry points can pass while a creator incorrectly gains read access. Exercise a verified principal without TASK_READ.",
+        "matrix": "Each request isolates a distinct failure path or the positive control."
+      },
+      "reason": "A useful matrix distinguishes protocol regressions from access-policy regressions and confirms the endpoint still serves authorized readers.",
+      "rubric": [],
+      "topics": [
+        "study-http-401",
+        "study-http-403",
+        "study-insufficient-authority"
+      ]
+    },
+    "interpret-challenge": {
+      "anchor": "http-semantics",
+      "correct": [
+        "offered"
+      ],
+      "feedback": {
+        "rejected": "An absent Authorization header can produce the same challenge.",
+        "offered": "Both the scheme and realm appear explicitly in WWW-Authenticate.",
+        "authorized": "The trace supplies no accepted principal or authorization decision.",
+        "anonymous": "A failed Basic authentication can invoke an entry point and produce the same response.",
+        "account": "A realm names a protection space shared by resources, not an individual account."
+      },
+      "reason": "The challenge advertises an authentication scheme and realm. Distinguishing absent credentials from rejected credentials requires request or server evidence.",
+      "rubric": [],
+      "topics": [
+        "study-http-401",
+        "study-missing-credentials",
+        "study-invalid-credentials"
+      ]
+    },
+    "public-error-schema": {
+      "anchor": "study-safe-error-details",
+      "correct": [
+        "stable"
+      ],
+      "feedback": {
+        "cause": "Exception classes can disclose the provider and distinguish failure causes.",
+        "account": "The code still reveals whether an account exists.",
+        "message": "A localized message omits the stable code required by the clients.",
+        "stable": "Clients receive one machine-readable code while account and provider details stay private.",
+        "provider": "A stable code does not prevent a separate field from exposing provider details."
+      },
+      "reason": "Use a stable public failure code across credential failures. Keep the diagnostic cause in protected server logs.",
+      "rubric": [],
+      "topics": [
+        "study-json-errors",
+        "study-safe-error-details"
+      ]
+    },
+    "writer-commit-trace": {
+      "anchor": "debug-the-challenge",
+      "correct": [
+        "late"
+      ],
+      "feedback": {
+        "principal": "The request credentials explain the path to the writer, but not the fate of identical header writes.",
+        "late": "The first flush commits the response before the header assignment.",
+        "cache": "Different exceptions could select different branches, but their types alone do not explain a lost header.",
+        "context": "The authentication stage precedes both observed calls to the same writer.",
+        "length": "Setting content length by itself does not flush or commit the response."
+      },
+      "reason": "Once the servlet response is committed, a later header assignment cannot change the transmitted headers. The timing difference explains the two responses.",
+      "rubric": [],
+      "topics": [
+        "study-authentication-entry-point",
+        "study-invalid-credentials"
+      ]
+    }
+  }
+}

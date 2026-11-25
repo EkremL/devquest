@@ -22,6 +22,81 @@ import static org.assertj.core.api.Assertions.assertThat;
 })
 class LearningIT {
     @Autowired LearningController learning;
+    @Test void practiceIsBoundRedactedAndStateless() throws Exception {
+        var id = pilotSession();
+        var before = progressSnapshot();
+        var paper = get("/sessions/" + id + "/assessment");
+        assertThat(paper.statusCode()).isEqualTo(200);
+        assertThat(paper.body()).contains("handler-selection", "\"release\":3", "interpret-challenge").doesNotContain("\"correct\"", "\"rubric\"", "\"reason\"", "\"feedback\"");
+        assertThat(get("/sessions/" + UUID.randomUUID() + "/assessment").statusCode()).isEqualTo(404);
+        String body = """
+                {"key":"http-401-and-403","release":2,"answers":[
+                {"question":"reader-policy","choices":["refusal"]},
+                {"question":"challenge-evidence","choices":["proof","scheme"]},
+                {"question":"regression-plan","choices":[],"text":"Compare the two entry points."}]}
+                """;
+        var reply = submit(id,body);
+        assertThat(reply.statusCode()).isEqualTo(200);
+        var rows = new tools.jackson.databind.ObjectMapper().readTree(reply.body());
+        assertThat(rows.get(0).get("outcome").asString()).isEqualTo("Correct");
+        assertThat(rows.get(1).get("outcome").asString()).isEqualTo("Correct");
+        assertThat(rows.get(2).get("outcome").asString()).isEqualTo("Unanswered");
+        assertThat(rows.get(11).get("outcome").asString()).isEqualTo("Self-review");
+        assertThat(submit(id,body.replace("\"proof\",\"scheme\"","\"scheme\"")).body()).contains("\"Incorrect\"");
+        for (String invalid : java.util.List.of(body.replace("proof","scheme"), body.replace("refusal","unknown"),
+                body.replace("reader-policy","unknown"), body.replace("reader-policy","handler-selection").replace("refusal","split").replace("challenge-evidence","handler-selection"),
+                body.replace("Compare the two entry points.", "x".repeat(4001)), "{}")) {
+            assertThat(submit(id,invalid).statusCode()).isEqualTo(400);
+        }
+        assertThat(submit(id,body.replace("\"release\":2","\"release\":99")).statusCode()).isEqualTo(409);
+        assertThat(submit(id,body + " ".repeat(33000)).statusCode()).isEqualTo(413);
+        var mapper = new tools.jackson.databind.ObjectMapper();
+        try (var source = getClass().getResourceAsStream("/assessments/http-401-and-403/3/assessment.json")) {
+            var pack = mapper.readValue(source, AssessmentEngine.Package.class);
+            var all = pack.getPaper().getQuestions().stream().map(q -> java.util.Map.of(
+                    "question", q.getId(), "choices", pack.getKeys().get(q.getId()).getCorrect())).toList();
+            var complete = submit(id,mapper.writeValueAsString(java.util.Map.of("key","http-401-and-403","release",3,"answers",all)));
+            assertThat(complete.statusCode()).isEqualTo(200);
+            var scores = mapper.readTree(complete.body());
+            assertThat(scores.size()).isEqualTo(12);
+            for (int i=0; i<11; i++) assertThat(scores.get(i).get("outcome").asString()).isEqualTo("Correct");
+            assertThat(scores.get(11).get("outcome").asString()).isEqualTo("Unanswered");
+        }
+        assertThat(progressSnapshot()).isEqualTo(before);
+    }
+
+    private HttpResponse<String> submit(UUID id, String body) throws Exception {
+        return post(id, "submit", body);
+    }
+
+    @Test void guidedFeedbackGradesOnlyOneSelectionWithoutWriting() throws Exception {
+        UUID id = pilotSession();
+        String before = progressSnapshot();
+        String body = """
+                {"key":"http-401-and-403","release":2,"answers":[{"question":"challenge-evidence","choices":["scheme"]}]}
+                """;
+        var reply = post(id,"check",body);
+        assertThat(reply.statusCode()).isEqualTo(200);
+        assertThat(reply.body()).contains("\"Incorrect\"","\"correct\"").doesNotContain("reader-policy","regression-plan");
+        assertThat(post(id,"check",body.replace("\"scheme\"","\"proof\",\"scheme\"")).body()).contains("\"Correct\"");
+        assertThat(post(id,"check",body.replace("scheme","unknown")).statusCode()).isEqualTo(400);
+        assertThat(post(id,"check",body.replace("challenge-evidence","regression-plan")).statusCode()).isEqualTo(400);
+        assertThat(post(id,"check",body.replace("\"release\":2","\"release\":99")).statusCode()).isEqualTo(409);
+        String active = body.replace("challenge-evidence", "interpret-challenge")
+                .replace("scheme", "offered").replace("\"release\":2", "\"release\":3");
+        assertThat(post(id,"check",active).body()).contains("\"Correct\"").doesNotContain("regression-plan");
+        assertThat(post(id,"check",active.replace("offered","rejected")).body()).contains("\"Incorrect\"");
+        assertThat(submit(id,active.replace("\"offered\"","\"offered\",\"rejected\"")).statusCode()).isEqualTo(400);
+        assertThat(post(id,"check",active.replace("interpret-challenge","challenge-evidence")).statusCode()).isEqualTo(400);
+        assertThat(post(id,"check",body.replace("\"release\":2","\"release\":1")).body()).contains("\"Incorrect\"");
+        assertThat(progressSnapshot()).isEqualTo(before);
+    }
+
+    private HttpResponse<String> post(UUID id, String action, String body) throws Exception {
+        return HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port
+                + "/api/learning/sessions/" + id + "/assessment/" + action)).header("Content-Type","application/json")
+                .header("X-DevQuest-Request","1").POST(HttpRequest.BodyPublishers.ofString(body)).build(), HttpResponse.BodyHandlers.ofString());
+    }
     @Autowired CurriculumReader curriculum;
     @Autowired JdbcTemplate jdbc;
     @LocalServerPort int port;

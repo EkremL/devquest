@@ -134,3 +134,7 @@
 @media (max-width: 600px) {
   .topic-learning h2, .topic-progress-label { flex-basis: 100%; }
 }
+
+.session-learning-actions { display:flex; flex-wrap:wrap; gap:.75rem; margin-bottom:1rem }
+.session-learning-actions .roadmap-reading-link { display:inline-flex; align-items:center; justify-content:center; gap:.55rem; min-height:44px; padding:.65rem 1rem; margin:0; border-radius:var(--radius-control); font-size:.9rem; font-weight:600 }
+@media(max-width:480px) { .session-learning-actions { display:grid; grid-template-columns:1fr } }

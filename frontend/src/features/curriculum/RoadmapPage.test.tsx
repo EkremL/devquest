@@ -58,7 +58,7 @@ describe('interactive roadmap', () => {
 
   it('opens a mapped passage, keeps both chapters mounted and returns to the same item', async () => {
     const fetch = vi.fn(async (path: string, _options?: RequestInit) => {
-      if (path.endsWith('/catalog')) return ok(['session-a'])
+      if (path.endsWith('/assessment-catalog') || path.endsWith('/catalog')) return ok(['session-a'])
       if (path.endsWith('/topics')) return ok({ 'item-1': 'study-second' })
       if (path.endsWith('/lesson')) return ok({
         session: { id: 'session-a', title: 'Test lesson', moduleId: 'module-a', moduleTitle: 'Test module' },
@@ -75,6 +75,9 @@ describe('interactive roadmap', () => {
     mount('/roadmap/sessions/session-a')
     const study = await screen.findByRole('link', { name: 'Study topic: Second concept' })
     expect(study).toHaveAttribute('href', '/learn/session-a/read#study-second')
+    const actions = within(screen.getByRole('navigation', { name: 'Learning workspaces' }))
+    expect(actions.getByRole('link', { name: 'Read lesson' })).toHaveAttribute('href', '/learn/session-a/read')
+    expect(actions.getByRole('link', { name: 'Practice assessment' })).toHaveAttribute('href', '/learn/session-a/assessment')
     const card = within(study.closest('li')!)
     expect(card.getByRole('link', { name: 'Second concept' })).toHaveAttribute('href', '/learn/session-a/read#study-second')
     expect(card.getByText('Topic 02')).toBeVisible()

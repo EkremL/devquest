@@ -29,6 +29,7 @@ interface Lesson {
 }
 
 export const getLessonCatalog = () => request<string[]>('/learning/catalog')
+export const getAssessmentCatalog = () => request<string[]>('/learning/assessment-catalog')
 export const getLesson = (sessionId: string) => request<Lesson>(`/learning/sessions/${encodeURIComponent(sessionId)}/lesson`)
 
 export const getTopicLinks = (sessionId: string) =>

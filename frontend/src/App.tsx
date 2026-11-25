@@ -6,6 +6,7 @@ import { Overview } from './Overview'
 import { RoadmapPage } from './features/curriculum/RoadmapPage'
 import { DataSafetyPage } from './features/data-safety/DataSafetyPage'
 import { ReadingPage } from './features/learning/ReadingPage'
+import { AssessmentPage } from './features/learning/AssessmentPage'
 const SkillTreePage = lazy(() => import('./features/skill-tree/SkillAtlas'))
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 15_000 } } })
@@ -34,7 +35,7 @@ export function AppRoutes() {
       <div className="profile"><div className="avatar">E</div><div><strong>Ekrem’s workspace</strong><span>Local · Single user</span></div><ShieldCheck size={17} /></div>
     </aside>
     <div className="main-area">
-      <header className="topbar"><span className="breadcrumb">Workspace / {location.pathname.startsWith('/roadmap') ? 'Learning roadmap' : location.pathname.startsWith('/learn/') ? 'Reading' : location.pathname === '/skill-tree' ? 'Skill tree' : location.pathname === '/data-safety' ? 'Data safety' : 'Overview'}</span><span className="local-badge"><ShieldCheck size={14} />Local environment</span></header>
+      <header className="topbar"><span className="breadcrumb">Workspace / {location.pathname.startsWith('/roadmap') ? 'Learning roadmap' : location.pathname.endsWith('/assessment') ? 'Assessment' : location.pathname.startsWith('/learn/') ? 'Reading' : location.pathname === '/skill-tree' ? 'Skill tree' : location.pathname === '/data-safety' ? 'Data safety' : 'Overview'}</span><span className="local-badge"><ShieldCheck size={14} />Local environment</span></header>
       <main id="main" tabIndex={-1}>
         <Routes>
           <Route path="/" element={<Overview />} />
@@ -44,6 +45,7 @@ export function AppRoutes() {
           <Route path="/roadmap/modules/:moduleId" element={<RoadmapPage />} />
           <Route path="/roadmap/sessions/:sessionId" element={<RoadmapPage />} />
           <Route path="/learn/:sessionId/read" element={<ReadingPage />} />
+          <Route path="/learn/:sessionId/assessment" element={<AssessmentPage />} />
           <Route path="/roadmap/competencies" element={<RoadmapPage />} />
           <Route path="*" element={<div className="empty-state"><h1>Page not found</h1><Link to="/roadmap">Return to roadmap</Link></div>} />
         </Routes>

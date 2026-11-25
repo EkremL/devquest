@@ -21,6 +21,31 @@ import java.util.UUID;
 class LearningController {
     private final LessonPackage packages;
     private final JdbcTemplate jdbc;
+    private final AssessmentEngine assessments;
+
+    @GetMapping("/assessment-catalog")
+    List<UUID> assessmentCatalog() {
+        return assessments.paper().isPresent() ? catalog() : List.of();
+    }
+
+    @GetMapping("/sessions/{sessionId}/assessment")
+    ResponseEntity<AssessmentEngine.Paper> assessment(@PathVariable UUID sessionId) {
+        return ResponseEntity.of(assessments.paper().filter(p -> catalog().contains(sessionId)));
+    }
+
+    @PostMapping("/sessions/{sessionId}/assessment/submit")
+    ResponseEntity<List<AssessmentEngine.Feedback>> submit(@PathVariable UUID sessionId,
+            @jakarta.validation.Valid @RequestBody AssessmentEngine.Submission responses) {
+        if (!assessmentCatalog().contains(sessionId)) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(assessments.grade(responses));
+    }
+
+    @PostMapping("/sessions/{sessionId}/assessment/check")
+    ResponseEntity<AssessmentEngine.Feedback> check(@PathVariable UUID sessionId,
+            @jakarta.validation.Valid @RequestBody AssessmentEngine.Submission response) {
+        if (!assessmentCatalog().contains(sessionId)) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(assessments.check(response));
+    }
 
     @GetMapping("/catalog")
     List<UUID> catalog() {
