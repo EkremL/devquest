@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useBlocker, useParams } from 'react-router'
+import { Link, useBlocker, useNavigate, useParams } from 'react-router'
 import { Check, Trash2 } from 'lucide-react'
 import { DestructiveDialog } from '../../components/DestructiveDialog'
 import { ApiError, request } from '../curriculum/api'
+import type { SavedAttempt } from './AssessmentHistory'
 import { Practice, type Answer, type Feedback, type Paper } from './AssessmentPage'
 
 interface Draft {
@@ -77,6 +78,7 @@ function DraftEntry({session}: {session:string}) {
           <Trash2 size={15} aria-hidden="true"/>Discard draft</button></div></> :
       <><p>Save your answers and return to the same question later.</p>
         <button ref={startButton} className="primary-button" onClick={start}>Start assessment draft</button></>}
+    <Link to={'/learn/'+session+'/assessment/history'}>Past attempts</Link>
     {confirming && <DestructiveDialog title="Discard saved draft?"
       description="This will remove the saved answers, written response, and question position for this assessment draft. This action cannot be undone."
       cancelLabel="Keep draft" confirmLabel="Discard draft" pending={discarding} onCancel={cancelDiscard} onConfirm={discard}/>}
@@ -87,7 +89,7 @@ function DraftEntry({session}: {session:string}) {
 export interface DraftControls {
   index:number; answers:Record<string,Answer>; guided:Record<string,Feedback>
   setIndex:(index:number)=>void; setAnswers:(answers:Record<string,Answer>)=>void
-  check:(answer:Answer)=>Promise<Feedback>; submit:()=>Promise<Feedback[]>; restart:()=>void
+  check:(answer:Answer)=>Promise<Feedback>; submit:(rating:string|null)=>Promise<Feedback[]>; restart:()=>void
   busy:boolean; ended:boolean; panel:React.ReactNode
 }
 function SavedPractice({initial,path,reload}:{initial:Draft;path:string;reload:()=>void}) {
@@ -141,12 +143,15 @@ function SavedPractice({initial,path,reload}:{initial:Draft;path:string;reload:(
     const timer=setTimeout(()=>void save().catch(()=>{}),retryPending?2000:500)
     return ()=>clearTimeout(timer)
   },[save,dirty,saving,error,ended,retryPending,conflict])
-  async function submit() {
+  const navigate=useNavigate()
+  async function submit(rating:string|null) {
     const draft=dirty?await save():confirmed.current
     try {
-      const result=await request<Feedback[]>(path+'/submit',post({id:draft.id,version:draft.version}))
-      setEnded(true);return result
-    } catch(e){setError((e as Error).message);if(e instanceof ApiError && e.status===409)setConflict(true);throw e}
+      const result=await request<SavedAttempt>(path+'/submit',post({id:draft.id,version:draft.version,rating}))
+      setEnded(true)
+      navigate('/learn/'+initial.session+'/assessment/history/'+result.summary.id)
+      return result.snapshot.results
+    } catch(e){if(e instanceof ApiError && e.status===409)setConflict(true);throw e}
   }
   const retry=()=>void save().catch(()=>{})
   const controls:DraftControls={

@@ -45,7 +45,9 @@ export function Practice({paper,path,session,draft}: {paper: Paper; path: string
   }
   const check = useMutation({mutationFn:(response: Answer)=>draft ? draft.check(response) : evaluate<Feedback>('check',[response]),
     onSuccess:feedback=>setGuided(previous=>({...previous,[feedback.question]:feedback})), retry:false})
-  const submit = useMutation({mutationFn:()=>draft ? draft.submit() : evaluate<Feedback[]>('submit',Object.values(answers)),retry:false})
+  const [rating,setRating]=useState('')
+  const written=paper.questions.find(item=>item.type==='written')!
+  const submit = useMutation({mutationFn:()=>draft ? draft.submit(answers[written.id]?.text?.trim() && rating ? rating : null) : evaluate<Feedback[]>('submit',Object.values(answers)),retry:false})
   const busy = submit.isPending || check.isPending || !!draft?.busy
   const heading = useRef<HTMLHeadingElement>(null)
   const previousView = useRef('0:false')
@@ -68,7 +70,7 @@ export function Practice({paper,path,session,draft}: {paper: Paper; path: string
   return <div className="assessment reading-page">
     <nav aria-label="Session navigation"><Link to={'/roadmap/sessions/'+session}>Session checklist</Link> / <Link to={'/learn/'+session+'/read'}>Reading workspace</Link></nav>
     <header className="rd-hero"><div><p className="rd-kicker">Practice Mode · Session 2.6</p><h1>401 and 403</h1>
-      <p>Assessment · {paper.questions.length} questions. {draft ? 'Only server-confirmed draft changes survive closing. Submitted results are temporary.' : 'Attempts are unsaved. Refreshing or leaving clears this practice.'}</p></div></header>
+      <p>Assessment · {paper.questions.length} questions. {draft ? 'Only server-confirmed draft changes survive closing. Submitted results are saved in Past attempts.' : 'Attempts are unsaved. Refreshing or leaving clears this practice.'}</p></div></header>
     {draft && !result && draft.panel}
     {result ? <>
       <h2 ref={heading} tabIndex={-1}>Practice results</h2>
@@ -107,11 +109,15 @@ export function Practice({paper,path,session,draft}: {paper: Paper; path: string
         <div className="as-controls"><button className="secondary-button" disabled={busy || index===0} onClick={()=>setIndex(index-1)}>Previous</button>
           <button className="primary-button" disabled={busy} onClick={()=>setIndex(index+1)}>{index===paper.questions.length-1?'Review answers':'Next question'}</button></div>
       </> : <><h2 tabIndex={-1} ref={heading}>Review your answers</h2><p>{count} of {paper.questions.length} answered · {paper.questions.length-count} unanswered · {Object.keys(guided).length} with feedback revealed.</p>
-        <p>Written response · {answered(paper.questions.find(item=>item.type==='written')!.id)?'Provided':'Not answered'}. {draft?'Submission ends your saved draft. Results last only on this page.':'This practice is unsaved.'}</p>
+        <p>Written response · {answered(paper.questions.find(item=>item.type==='written')!.id)?'Provided':'Not answered'}. {draft?'Submission saves a read-only result and closes this draft.':'This practice is unsaved.'}</p>
+        {draft && answered(written.id) && <label className="as-rating">Written response · optional self-rating before feedback
+          <select value={rating} disabled={busy} onChange={e=>setRating(e.target.value)}><option value="">No rating</option>
+            {['Meets criteria','Partially meets criteria','Needs review'].map(value=><option key={value}>{value}</option>)}</select>
+          <small>Your own reflection is recorded with this submission.</small></label>}
         {firstUnanswered>=0 && <p>Unanswered questions will be recorded in this result as skipped.</p>}
         <div className="as-controls">{firstUnanswered>=0 && <button disabled={busy} className="secondary-button" onClick={()=>setIndex(firstUnanswered)}>Return to unanswered questions</button>}
-          <button className="primary-button" disabled={busy} onClick={()=>{if(!draft || window.confirm('Submit and end this draft? Results are temporary.'))submit.mutate()}}>{submit.isPending?'Checking answers…':firstUnanswered>=0?'Submit anyway':'Submit Assessment'}</button></div>
-        {submit.isError && <p role="alert">{submit.error.message}</p>}</>}</section>
+          <button className="primary-button" disabled={busy} onClick={()=>{if(!draft || window.confirm('Submit this draft and save your assessment result?'))submit.mutate()}}>{submit.isPending?'Checking answers…':firstUnanswered>=0?'Submit anyway':'Submit Assessment'}</button></div>
+        {submit.isError && <p role="alert">{submit.error.message} {draft && <>Retry submission or <Link to={'/learn/'+session+'/assessment/history'}>check Past attempts</Link>.</>}</p>}</>}</section>
     </>}
     <nav aria-label="Technical references"><a href="https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.2">RFC 9110 · HTTP status codes</a> · <a href="https://docs.spring.io/spring-security/reference/7.1/servlet/authentication/passwords/basic.html">Spring Security 7.1 · HTTP Basic</a></nav>
   </div>

@@ -16,7 +16,7 @@ $before = @(Get-RecoverySnapshot 'devquest_db')
 Invoke-PgTool pg_dump $app ($connection + @('-Fc','-f',$dump,'-d','devquest_db'))
 Invoke-PgTool pg_restore $app @('--list',$dump) | Out-Null
 if (Compare-Object $before @(Get-RecoverySnapshot 'devquest_db')) { throw 'Live data changed during backup. Pause edits and retry.' }
-@{sha256=(Get-FileHash -LiteralPath $dump).Hash; snapshot=$before} | ConvertTo-Json | Set-Content (Join-Path $stage 'manifest.json') -Encoding UTF8
+@{manifestVersion=2; sha256=(Get-FileHash -LiteralPath $dump).Hash; snapshot=$before} | ConvertTo-Json | Set-Content (Join-Path $stage 'manifest.json') -Encoding UTF8
 $destination = Join-Path $root $name
 [IO.Directory]::Move($stage,$destination)
 Write-Output $destination

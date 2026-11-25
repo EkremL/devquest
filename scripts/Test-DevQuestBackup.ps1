@@ -13,7 +13,9 @@ Invoke-PgTool createdb $admin @('-w','-h','127.0.0.1','-p',"$port",'-U',$admin.U
 Invoke-PgTool psql $app ($connection + @('-X','-v','ON_ERROR_STOP=1','-d',$target,'-c',"REVOKE CONNECT ON DATABASE $target FROM PUBLIC"))
 try {
     Invoke-PgTool pg_restore $app ($connection + @('--single-transaction','--no-owner','--no-acl','-d',$target,$dump))
-    $restored = @(Get-RecoverySnapshot $target)
+    $format = if ($null -eq $manifest.manifestVersion) { 1 } else { [int]$manifest.manifestVersion }
+    $restored = @(Get-RecoverySnapshot $target $format)
+    if ($format -eq 1) { Write-Host 'Legacy manifest covers curriculum and progress only.' }
     if (Compare-Object @($manifest.snapshot) $restored) { throw "Restored data differs from backup manifest. Inspect $target." }
 } finally {
     if (Compare-Object $before @(Get-RecoverySnapshot 'devquest_db')) { throw 'Live data changed during verification. Investigate concurrent edits.' }

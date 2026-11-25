@@ -26,6 +26,7 @@ class AssessmentDraftController {
     private final AssessmentEngine engine;
     private final ObjectMapper json;
     private final JdbcTemplate jdbc;
+    private final AttemptHistory attempts;
 
     @Getter @Setter static class Revision {
         @NotNull private UUID id;
@@ -140,10 +141,20 @@ class AssessmentDraftController {
         return Map.of("discarded",true);
     }
 
-    @PostMapping("/submit") List<AssessmentEngine.Feedback> submit(@PathVariable UUID session,@Valid @RequestBody Revision revision) {
-        var draft = locked(session,revision);
-        var results = engine.grade(submission(draft.paper,draft.answers));
+    @Getter @Setter static class Submit extends Revision {
+        @Pattern(regexp="Meets criteria|Partially meets criteria|Needs review") private String rating;
+    }
+
+    @PostMapping("/submit") AttemptHistory.Result submit(@PathVariable UUID session,@Valid @RequestBody Submit operation) {
+        // A waiting SELECT FOR UPDATE can see the row disappear when the first submit commits.
+        // Read the durable receipt in a fresh READ COMMITTED statement in that case.
+        var lockedIds=jdbc.queryForList("SELECT id FROM devquest.assessment_draft WHERE id=? AND session_id=? FOR UPDATE",
+                UUID.class, operation.getId(), session);
+        if (lockedIds.isEmpty()) return attempts.replay(session,operation);
+        var draft=locked(session,operation);
+        var results=engine.grade(submission(draft.paper,draft.answers));
+        var receipt=attempts.store(draft,results,operation.getRating());
         jdbc.update("DELETE FROM devquest.assessment_draft WHERE id=?",draft.id);
-        return results;
+        return receipt;
     }
 }

@@ -45,7 +45,8 @@ $admin = Import-Clixml (Join-Path $installation 'admin.credential.xml')
 Invoke-PgTool createdb $admin @('-w','-h','127.0.0.1','-p',"$port",'-U',$admin.UserName,'--maintenance-db=postgres','-T','template0','-O',$app.UserName,$target)
 Invoke-PgTool psql $app ($connection + @('-X','-v','ON_ERROR_STOP=1','-d',$target,'-c',"REVOKE CONNECT ON DATABASE $target FROM PUBLIC"))
 Invoke-PgTool pg_restore $app ($connection + @('--single-transaction','--no-owner','--no-acl','-d',$target,$dump))
-if (Compare-Object @($manifest.snapshot) @(Get-RecoverySnapshot $target)) { throw 'Recovered data differs' }
+$format = if ($null -eq $manifest.manifestVersion) { 1 } else { [int]$manifest.manifestVersion }
+if (Compare-Object @($manifest.snapshot) @(Get-RecoverySnapshot $target $format)) { throw 'Recovered data differs' }
 ```
 
 5. Confirm the restored revision, mappings, progress and event counts before starting the app. Keep the archive untouched. Start the matching DevQuest release against the recovered database by setting the datasource URL explicitly in the backend terminal. Flyway may apply newer migrations to this recovered copy at startup.
@@ -59,8 +60,22 @@ Set-Location backend
 
 Open the roadmap and export its Markdown. Confirm the expected learning state before resuming writes. Record the chosen database name in the private local datasource configuration before subsequent restarts. The standard backup script targets only devquest_db. If adopting a differently named database permanently, update and verify the backup source as part of that cutover before resuming normal use. Keep the original database for independent review.
 
-## Saved assessment drafts
+## Assessment drafts and submitted attempts
 
-Before first starting a backend that includes V4 against your personal database, use the backup and verification procedure above. A full custom-format database backup taken after V4 includes the assessment draft table and all server-confirmed answers, written text, position and guided question IDs. Treat these archives as personal learning data. Markdown progress exports contain no draft responses.
+Before first starting a backend with a new migration against your personal database, run the backup and verification procedure above. Full database backups include saved draft responses and positions from V4 and submitted attempts from V5. The version 2 manifest fingerprints the complete contents of both tables when the corresponding migration has been applied. This includes the original serialized attempt snapshot and option order. Older manifests can still be checked against the tables they originally covered.
 
-To resume after recovery, restore the full database into a new database as described above and use a DevQuest checkout containing the draft's pinned assessment package. The database supplies local session identity and the saved responses. The repository supplies the authored questions and feedback for that release. Final result pages and edits still awaiting a save are outside the backup. The existing recovery manifest compares curriculum and progress tables; draft-specific restore verification is deferred.
+Restore the full archive to a fresh database. Use a compatible DevQuest build with the original authored package to continue an unfinished draft. Completed attempts carry a bounded snapshot of their paper, answers, guided markers, grading explanations and rubric. History reads this snapshot directly. Optional self-ratings belong to the submission. Unconfirmed edits and earlier temporary practice sessions have no historical record. Keep the repository for Reading deep links. Treat archives and restored databases as personal learning data.
+
+### Rehearse assessment recovery on isolated test data
+
+The test source must contain a guided draft and a completed attempt with guided, independent and written responses. Use a separately created empty database owned by the local test role. The script takes a full custom-format dump into a unique temporary file, hashes it, inspects it, restores it in one transaction and compares all manifest tables before and after. It retains the temporary archive and target database for inspection. Neither parameter accepts the personal database name.
+
+```powershell
+. .\scripts\Recovery-Common.ps1
+$test = Import-Clixml (Join-Path $installation 'test.credential.xml')
+$admin = Import-Clixml (Join-Path $installation 'admin.credential.xml')
+$target = 'devquest_verify_' + [guid]::NewGuid().ToString('N')
+Invoke-PgTool createdb $admin @('-w','-h','127.0.0.1','-p',"$port",'-U',$admin.UserName,'--maintenance-db=postgres','-T','template0','-O',$test.UserName,$target)
+Invoke-PgTool psql $test @('-w','-h','127.0.0.1','-p',"$port",'-U',$test.UserName,'-d',$target,'-c',"REVOKE CONNECT ON DATABASE $target FROM PUBLIC")
+.\scripts\Test-AssessmentRecovery.ps1 -SourceDatabase $sourceTestDatabase -EmptyTarget $target
+```

@@ -39,18 +39,19 @@ export function SelectionFeedback({question, response, feedback}: {question: Que
   </div>
 }
 
-function WrittenReview({feedback,response}: {feedback:Feedback; response?:Answer}) {
+function WrittenReview({feedback,response,historicalRating}: {feedback:Feedback; response?:Answer; historicalRating?:string|null}) {
   return <div className="as-explanation"><h4>Your explanation</h4><p className="as-written">{response?.text || 'Not answered'}</p>
     <h4>Expert model explanation</h4><p>{feedback.guide.reason}</p>
-    <fieldset><legend>Self-review rubric</legend><p>Compare your explanation with the model. Mark each criterion your response addresses. These are your own unsaved observations.</p>
+    {historicalRating!==undefined ? <><h4>Self-review rubric</h4><ul>{feedback.guide.rubric.map(line=><li key={line}>{line}</li>)}</ul>
+      <p>Self-rating at submission · {historicalRating??'No rating provided'}</p></> : <><fieldset><legend>Self-review rubric</legend><p>Compare your explanation with the model. Mark each criterion your response addresses. These are your own unsaved observations.</p>
       {feedback.guide.rubric.map(line=><label key={line}><input type="checkbox"/>{line}</label>)}</fieldset>
     <label className="as-rating">Your self-review rating (optional)
-      <select defaultValue=""><option value="">Choose a rating</option>{['Meets criteria','Partially meets criteria','Needs review'].map(value=><option key={value}>{value}</option>)}</select></label>
+      <select defaultValue=""><option value="">Choose a rating</option>{['Meets criteria','Partially meets criteria','Needs review'].map(value=><option key={value}>{value}</option>)}</select></label></>}
   </div>
 }
 
-export function PracticeResults({paper,results,answers,guided,session}: {
-  paper:Paper; results:Feedback[]; answers:Record<string,Answer>; guided:Record<string,Feedback>; session:string
+export function PracticeResults({paper,results,answers,guided,session,historicalRating}: {
+  paper:Paper; results:Feedback[]; answers:Record<string,Answer>; guided:Record<string,Feedback>; session:string; historicalRating?:string|null
 }) {
   const headings = useRef<(HTMLHeadingElement | null)[]>([])
   const items = paper.questions.map(question => ({question, feedback:results.find(f=>f.question===question.id)!}))
@@ -101,7 +102,8 @@ export function PracticeResults({paper,results,answers,guided,session}: {
         </div>
         <h3 tabIndex={-1} ref={element => { headings.current[i] = element }}>{question.prompt}</h3>
         <small>{paper.objectives[question.objective]}</small>
-        {question.type==='written'?<WrittenReview feedback={feedback} response={answers[question.id]}/>:
+        {historicalRating!==undefined && question.sample && <figure className="rd-sample"><figcaption>Question exhibit</figcaption><pre tabIndex={0}>{question.sample}</pre></figure>}
+        {question.type==='written'?<WrittenReview historicalRating={historicalRating} feedback={feedback} response={answers[question.id]}/>:
           <SelectionFeedback question={question} response={answers[question.id]} feedback={feedback}/>}
         <Link to={'/learn/'+session+'/read#'+feedback.guide.anchor}>Review the relevant passage</Link>
       </section>

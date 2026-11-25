@@ -103,9 +103,41 @@ class LearningIT {
         assertThat(post(session,"draft/save",current.replace("\"version\":1","\"version\":2").replace("refusal","challenge")).statusCode()).isEqualTo(409);
         String revision = "{\"id\":\"" + id + "\",\"version\":2}";
         assertThat(post(session,"draft/discard",revision.replace(":2",":1")).statusCode()).isEqualTo(409);
-        assertThat(post(session,"draft/submit",revision).statusCode()).isEqualTo(200);
+        String attemptsPath="/sessions/"+session+"/assessment/attempts";
+        String rated=revision.substring(0,revision.length()-1)+",\"rating\":\"Needs review\"}";
+        assertThat(post(session,"draft/submit",rated.replace("Needs review","automatic")).statusCode()).isEqualTo(400);
+        assertThat(post(session,"draft/submit",rated.replace(":2",":1")).statusCode()).isEqualTo(409);
+        assertThat(get(path).body()).contains(id);
+        var parallel=java.util.concurrent.CompletableFuture.supplyAsync(()->{
+            try { return post(session,"draft/submit",rated); }
+            catch(Exception e){ throw new java.util.concurrent.CompletionException(e); }
+        });
+        var receipt=post(session,"draft/submit",rated);
+        assertThat(receipt.statusCode()).isEqualTo(200);
+        assertThat(parallel.get().body()).isEqualTo(receipt.body());
+        assertThat(post(session,"draft/submit",rated).body()).isEqualTo(receipt.body());
+        assertThat(post(session,"draft/save",current).statusCode()).isEqualTo(409);
+        var result=mapper.readTree(get(attemptsPath+"/"+id).body());
+        assertThat(result).isEqualTo(mapper.readTree(receipt.body()));
+        assertThat(result.get("summary").get("guided").asInt()).isEqualTo(1);
+        assertThat(result.get("summary").get("correct").asInt()).isZero();
+        assertThat(result.get("summary").get("skipped").asInt()).isEqualTo(10);
+        assertThat(result.get("summary").get("rating").asString()).isEqualTo("Needs review");
+        assertThat(result.get("snapshot").get("paper")).isEqualTo(first.get("paper"));
+        assertThat(result.get("snapshot").get("answers")).isEqualTo(resumed.get("answers"));
+        assertThat(result.get("snapshot").get("results").get(0).get("guide")).isEqualTo(resumed.get("guided").get("reader-policy").get("guide"));
+        assertThat(result.get("snapshot").get("results").get(11).get("outcome").asString()).isEqualTo("Self-review");
+        assertThat(get("/sessions/"+UUID.randomUUID()+"/assessment/attempts/"+id).statusCode()).isEqualTo(404);
+        assertThat(get(attemptsPath+"?page=-1").statusCode()).isEqualTo(400);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM devquest.assessment_attempt WHERE id=?",Integer.class,UUID.fromString(id))).isOne();
+        org.assertj.core.api.Assertions.assertThatThrownBy(()->jdbc.update("UPDATE devquest.assessment_attempt SET guided=0 WHERE id=?",UUID.fromString(id)))
+                .isInstanceOf(org.springframework.dao.DataAccessException.class);
+
         assertThat(mapper.readTree(get(path).body()).get("draft").isNull()).isTrue();
         var fresh = mapper.readTree(post(session,"draft","{}").body());
+        assertThat(fresh.get("id").asString()).isNotEqualTo(id);
+        assertThat(fresh.get("guided").size()).isZero();
+        assertThat(post(session,"draft/submit",rated).body()).isEqualTo(receipt.body());
         assertThat(post(session,"draft/discard",revision.replace(id,fresh.get("id").asString()).replace(":2",":0")).statusCode()).isEqualTo(200);
         assertThat(progressSnapshot()).isEqualTo(before);
     }
@@ -121,8 +153,67 @@ class LearningIT {
         assertThat(resumed.getId()).isEqualTo(draft.getId());
         assertThat(resumed.getPaper().getRelease()).isEqualTo(2);
         assertThat(resumed.getPosition()).isEqualTo("challenge-evidence");
+        var operation=new AssessmentDraftController.Submit();
+        operation.setId(resumed.getId());
+        operation.setVersion(resumed.getVersion());
+        var historical=drafts.submit(session,operation);
+        assertThat(historical.getSummary().getRelease()).isEqualTo(2);
+        assertThat(historical.getSnapshot().get("results").get(1).get("guide").get("correct").size()).isEqualTo(2);
         assertThat(resumed.getPaper().getQuestions()).extracting(AssessmentEngine.Question::getId)
                 .contains("challenge-evidence").doesNotContain("interpret-challenge");
+    }
+
+    @Test void failureClosingDraftRollsBackTheInsertedAttempt() throws Exception {
+        var session=pilotSession();
+        var mapper=new tools.jackson.databind.ObjectMapper();
+        var draft=mapper.readTree(post(session,"draft","{}").body());
+        UUID id=UUID.fromString(draft.get("id").asString());
+        String edit="""
+                {"id":"%s","version":0,"position":"regression-plan","answers":[
+                  {"question":"reader-policy","choices":["refusal"]},
+                  {"question":"regression-plan","choices":[],"text":"Check both response paths."}]}
+                """.formatted(id);
+        assertThat(post(session,"draft/save",edit).statusCode()).isEqualTo(200);
+        assertThat(post(session,"draft/check/reader-policy",edit.replace("\"version\":0","\"version\":1")).statusCode()).isEqualTo(200);
+        String draftPath="/sessions/"+session+"/assessment/draft";
+        var saved=mapper.readTree(get(draftPath).body()).get("draft");
+        assertThat(saved.get("answers").size()).isEqualTo(2);
+        assertThat(saved.get("guided").size()).isOne();
+        assertThat(saved.get("position").asString()).isEqualTo("regression-plan");
+        String revision=mapper.writeValueAsString(java.util.Map.of("id",id,"version",saved.get("version").asLong()));
+        // A real FK failure occurs after the attempt INSERT, at the draft DELETE.
+        String fixture="devquest.test_hold_"+id.toString().replace("-","");
+        jdbc.execute("CREATE TABLE "+fixture+" (draft_id uuid REFERENCES devquest.assessment_draft(id))");
+        try {
+            jdbc.update("INSERT INTO "+fixture+" VALUES (?)",id);
+            assertThat(post(session,"draft/submit",revision).statusCode()).isBetween(400,599);
+            assertThat(mapper.readTree(get(draftPath).body()).get("draft")).isEqualTo(saved);
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM devquest.assessment_attempt WHERE id=?",Integer.class,id)).isZero();
+            assertThat(get("/sessions/"+session+"/assessment/attempts/"+id).statusCode()).isEqualTo(404);
+        } finally {
+            jdbc.execute("DROP TABLE "+fixture);
+        }
+        var receipt=post(session,"draft/submit",revision);
+        assertThat(receipt.statusCode()).isEqualTo(200);
+        assertThat(mapper.readTree(receipt.body()).get("snapshot").get("answers")).isEqualTo(saved.get("answers"));
+        assertThat(mapper.readTree(get(draftPath).body()).get("draft").isNull()).isTrue();
+    }
+
+    @Test void concurrentSaveAndSubmitUseOneDraftVersion() throws Exception {
+        var session=pilotSession();
+        var mapper=new tools.jackson.databind.ObjectMapper();
+        var draft=mapper.readTree(post(session,"draft","{}").body());
+        String id=draft.get("id").asString();
+        String operation="{\"id\":\""+id+"\",\"version\":0}";
+        String edit=operation.substring(0,operation.length()-1)+",\"position\":\"@review\",\"answers\":[]}";
+        var concurrent=java.util.concurrent.CompletableFuture.supplyAsync(()->{
+            try { return post(session,"draft/save",edit).statusCode(); }
+            catch(Exception e){throw new java.util.concurrent.CompletionException(e);}
+        });
+        int submitted=post(session,"draft/submit",operation).statusCode();
+        assertThat(java.util.List.of(concurrent.get(),submitted)).containsExactlyInAnyOrder(200,409);
+        if(submitted==409) assertThat(post(session,"draft/submit",operation.replace(":0",":1")).statusCode()).isEqualTo(200);
+        assertThat(get("/sessions/"+session+"/assessment/attempts/"+id).statusCode()).isEqualTo(200);
     }
 
     private HttpResponse<String> submit(UUID id, String body) throws Exception {
