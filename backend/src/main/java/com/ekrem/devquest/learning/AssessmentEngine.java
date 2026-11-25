@@ -105,7 +105,9 @@ class AssessmentEngine {
     private static void require(boolean valid) {
         if (!valid) throw new IllegalArgumentException("Invalid assessment package");
     }
-    Optional<Paper> paper() { return Optional.ofNullable(releases.get(ACTIVE_RELEASE)).map(Package::getPaper); }
+    Optional<Paper> paper() { return paper(ACTIVE_RELEASE); }
+
+    Optional<Paper> paper(int release) { return Optional.ofNullable(releases.get(release)).map(Package::getPaper); }
 
     Feedback check(Submission submission) {
         if (submission.answers.size() != 1) throw invalid();

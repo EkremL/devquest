@@ -1,17 +1,19 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { BrowserRouter, NavLink, Route, Routes, Link, useLocation } from 'react-router'
+import { createBrowserRouter, RouterProvider, NavLink, Route, Routes, Link, useLocation } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CodeXml, GitBranch, LayoutDashboard, Map, Network, ShieldCheck, Waypoints } from 'lucide-react'
 import { Overview } from './Overview'
 import { RoadmapPage } from './features/curriculum/RoadmapPage'
 import { DataSafetyPage } from './features/data-safety/DataSafetyPage'
 import { ReadingPage } from './features/learning/ReadingPage'
-import { AssessmentPage } from './features/learning/AssessmentPage'
+import { DraftWorkspace } from './features/learning/DraftWorkspace'
 const SkillTreePage = lazy(() => import('./features/skill-tree/SkillAtlas'))
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 15_000 } } })
+let appRouter: ReturnType<typeof createBrowserRouter> | undefined
 export function App() {
-  return <QueryClientProvider client={queryClient}><BrowserRouter><AppRoutes /></BrowserRouter></QueryClientProvider>
+  appRouter ??= createBrowserRouter([{path:"*",element:<AppRoutes/>}])
+  return <QueryClientProvider client={queryClient}><RouterProvider router={appRouter}/></QueryClientProvider>
 }
 export function AppRoutes() {
   const location = useLocation()
@@ -45,7 +47,7 @@ export function AppRoutes() {
           <Route path="/roadmap/modules/:moduleId" element={<RoadmapPage />} />
           <Route path="/roadmap/sessions/:sessionId" element={<RoadmapPage />} />
           <Route path="/learn/:sessionId/read" element={<ReadingPage />} />
-          <Route path="/learn/:sessionId/assessment" element={<AssessmentPage />} />
+          <Route path="/learn/:sessionId/assessment" element={<DraftWorkspace />} />
           <Route path="/roadmap/competencies" element={<RoadmapPage />} />
           <Route path="*" element={<div className="empty-state"><h1>Page not found</h1><Link to="/roadmap">Return to roadmap</Link></div>} />
         </Routes>

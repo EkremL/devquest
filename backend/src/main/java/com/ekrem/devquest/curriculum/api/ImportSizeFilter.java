@@ -11,7 +11,7 @@ import java.io.*;
 public class ImportSizeFilter extends OncePerRequestFilter {
     @Override protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response,FilterChain chain) throws ServletException,IOException {
         boolean assessment = request.getRequestURI().startsWith("/api/learning/sessions/")
-                && (request.getRequestURI().endsWith("/assessment/submit") || request.getRequestURI().endsWith("/assessment/check"));
+                && (request.getRequestURI().endsWith("/assessment/submit") || request.getRequestURI().contains("/assessment/draft") || request.getRequestURI().endsWith("/assessment/check"));
         boolean preview = request.getRequestURI().startsWith("/api/") && request.getRequestURI().contains("import-previews");
         if(request.getMethod().equals("POST") && (assessment || preview)) {
             int limit = assessment ? 32768 : 750000;

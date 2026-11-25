@@ -65,6 +65,66 @@ class LearningIT {
         assertThat(progressSnapshot()).isEqualTo(before);
     }
 
+    @Test void draftLifecycleUsesPinnedContentVersionedWritesAndServerOwnedReveals() throws Exception {
+        var session = pilotSession();
+        var path = "/sessions/" + session + "/assessment/draft";
+        var mapper = new tools.jackson.databind.ObjectMapper();
+        var before = progressSnapshot();
+        assertThat(mapper.readTree(get(path).body()).get("draft").isNull()).isTrue();
+        var first = mapper.readTree(post(session,"draft","{}").body());
+        String id = first.get("id").asString();
+        assertThat(first.get("paper").get("release").asInt()).isEqualTo(3);
+        assertThat(mapper.readTree(post(session,"draft","{}").body()).get("id").asString()).isEqualTo(id);
+        String edit = """
+            {"id":"%s","version":0,"position":"regression-plan","answers":[
+            {"question":"reader-policy","choices":["refusal"]},{"question":"regression-plan","choices":[],"text":"Test both paths."}]}
+            """.formatted(id);
+        assertThat(post(UUID.randomUUID(),"draft/save",edit).statusCode()).isEqualTo(404);
+        assertThat(post(session,"draft/save",edit.replace("reader-policy","foreign")).statusCode()).isEqualTo(400);
+        assertThat(post(session,"draft/save",edit.replace("refusal","foreign")).statusCode()).isEqualTo(400);
+        assertThat(post(session,"draft/save",edit.replace("\"refusal\"","\"refusal\",\"challenge\"")).statusCode()).isEqualTo(400);
+        assertThat(post(session,"draft/save",edit.replace("Test both paths.","x".repeat(4001))).statusCode()).isEqualTo(400);
+        assertThat(post(session,"draft/save",edit.replace("regression-plan","foreign")).statusCode()).isEqualTo(400);
+        assertThat(post(session,"draft/save",edit+" ".repeat(33000)).statusCode()).isEqualTo(413);
+        var saved = post(session,"draft/save",edit);
+        assertThat(saved.statusCode()).isEqualTo(200);
+        assertThat(saved.body()).doesNotContain("\"correct\":","\"reason\":");
+        assertThat(post(session,"draft/save",edit).statusCode()).isEqualTo(409);
+        String current = edit.replace("\"version\":0","\"version\":1");
+        assertThat(mapper.readTree(post(session,"draft/save",current).body()).get("version").asLong()).isEqualTo(1);
+        assertThat(post(session,"draft/check/regression-plan",current).statusCode()).isEqualTo(400);
+        var checked = post(session,"draft/check/reader-policy",current);
+        assertThat(checked.statusCode()).isEqualTo(200);
+        var resumed = mapper.readTree(get(path).body()).get("draft");
+        assertThat(resumed.get("guided").size()).isEqualTo(1);
+        assertThat(resumed.get("guided").get("reader-policy").get("outcome").asString()).isEqualTo("Correct");
+        assertThat(resumed.get("position").asString()).isEqualTo("regression-plan");
+        assertThat(resumed.get("answers").get(1).get("text").asString()).isEqualTo("Test both paths.");
+        assertThat(post(session,"draft/save",current.replace("\"version\":1","\"version\":2").replace("refusal","challenge")).statusCode()).isEqualTo(409);
+        String revision = "{\"id\":\"" + id + "\",\"version\":2}";
+        assertThat(post(session,"draft/discard",revision.replace(":2",":1")).statusCode()).isEqualTo(409);
+        assertThat(post(session,"draft/submit",revision).statusCode()).isEqualTo(200);
+        assertThat(mapper.readTree(get(path).body()).get("draft").isNull()).isTrue();
+        var fresh = mapper.readTree(post(session,"draft","{}").body());
+        assertThat(post(session,"draft/discard",revision.replace(id,fresh.get("id").asString()).replace(":2",":0")).statusCode()).isEqualTo(200);
+        assertThat(progressSnapshot()).isEqualTo(before);
+    }
+
+    @Autowired AssessmentDraftController drafts;
+
+    @Test @Transactional void resumesOriginalReleaseWhenTheCurrentPaperIsNewer() {
+        UUID session = pilotSession();
+        var draft = drafts.start(session);
+        // Reproduce a pre-upgrade row inside the rolled-back test transaction.
+        jdbc.update("UPDATE devquest.assessment_draft SET release=2,position='challenge-evidence' WHERE id=?", draft.getId());
+        var resumed = drafts.read(session).getDraft();
+        assertThat(resumed.getId()).isEqualTo(draft.getId());
+        assertThat(resumed.getPaper().getRelease()).isEqualTo(2);
+        assertThat(resumed.getPosition()).isEqualTo("challenge-evidence");
+        assertThat(resumed.getPaper().getQuestions()).extracting(AssessmentEngine.Question::getId)
+                .contains("challenge-evidence").doesNotContain("interpret-challenge");
+    }
+
     private HttpResponse<String> submit(UUID id, String body) throws Exception {
         return post(id, "submit", body);
     }

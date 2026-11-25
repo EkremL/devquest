@@ -58,3 +58,9 @@ Set-Location backend
 ```
 
 Open the roadmap and export its Markdown. Confirm the expected learning state before resuming writes. Record the chosen database name in the private local datasource configuration before subsequent restarts. The standard backup script targets only devquest_db. If adopting a differently named database permanently, update and verify the backup source as part of that cutover before resuming normal use. Keep the original database for independent review.
+
+## Saved assessment drafts
+
+Before first starting a backend that includes V4 against your personal database, use the backup and verification procedure above. A full custom-format database backup taken after V4 includes the assessment draft table and all server-confirmed answers, written text, position and guided question IDs. Treat these archives as personal learning data. Markdown progress exports contain no draft responses.
+
+To resume after recovery, restore the full database into a new database as described above and use a DevQuest checkout containing the draft's pinned assessment package. The database supplies local session identity and the saved responses. The repository supplies the authored questions and feedback for that release. Final result pages and edits still awaiting a save are outside the backup. The existing recovery manifest compares curriculum and progress tables; draft-specific restore verification is deferred.

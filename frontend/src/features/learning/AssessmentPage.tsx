@@ -6,6 +6,7 @@ import { CodeSample } from './CodeSample'
 import type { Language } from './api'
 import { SelectionFeedback, PracticeResults } from './AssessmentFeedback'
 import { AssessmentBadge, QuestionNavigator, questionState } from './AssessmentStates'
+import type { DraftControls } from './DraftWorkspace'
 import './assessment.css'
 
 export interface Question {
@@ -27,20 +28,25 @@ export function AssessmentPage() {
   return <Practice key={sessionId + ':' + query.data.release} paper={query.data} path={path} session={sessionId}/>
 }
 
-function Practice({paper,path,session}: {paper: Paper; path: string; session: string}) {
-  const [index,setIndex] = useState(0)
-  const [answers,setAnswers] = useState<Record<string,Answer>>({})
-  const [guided,setGuided] = useState<Record<string,Feedback>>({})
+export function Practice({paper,path,session,draft}: {paper: Paper; path: string; session: string; draft?:DraftControls}) {
+  const [localIndex,setLocalIndex] = useState(0)
+  const [localAnswers,setLocalAnswers] = useState<Record<string,Answer>>({})
+  const [localGuided,setGuided] = useState<Record<string,Feedback>>({})
+  const index=draft?.index ?? localIndex
+  const answers=draft?.answers ?? localAnswers
+  const guided=draft?.guided ?? localGuided
+  const setIndex=draft?.setIndex ?? setLocalIndex
+  const setAnswers=draft?.setAnswers ?? setLocalAnswers
   function evaluate<T>(action:string, responses:Answer[]) {
     return request<T>(path+'/'+action, {
       method:'POST', headers:{'Content-Type':'application/json','X-DevQuest-Request':'1'},
       body:JSON.stringify({key:paper.key,release:paper.release,answers:responses})
     })
   }
-  const check = useMutation({mutationFn:(response: Answer)=>evaluate<Feedback>('check',[response]),
+  const check = useMutation({mutationFn:(response: Answer)=>draft ? draft.check(response) : evaluate<Feedback>('check',[response]),
     onSuccess:feedback=>setGuided(previous=>({...previous,[feedback.question]:feedback})), retry:false})
-  const submit = useMutation({mutationFn:()=>evaluate<Feedback[]>('submit',Object.values(answers)),retry:false})
-  const busy = submit.isPending || check.isPending
+  const submit = useMutation({mutationFn:()=>draft ? draft.submit() : evaluate<Feedback[]>('submit',Object.values(answers)),retry:false})
+  const busy = submit.isPending || check.isPending || !!draft?.busy
   const heading = useRef<HTMLHeadingElement>(null)
   const previousView = useRef('0:false')
   useEffect(() => {
@@ -62,11 +68,12 @@ function Practice({paper,path,session}: {paper: Paper; path: string; session: st
   return <div className="assessment reading-page">
     <nav aria-label="Session navigation"><Link to={'/roadmap/sessions/'+session}>Session checklist</Link> / <Link to={'/learn/'+session+'/read'}>Reading workspace</Link></nav>
     <header className="rd-hero"><div><p className="rd-kicker">Practice Mode · Session 2.6</p><h1>401 and 403</h1>
-      <p>Assessment · {paper.questions.length} questions. Attempts are unsaved. Refreshing or leaving clears this practice.</p></div></header>
+      <p>Assessment · {paper.questions.length} questions. {draft ? 'Only server-confirmed draft changes survive closing. Submitted results are temporary.' : 'Attempts are unsaved. Refreshing or leaving clears this practice.'}</p></div></header>
+    {draft && !result && draft.panel}
     {result ? <>
       <h2 ref={heading} tabIndex={-1}>Practice results</h2>
       <PracticeResults paper={paper} results={result} answers={answers} guided={guided} session={session}/>
-      <button className="primary-button" onClick={()=>{submit.reset();check.reset();setGuided({});setAnswers({});setIndex(0)}}>Start new practice</button>
+      <button className="primary-button" onClick={()=>{if(draft){draft.restart();return}submit.reset();check.reset();setGuided({});setAnswers({});setIndex(0)}}>Start new practice</button>
     </> : <>
       <p>Use the pilot’s hypothetical Servlet Basic API. Each request starts fresh over HTTPS. The healthy summary endpoint requires TASK_READ. Examples are illustrative.</p>
       <QuestionNavigator questions={paper.questions} current={index} busy={busy}
@@ -100,10 +107,10 @@ function Practice({paper,path,session}: {paper: Paper; path: string; session: st
         <div className="as-controls"><button className="secondary-button" disabled={busy || index===0} onClick={()=>setIndex(index-1)}>Previous</button>
           <button className="primary-button" disabled={busy} onClick={()=>setIndex(index+1)}>{index===paper.questions.length-1?'Review answers':'Next question'}</button></div>
       </> : <><h2 tabIndex={-1} ref={heading}>Review your answers</h2><p>{count} of {paper.questions.length} answered · {paper.questions.length-count} unanswered · {Object.keys(guided).length} with feedback revealed.</p>
-        <p>Written response · {answered(paper.questions.find(item=>item.type==='written')!.id)?'Provided':'Not answered'}. This practice is unsaved.</p>
+        <p>Written response · {answered(paper.questions.find(item=>item.type==='written')!.id)?'Provided':'Not answered'}. {draft?'Submission ends your saved draft. Results last only on this page.':'This practice is unsaved.'}</p>
         {firstUnanswered>=0 && <p>Unanswered questions will be recorded in this result as skipped.</p>}
         <div className="as-controls">{firstUnanswered>=0 && <button disabled={busy} className="secondary-button" onClick={()=>setIndex(firstUnanswered)}>Return to unanswered questions</button>}
-          <button className="primary-button" disabled={busy} onClick={()=>submit.mutate()}>{submit.isPending?'Checking answers…':firstUnanswered>=0?'Submit anyway':'Submit Assessment'}</button></div>
+          <button className="primary-button" disabled={busy} onClick={()=>{if(!draft || window.confirm('Submit and end this draft? Results are temporary.'))submit.mutate()}}>{submit.isPending?'Checking answers…':firstUnanswered>=0?'Submit anyway':'Submit Assessment'}</button></div>
         {submit.isError && <p role="alert">{submit.error.message}</p>}</>}</section>
     </>}
     <nav aria-label="Technical references"><a href="https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.2">RFC 9110 · HTTP status codes</a> · <a href="https://docs.spring.io/spring-security/reference/7.1/servlet/authentication/passwords/basic.html">Spring Security 7.1 · HTTP Basic</a></nav>
