@@ -28,7 +28,7 @@ class AssessmentEngineTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"http-401-and-403, 3", "identity-and-access-vocabulary, 1"})
+    @CsvSource({"http-401-and-403, 3", "identity-and-access-vocabulary, 1", "security-philosophy, 1"})
     void activePaperUsesTheSingleAnswerBlueprint(String key, int release) {
         var mapper = new ObjectMapper();
         var engine = new AssessmentEngine(mapper, new LessonPackage(mapper));
@@ -46,15 +46,16 @@ class AssessmentEngineTest {
         assertThat(questions.subList(8, 12)).allMatch(q -> q.getDifficulty().equals("Advanced"));
     }
 
-    @Test void vocabularyReleaseGradesEachChoiceAgainstItsOwnAnswerKey() throws Exception {
-        String key = "identity-and-access-vocabulary";
+    @ParameterizedTest
+    @CsvSource({"identity-and-access-vocabulary, 4, 16", "security-philosophy, 1, 12"})
+    void authoredReleaseGradesEachChoiceAgainstItsOwnAnswerKey(String key, int readingRelease, int topicCount) throws Exception {
         var mapper = new ObjectMapper();
         var engine = new AssessmentEngine(mapper, new LessonPackage(mapper));
         var paper = engine.paper(key, 1).orElseThrow();
-        assertThat(paper.getReadingRelease()).isEqualTo(4);
+        assertThat(paper.getReadingRelease()).isEqualTo(readingRelease);
         try (var file = getClass().getResourceAsStream("/assessments/" + key + "/1/assessment.json")) {
             var packageContent = mapper.readValue(file, AssessmentEngine.Package.class);
-            assertThat(packageContent.getKeys().values().stream().flatMap(guide -> guide.getTopics().stream()).distinct()).hasSize(16);
+            assertThat(packageContent.getKeys().values().stream().flatMap(guide -> guide.getTopics().stream()).distinct()).hasSize(topicCount);
             var submission = new AssessmentEngine.Submission();
             submission.setKey(key);
             submission.setRelease(1);

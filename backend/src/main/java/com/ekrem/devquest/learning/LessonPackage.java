@@ -28,8 +28,8 @@ class LessonPackage {
 
     LessonPackage(ObjectMapper json) {
         pilot = load(json, "http-401-and-403", 4);
-        published = java.util.stream.Stream.concat(
-                load(json, "identity-and-access-vocabulary", 4).stream(), pilot.stream()).toList();
+        published = java.util.stream.Stream.of(load(json, "identity-and-access-vocabulary", 4),
+                load(json, "security-philosophy", 1), pilot).flatMap(Optional::stream).toList();
         archived = java.util.stream.IntStream.of(1, 2, 3)
                 .mapToObj(release -> load(json, "identity-and-access-vocabulary", release))
                 .flatMap(Optional::stream).toList();
@@ -210,7 +210,7 @@ class LessonPackage {
             else if (node instanceof Link link && link.getFirstChild() instanceof Text label && label.getNext() == null) {
                 var destination = URI.create(link.getDestination());
                 require("https".equals(destination.getScheme())
-                        && Set.of("www.rfc-editor.org", "docs.spring.io", "docs.oracle.com", "pages.nist.gov")
+                        && Set.of("www.rfc-editor.org", "docs.spring.io", "docs.oracle.com", "pages.nist.gov", "cheatsheetseries.owasp.org")
                                 .contains(destination.getHost() == null ? "" : destination.getHost())
                         && destination.getRawUserInfo() == null && destination.getPort() == -1, "Unsupported reference URL");
                 spans.add(new Span("link", label.getLiteral(), destination.toASCIIString()));

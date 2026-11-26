@@ -34,7 +34,9 @@ class LessonPackageTest {
         assertThat(manifest.getRelease()).isEqualTo(4);
         assertThat(lesson.getSections()).hasSize(5);
         for (int release : new int[]{1, 2, 3}) {
-            var archived = packages.releases(release).getFirst();
+            var archived = packages.releases(release).stream()
+                    .filter(candidate -> manifest.getKey().equals(candidate.getManifest().getKey()))
+                    .findFirst().orElseThrow();
             assertThat(archived.getManifest().getRelease()).isEqualTo(release);
             assertThat(archived.getManifest().getTopics()).isEqualTo(manifest.getTopics());
             assertThat(archived.getManifest().getBinding()).isEqualTo(manifest.getBinding());

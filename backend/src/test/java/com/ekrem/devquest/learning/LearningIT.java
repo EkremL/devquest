@@ -266,7 +266,7 @@ class LearningIT {
         UUID id = pilotSession();
         UUID vocabulary = session("Session 1.1 — Identity and Access Vocabulary");
         String before = progressSnapshot();
-        assertThat(get("/catalog").body()).isEqualTo("[\"" + vocabulary + "\",\"" + id + "\"]");
+        assertThat(get("/catalog").body()).isEqualTo("[\"" + vocabulary + "\",\"" + philosophySession() + "\",\"" + id + "\"]");
         var lesson = get("/sessions/" + id + "/lesson");
         assertThat(lesson.statusCode()).isEqualTo(200);
         assertThat(lesson.body()).contains("http-401-and-403", "predict-the-response", "401 Unauthorized",
@@ -313,7 +313,7 @@ class LearningIT {
                 "study-resource-server", "study-authentication-server", "study-identity-provider", "study-human-to-service", "study-service-to-service");
         assertThat(links).hasSize(16);
         assertThat(get("/sessions/" + id + "/topics").statusCode()).isEqualTo(200);
-        assertThat(learning.assessmentCatalog()).containsExactly(id, pilotSession());
+        assertThat(learning.assessmentCatalog()).containsExactly(id, philosophySession(), pilotSession());
         var paper = get("/sessions/" + id + "/assessment");
         assertThat(paper.statusCode()).isEqualTo(200);
         assertThat(paper.body()).contains("identity-and-access-vocabulary", "\"release\":1", "\"readingRelease\":4")
@@ -425,7 +425,7 @@ class LearningIT {
 
     @Test @Transactional void identicalLabelInAnotherSessionDoesNotAcquireLink() {
         UUID id = pilotSession();
-        UUID other = session("Session 1.2 — Security Philosophy");
+        UUID other = session("Session 1.3 — HTTP Authentication Basics");
         jdbc.update("""
                 UPDATE devquest.source_item_mapping m SET label='Meaning of 401 Unauthorized', source_line=257
                 FROM devquest.curriculum_node n WHERE n.id=m.node_id AND n.stable_id=? AND m.position=0
@@ -441,6 +441,54 @@ class LearningIT {
 
     private UUID pilotSession() {
         return session("Session 2.6 — 401 and 403");
+    }
+
+    private UUID philosophySession() {
+        return session("Session 1.2 — Security Philosophy");
+    }
+
+    @Test void servesPhilosophyLinksAndIsolatesItsAssessmentHistory() throws Exception {
+        UUID id = philosophySession();
+        UUID other = session("Session 1.1 — Identity and Access Vocabulary");
+        String before = progressSnapshot();
+        var reading = get("/sessions/" + id + "/lesson");
+        assertThat(reading.statusCode()).isEqualTo(200);
+        assertThat(reading.body()).contains("\"key\":\"security-philosophy\"", "\"release\":1", "ExportReadPolicy");
+        var links = learning.topicLinks(id);
+        var ordered = jdbc.queryForList("""
+                SELECT m.item_id FROM devquest.source_item_mapping m JOIN devquest.curriculum_node n ON n.id=m.node_id
+                JOIN devquest.curriculum c ON c.current_revision_id=m.revision_id WHERE n.stable_id=? ORDER BY m.position
+                """, UUID.class, id);
+        assertThat(ordered.stream().map(links::get)).containsExactly("study-assets", "study-trust-boundaries",
+                "study-threat-modeling", "study-attack-surface", "study-least-privilege", "study-deny-by-default",
+                "study-secure-defaults", "study-defense-in-depth", "study-secure-failure", "study-authentication-and-trust",
+                "study-authentication-and-policy", "study-policy-enforcement");
+        var mapper = new tools.jackson.databind.ObjectMapper();
+        var paper = get("/sessions/" + id + "/assessment");
+        assertThat(paper.statusCode()).isEqualTo(200);
+        assertThat(paper.body()).contains("\"readingRelease\":1").doesNotContain("\"correct\"", "\"reason\"", "\"rubric\"");
+        var draft = mapper.readTree(post(id,"draft","{}").body());
+        String attempt = draft.get("id").asString();
+        assertThat(draft.get("paper").get("key").asString()).isEqualTo("security-philosophy");
+        String edit = """
+                {"id":"%s","version":%d,"position":"@review","answers":[
+                  {"question":"asset-in-the-status","choices":["protect"]},
+                  {"question":"boundary-evidence","choices":["verified"]}]}
+                """.formatted(attempt,draft.get("version").asLong());
+        var check = post(id,"draft/check/asset-in-the-status",edit);
+        assertThat(check.statusCode()).isEqualTo(200);
+        var saved = mapper.readTree(check.body());
+        assertThat(mapper.readTree(get("/sessions/" + id + "/assessment/draft").body()).get("draft")).isEqualTo(saved);
+        String submit = "{\"id\":\"" + attempt + "\",\"version\":" + saved.get("version").asLong() + "}";
+        var submitted = post(id,"draft/submit",submit);
+        assertThat(submitted.statusCode()).isEqualTo(200);
+        var summary = mapper.readTree(submitted.body()).get("summary");
+        assertThat(summary.get("guided").asInt()).isOne();
+        assertThat(summary.get("correct").asInt()).isOne();
+        assertThat(get("/sessions/" + id + "/assessment/attempts").body()).contains(attempt);
+        assertThat(get("/sessions/" + other + "/assessment/attempts/" + attempt).statusCode()).isEqualTo(404);
+        assertThat(get("/sessions/" + pilotSession() + "/assessment/attempts/" + attempt).statusCode()).isEqualTo(404);
+        assertThat(progressSnapshot()).isEqualTo(before);
     }
 
     private UUID session(String title) {

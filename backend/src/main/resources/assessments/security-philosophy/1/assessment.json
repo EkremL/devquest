@@ -1,0 +1,415 @@
+{
+  "paper": {
+    "key": "security-philosophy",
+    "release": 1,
+    "readingRelease": 1,
+    "title": "Security Philosophy",
+    "context": "Review the fictional export service as an engineer. Follow the facts the server can verify, then choose the policy or enforcement decision that protects the named resource.",
+    "objectives": {
+      "identify-exposure": "Trace an export request across trust boundaries and identify assets, exposure and controls.",
+      "constrain-policy": "Design narrow permissions and safe defaults for an export operation.",
+      "fail-without-disclosure": "Choose independent enforcement layers and preserve confidentiality when a decision cannot be made.",
+      "place-enforcement": "Separate authentication evidence, trust decisions, written policy and runtime enforcement."
+    },
+    "questions": [
+      {
+        "id": "asset-in-the-status",
+        "objective": "identify-exposure",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "An exports status response contains the customer name and the report title, but never sends file bytes. The feature must keep workspace activity private. Which access rule follows?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "public": "Make the status public because only the file contains protected data.",
+          "protect": "Treat status as a separate protected resource and enforce the caller’s workspace there.",
+          "implicit": "Use the successful create response as proof for anyone who later asks about that job.",
+          "opaque": "Make the job ID opaque and treat possession of that ID as authorization."
+        }
+      },
+      {
+        "id": "boundary-evidence",
+        "objective": "identify-exposure",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "The API validated a browser session for a member of North. It reads an export record from storage for the download decision. Which pair of facts belongs in the workspace comparison?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "referrer": "The page that opened the download and the workspace named in the link.",
+          "network": "The internal network location and the tenant the client selected.",
+          "verified": "The member’s trusted workspace and the export record’s stored workspace.",
+          "session": "The session’s account name and the export’s filename."
+        }
+      },
+      {
+        "id": "threat-requirement",
+        "objective": "identify-exposure",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A design review finds that job records and files are both confidential. Which requirement gives a reviewer a concrete threat-model test?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "policy": "For both status and download, deny a verified caller from another workspace before revealing metadata or bytes.",
+          "auth": "Require sign-in for all export pages and verify that a signed-in user sees the dashboard.",
+          "storage": "Encrypt the stored export and test that storage receives encrypted bytes.",
+          "logs": "Log all requests and review whether response times increase after rollout."
+        }
+      },
+      {
+        "id": "cleanup-credentials",
+        "objective": "constrain-policy",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A cleanup job in East must remove expired files each night. The storage service can enforce tenant and expiry constraints. Which grant meets that job’s requirements with the smallest scope?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "all-workspaces": "Delete expired exports in every workspace.",
+          "all-east": "Delete any export in East.",
+          "read-delete": "Read and delete expired exports in East.",
+          "expire-east": "Delete only expired exports in East."
+        }
+      },
+      {
+        "id": "new-operation",
+        "objective": "constrain-policy",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "The export service introduces an archive operation. A request for it arrives from an authenticated caller with permission to download. The policy has no archive rule and actions do not imply one another. What should happen?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "inherit": "Permit archive using the existing download rule.",
+          "deny": "Deny archive until an explicit matching permit exists.",
+          "role": "Permit archive for verified workspace members because the caller’s workspace is known.",
+          "retry": "Repeat authentication before deciding because the operation is new."
+        }
+      },
+      {
+        "id": "fresh-environment",
+        "objective": "constrain-policy",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "Public sharing is optional. Security review must approve it before any workspace enables it. Which rollout configuration satisfies that requirement for a newly created workspace?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "off": "Set sharing off by default and require a reviewed enable decision.",
+          "on": "Enable sharing and let owners opt out when they first visit settings.",
+          "hidden": "Enable sharing in the service but hide the button until the review.",
+          "expire": "Enable sharing with short expiration on links while the review is pending."
+        }
+      },
+      {
+        "id": "independent-layers",
+        "objective": "fail-without-disclosure",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "The team wants a second limit that still protects other tenants if the export service makes the wrong resource decision. Which design adds that limit?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "duplicate": "Check the same client-supplied workspace at the gateway and in the service.",
+          "browser": "Hide other workspaces in the dashboard and require sign-in at the service.",
+          "audit": "Log the tenant in two systems and compare audits each night.",
+          "scoped": "Constrain storage operations to the verified tenant and keep the service’s action and resource check."
+        }
+      },
+      {
+        "id": "decision-unavailable",
+        "objective": "fail-without-disclosure",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A fresh membership decision is mandatory. The membership service times out after the session is validated. Which trace matches the stated fail-closed design?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "stream": "Open the file stream and decide whether to send the bytes after the lookup recovers.",
+          "deny": "Leave storage unopened, return the approved generic outage response and log a correlation ID.",
+          "cached": "Reuse a previously recorded permit even though fresh membership is required.",
+          "detail": "Return the membership service exception so the client can determine whether to retry."
+        }
+      },
+      {
+        "id": "worker-surface",
+        "objective": "identify-exposure",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A team removes an obsolete export UI option. The corresponding worker command is still deployed and accepts requests from the job queue. No supported workflow uses it. Which review action reduces the service’s exposure while preserving supported operations?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "inventory": "Leave the worker command out of the inventory because it has no public link.",
+          "check": "Keep the command as-is and add tests for the browser endpoints.",
+          "remove": "Remove the obsolete command and its exclusive grants, then verify supported queue commands still work.",
+          "rename": "Rename the queue command and update the internal runbook."
+        }
+      },
+      {
+        "id": "auth-is-not-scope",
+        "objective": "place-enforcement",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A gateway authenticates a client and the service trusts the forwarded verified account. The download policy still requires a current membership match against the actual stored export. Which information must the service use before authorizing?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "grants": "Only the authenticated account and requested export ID.",
+          "location": "The gateway’s internal network address and the workspace from the request.",
+          "session": "Only the gateway’s authentication success, since the service already trusts it.",
+          "policy": "The authenticated actor’s trusted action grant and membership, compared against the export’s stored workspace."
+        }
+      },
+      {
+        "id": "enforcement-failure",
+        "objective": "place-enforcement",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "The policy engine correctly denied a request, yet a regression test recorded the handler opening the export stream. Which correction addresses the demonstrated failure?",
+        "sample": "policy=denied, storage_opened=true",
+        "language": "text",
+        "choices": {
+          "guard": "Make the handler gate the storage operation on the permit decision and assert denied requests never open it.",
+          "rule": "Rewrite the deny rule to remove any wording ambiguity but keep the current handler.",
+          "auth": "Add another login verification in front of the handler.",
+          "response": "Keep the current handler and standardize the outward error body."
+        }
+      },
+      {
+        "id": "review-the-export-release",
+        "objective": "place-enforcement",
+        "type": "written",
+        "difficulty": "Advanced",
+        "prompt": "Write a short release review in English. A dashboard user with export:download requests an export in their own workspace. The application verified their session, but the required current membership lookup timed out. A service trace shows that policy returned no permit and the handler still opened a storage stream. The cleanup worker can also read exports across workspaces even though it only expires old files in one. Identify the assets and trust boundaries, explain where enforcement failed, propose narrowly scoped controls and a safe failure response, and describe regression tests.",
+        "sample": "Observed: verified actor, membership unavailable,\npolicy produced no permit, storage stream opened.\nWorker needs: expire old files in one workspace.",
+        "language": "text",
+        "choices": {}
+      }
+    ]
+  },
+  "keys": {
+    "asset-in-the-status": {
+      "anchor": "study-assets",
+      "correct": [
+        "protect"
+      ],
+      "feedback": {
+        "public": "Metadata can disclose activity even without file bytes.",
+        "protect": "The customer and report title reveal activity. Give the status operation its own access decision.",
+        "implicit": "The create decision applied to its original actor and operation.",
+        "opaque": "The stated policy grants access to eligible workspace members. An opaque ID does not establish membership."
+      },
+      "reason": "The customer and report title reveal activity. Give the status operation its own access decision.",
+      "rubric": [],
+      "topics": [
+        "study-assets",
+        "study-attack-surface"
+      ]
+    },
+    "boundary-evidence": {
+      "anchor": "study-trust-boundaries",
+      "correct": [
+        "verified"
+      ],
+      "feedback": {
+        "referrer": "Both describe the client interaction rather than the trusted membership and stored resource.",
+        "network": "Network location and a selected tenant do not establish the required facts.",
+        "verified": "Authentication supplies the actor. The API resolves membership and resource facts before comparing them.",
+        "session": "These identify different things and cannot establish matching workspace scope."
+      },
+      "reason": "Authentication supplies the actor. The API resolves membership and resource facts before comparing them.",
+      "rubric": [],
+      "topics": [
+        "study-trust-boundaries",
+        "study-authentication-and-trust"
+      ]
+    },
+    "threat-requirement": {
+      "anchor": "study-threat-modeling",
+      "correct": [
+        "policy"
+      ],
+      "feedback": {
+        "policy": "This names the actor, exposure paths, protected data and expected outcome.",
+        "auth": "Sign-in alone does not address cross-workspace disclosure.",
+        "storage": "Encryption at rest does not establish which authenticated caller can retrieve a record.",
+        "logs": "That provides observation data but lacks an access expectation."
+      },
+      "reason": "This names the actor, exposure paths, protected data and expected outcome.",
+      "rubric": [],
+      "topics": [
+        "study-threat-modeling",
+        "study-assets"
+      ]
+    },
+    "cleanup-credentials": {
+      "anchor": "study-least-privilege",
+      "correct": [
+        "expire-east"
+      ],
+      "feedback": {
+        "all-workspaces": "The action is limited but the workspace scope exceeds the job’s duties.",
+        "all-east": "The workspace is correct but the grant fails to constrain expiry.",
+        "read-delete": "The job does not need file contents.",
+        "expire-east": "The grant matches the job’s action, resource state and workspace."
+      },
+      "reason": "The grant matches the job’s action, resource state and workspace.",
+      "rubric": [],
+      "topics": [
+        "study-least-privilege"
+      ]
+    },
+    "new-operation": {
+      "anchor": "study-deny-by-default",
+      "correct": [
+        "deny"
+      ],
+      "feedback": {
+        "inherit": "Download and archive are distinct actions under the stated policy.",
+        "deny": "Authenticated callers still need a rule for the requested operation. An unmatched action remains closed.",
+        "role": "Membership alone does not define an allowed action.",
+        "retry": "A second authentication cannot supply a missing policy rule."
+      },
+      "reason": "Authenticated callers still need a rule for the requested operation. An unmatched action remains closed.",
+      "rubric": [],
+      "topics": [
+        "study-deny-by-default",
+        "study-authentication-and-policy"
+      ]
+    },
+    "fresh-environment": {
+      "anchor": "study-secure-defaults",
+      "correct": [
+        "off"
+      ],
+      "feedback": {
+        "off": "A fresh workspace starts private, and the optional action remains unavailable until deliberately enabled.",
+        "on": "A workspace could expose exports before a review or an owner visit.",
+        "hidden": "Interface visibility does not control server behavior.",
+        "expire": "A shorter lifetime does not replace the required approval."
+      },
+      "reason": "A fresh workspace starts private, and the optional action remains unavailable until deliberately enabled.",
+      "rubric": [],
+      "topics": [
+        "study-secure-defaults",
+        "study-deny-by-default"
+      ]
+    },
+    "independent-layers": {
+      "anchor": "study-defense-in-depth",
+      "correct": [
+        "scoped"
+      ],
+      "feedback": {
+        "duplicate": "Both copies depend on the same unverified input.",
+        "browser": "Neither measure independently constrains what the service retrieves from storage.",
+        "audit": "Detection after the event does not constrain the storage operation.",
+        "scoped": "A separately enforced storage restriction reduces the consequence of a mistaken higher-layer decision."
+      },
+      "reason": "A separately enforced storage restriction reduces the consequence of a mistaken higher-layer decision.",
+      "rubric": [],
+      "topics": [
+        "study-defense-in-depth",
+        "study-trust-boundaries"
+      ]
+    },
+    "decision-unavailable": {
+      "anchor": "study-secure-failure",
+      "correct": [
+        "deny"
+      ],
+      "feedback": {
+        "stream": "This permits sensitive work before the required authorization facts are available.",
+        "deny": "The API can diagnose the outage internally while withholding export data.",
+        "cached": "That violates the explicit freshness requirement in this scenario.",
+        "detail": "An implementation trace is unnecessary for the public contract and can disclose internals."
+      },
+      "reason": "The API can diagnose the outage internally while withholding export data.",
+      "rubric": [],
+      "topics": [
+        "study-secure-failure",
+        "study-policy-enforcement"
+      ]
+    },
+    "worker-surface": {
+      "anchor": "study-attack-surface",
+      "correct": [
+        "remove"
+      ],
+      "feedback": {
+        "inventory": "The queue is still an input boundary and the command still runs.",
+        "check": "Testing different entry points does not remove an unused execution path.",
+        "remove": "Removing a reachable, unused command reduces surface. Checks on supported commands guard against a regression.",
+        "rename": "A different name leaves the command callable."
+      },
+      "reason": "Removing a reachable, unused command reduces surface. Checks on supported commands guard against a regression.",
+      "rubric": [],
+      "topics": [
+        "study-attack-surface",
+        "study-threat-modeling",
+        "study-least-privilege"
+      ]
+    },
+    "auth-is-not-scope": {
+      "anchor": "study-authentication-and-trust",
+      "correct": [
+        "policy"
+      ],
+      "feedback": {
+        "grants": "Those identify the caller and target but do not establish grant or scope.",
+        "location": "Neither establishes a current membership match.",
+        "session": "The accepted identity does not carry the export-specific decision.",
+        "policy": "Trust in the actor and enforcement of resource policy answer separate questions."
+      },
+      "reason": "Trust in the actor and enforcement of resource policy answer separate questions.",
+      "rubric": [],
+      "topics": [
+        "study-authentication-and-trust",
+        "study-authentication-and-policy",
+        "study-policy-enforcement"
+      ]
+    },
+    "enforcement-failure": {
+      "anchor": "study-policy-enforcement",
+      "correct": [
+        "guard"
+      ],
+      "feedback": {
+        "guard": "The policy is already correct. The failure is at the enforcement point before storage.",
+        "rule": "The observed decision was already deny. Rewording cannot make the handler enforce it.",
+        "auth": "This does not connect the existing deny decision to the storage action.",
+        "response": "A safe-looking response does not prevent the sensitive side effect."
+      },
+      "reason": "The policy is already correct. The failure is at the enforcement point before storage.",
+      "rubric": [],
+      "topics": [
+        "study-policy-enforcement",
+        "study-secure-failure",
+        "study-defense-in-depth"
+      ]
+    },
+    "review-the-export-release": {
+      "anchor": "study-policy-enforcement",
+      "correct": [],
+      "feedback": {},
+      "reason": "Protect the export bytes and any sensitive job metadata. The API validates the caller at entry and relies on current workspace facts before storage access. The verified identity does not replace membership or a permit. Gate the handler or data operation on a valid permit and leave storage unopened when membership is unavailable. Return the approved generic service failure and record a correlation ID and bounded reason. Give the cleanup worker only expiry operations for its workspace. Retain tenant limits at storage as an independent layer. Test legitimate same-workspace access, another-workspace refusal, unavailable membership with zero storage calls, and rejection of worker operations outside its job.",
+      "rubric": [
+        "Name protected data and where trust changes at entry and storage.",
+        "Separate accepted identity from the missing current permit and identify the enforcement failure.",
+        "Describe safe failure before storage and suitable public and internal reporting.",
+        "Narrow the cleanup grant and explain an independent storage constraint.",
+        "Give explicit positive, denial, unavailability and worker-scope regression cases."
+      ],
+      "topics": [
+        "study-policy-enforcement",
+        "study-assets",
+        "study-trust-boundaries",
+        "study-secure-failure",
+        "study-defense-in-depth",
+        "study-least-privilege"
+      ]
+    }
+  }
+}

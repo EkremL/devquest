@@ -1,0 +1,292 @@
+{
+  "key": "security-philosophy",
+  "release": 1,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 1 — Authentication Foundations",
+    "sessionTitle": "Session 1.2 — Security Philosophy"
+  },
+  "objectives": {
+    "identify-exposure": "Trace an export request across trust boundaries and identify assets, exposure and controls.",
+    "constrain-policy": "Design narrow permissions and safe defaults for an export operation.",
+    "fail-without-disclosure": "Choose independent enforcement layers and preserve confidentiality when a decision cannot be made.",
+    "place-enforcement": "Separate authentication evidence, trust decisions, written policy and runtime enforcement."
+  },
+  "sections": [
+    {
+      "anchor": "map-the-export",
+      "title": "Map what the export service protects",
+      "objectives": [
+        "identify-exposure"
+      ]
+    },
+    {
+      "anchor": "reduce-grants",
+      "title": "Reduce the authority that can travel",
+      "objectives": [
+        "constrain-policy"
+      ],
+      "practice": {
+        "prompt": "The cleanup worker only removes expired exports. Which grant would you give it?",
+        "choices": [
+          {
+            "label": "Cleanup of expired exports in its tenant.",
+            "reason": "This grant matches the task, target and scope. The worker does not need to create or download exports."
+          },
+          {
+            "label": "Read and cleanup of all exports.",
+            "reason": "Reading the export body and operating in every tenant are outside the stated job."
+          },
+          {
+            "label": "The export owner’s dashboard role.",
+            "reason": "A human dashboard role serves a different purpose and makes the worker harder to constrain and audit."
+          }
+        ]
+      }
+    },
+    {
+      "anchor": "contain-failure",
+      "title": "Contain failures before data leaves",
+      "objectives": [
+        "fail-without-disclosure"
+      ],
+      "practice": {
+        "prompt": "A previously valid export link is opened while the current membership lookup is unavailable. This service requires a fresh membership decision. What do you expect?",
+        "choices": [
+          {
+            "label": "Stop the download and return the approved service error.",
+            "reason": "The service cannot establish a current allow decision. It can report unavailability without disclosing export data."
+          },
+          {
+            "label": "Serve the file because the link was valid earlier.",
+            "reason": "The original decision does not satisfy the fresh membership rule."
+          },
+          {
+            "label": "Return the policy exception to help the caller debug.",
+            "reason": "Internal traces expose implementation details. Keep diagnostic reasons in restricted logs."
+          }
+        ]
+      }
+    },
+    {
+      "anchor": "enforce-the-policy",
+      "title": "Turn the policy into a runtime decision",
+      "objectives": [
+        "place-enforcement",
+        "constrain-policy"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 68,
+      "sourceLabel": "Assets and protected resources",
+      "objectives": [
+        "identify-exposure"
+      ],
+      "passages": [
+        "study-assets"
+      ]
+    },
+    {
+      "sourceLine": 69,
+      "sourceLabel": "Trust boundaries",
+      "objectives": [
+        "identify-exposure"
+      ],
+      "passages": [
+        "study-trust-boundaries"
+      ]
+    },
+    {
+      "sourceLine": 70,
+      "sourceLabel": "Basic threat modeling",
+      "objectives": [
+        "identify-exposure"
+      ],
+      "passages": [
+        "study-threat-modeling"
+      ]
+    },
+    {
+      "sourceLine": 71,
+      "sourceLabel": "Attack surface",
+      "objectives": [
+        "identify-exposure"
+      ],
+      "passages": [
+        "study-attack-surface"
+      ]
+    },
+    {
+      "sourceLine": 72,
+      "sourceLabel": "Principle of least privilege",
+      "objectives": [
+        "constrain-policy"
+      ],
+      "passages": [
+        "study-least-privilege"
+      ]
+    },
+    {
+      "sourceLine": 73,
+      "sourceLabel": "Deny-by-default security",
+      "objectives": [
+        "constrain-policy"
+      ],
+      "passages": [
+        "study-deny-by-default"
+      ]
+    },
+    {
+      "sourceLine": 74,
+      "sourceLabel": "Secure defaults",
+      "objectives": [
+        "constrain-policy"
+      ],
+      "passages": [
+        "study-secure-defaults"
+      ]
+    },
+    {
+      "sourceLine": 75,
+      "sourceLabel": "Defense in depth",
+      "objectives": [
+        "fail-without-disclosure"
+      ],
+      "passages": [
+        "study-defense-in-depth"
+      ]
+    },
+    {
+      "sourceLine": 76,
+      "sourceLabel": "Secure failure behavior",
+      "objectives": [
+        "fail-without-disclosure"
+      ],
+      "passages": [
+        "study-secure-failure"
+      ]
+    },
+    {
+      "sourceLine": 77,
+      "sourceLabel": "Authentication versus trust",
+      "objectives": [
+        "place-enforcement"
+      ],
+      "passages": [
+        "study-authentication-and-trust"
+      ]
+    },
+    {
+      "sourceLine": 78,
+      "sourceLabel": "Authentication versus authorization policy",
+      "objectives": [
+        "place-enforcement"
+      ],
+      "passages": [
+        "study-authentication-and-policy"
+      ]
+    },
+    {
+      "sourceLine": 79,
+      "sourceLabel": "Policy definition versus policy enforcement",
+      "objectives": [
+        "place-enforcement"
+      ],
+      "passages": [
+        "study-policy-enforcement"
+      ]
+    }
+  ],
+  "visuals": {
+    "export-boundaries": {
+      "layout": "flow",
+      "title": "An export crosses two boundaries",
+      "groups": [
+        {
+          "title": "Entry boundary",
+          "items": [
+            {
+              "label": "Dashboard to API",
+              "detail": "Validate the caller and request. Treat the resource identifier as an input."
+            },
+            {
+              "label": "API decision",
+              "detail": "Use trusted grants and the export’s stored tenant."
+            }
+          ]
+        },
+        {
+          "title": "Data boundary",
+          "items": [
+            {
+              "label": "API to storage",
+              "detail": "Use a tenant-scoped lookup or a narrowly authorized storage operation."
+            },
+            {
+              "label": "Return bytes",
+              "detail": "Only after the requested export and current decision agree."
+            }
+          ]
+        }
+      ]
+    },
+    "job-grants": {
+      "layout": "comparison",
+      "title": "Assign access by job",
+      "groups": [
+        {
+          "title": "Dashboard user",
+          "items": [
+            {
+              "label": "Start",
+              "detail": "Create an export for the tenant where the user has a create grant."
+            },
+            {
+              "label": "Download",
+              "detail": "Require a separate read grant and a matching stored tenant."
+            }
+          ]
+        },
+        {
+          "title": "Cleanup worker",
+          "items": [
+            {
+              "label": "Expire",
+              "detail": "Remove only expired exports in its assigned tenant."
+            },
+            {
+              "label": "Keep out of scope",
+              "detail": "Reading contents, publishing links and working across tenants."
+            }
+          ]
+        }
+      ]
+    },
+    "failure-trace": {
+      "layout": "trace",
+      "title": "Membership service unavailable",
+      "groups": [
+        {
+          "title": "Observed sequence",
+          "items": [
+            {
+              "label": "Verified",
+              "detail": "The session identifies the caller."
+            },
+            {
+              "label": "Unavailable",
+              "detail": "Current membership cannot be checked."
+            },
+            {
+              "label": "Contained",
+              "detail": "The handler does not open the export stream. A generic failure goes to the client."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
