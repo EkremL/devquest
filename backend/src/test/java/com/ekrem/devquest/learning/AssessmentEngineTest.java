@@ -27,11 +27,13 @@ class AssessmentEngineTest {
         }
     }
 
-    @Test void activePaperUsesTheSingleAnswerBlueprint() {
+    @ParameterizedTest
+    @CsvSource({"http-401-and-403, 3", "identity-and-access-vocabulary, 1"})
+    void activePaperUsesTheSingleAnswerBlueprint(String key, int release) {
         var mapper = new ObjectMapper();
         var engine = new AssessmentEngine(mapper, new LessonPackage(mapper));
-        var paper = engine.paper().orElseThrow();
-        assertThat(paper.getRelease()).isEqualTo(3);
+        var paper = engine.paper(key).orElseThrow();
+        assertThat(paper.getRelease()).isEqualTo(release);
         var questions = paper.getQuestions();
         assertThat(questions).hasSize(12);
         assertThat(questions.subList(0, 11)).allSatisfy(q -> {
@@ -42,6 +44,35 @@ class AssessmentEngineTest {
         assertThat(questions.subList(0, 3)).allMatch(q -> q.getDifficulty().equals("Foundation"));
         assertThat(questions.subList(3, 8)).allMatch(q -> q.getDifficulty().equals("Intermediate"));
         assertThat(questions.subList(8, 12)).allMatch(q -> q.getDifficulty().equals("Advanced"));
+    }
+
+    @Test void vocabularyReleaseGradesEachChoiceAgainstItsOwnAnswerKey() throws Exception {
+        String key = "identity-and-access-vocabulary";
+        var mapper = new ObjectMapper();
+        var engine = new AssessmentEngine(mapper, new LessonPackage(mapper));
+        var paper = engine.paper(key, 1).orElseThrow();
+        assertThat(paper.getReadingRelease()).isEqualTo(4);
+        try (var file = getClass().getResourceAsStream("/assessments/" + key + "/1/assessment.json")) {
+            var packageContent = mapper.readValue(file, AssessmentEngine.Package.class);
+            assertThat(packageContent.getKeys().values().stream().flatMap(guide -> guide.getTopics().stream()).distinct()).hasSize(16);
+            var submission = new AssessmentEngine.Submission();
+            submission.setKey(key);
+            submission.setRelease(1);
+            for (var question : paper.getQuestions().subList(0, 11)) {
+                var guide = packageContent.getKeys().get(question.getId());
+                assertThat(guide.getCorrect()).hasSize(1);
+                var answer = new AssessmentEngine.Answer();
+                answer.setQuestion(question.getId());
+                submission.setAnswers(List.of(answer));
+                for (String choice : question.getChoices().keySet()) {
+                    answer.setChoices(List.of(choice));
+                    assertThat(engine.check(submission).getOutcome()).isEqualTo(guide.getCorrect().contains(choice) ? "Correct" : "Incorrect");
+                }
+                answer.setChoices(question.getChoices().keySet().stream().limit(2).toList());
+                assertThatThrownBy(() -> engine.check(submission)).isInstanceOfSatisfying(
+                        ResponseStatusException.class, error -> assertThat(error.getStatusCode().value()).isEqualTo(400));
+            }
+        }
     }
 
     @ParameterizedTest

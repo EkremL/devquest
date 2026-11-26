@@ -1,0 +1,432 @@
+{
+  "paper": {
+    "key": "identity-and-access-vocabulary",
+    "release": 1,
+    "readingRelease": 4,
+    "title": "Identity and Access Vocabulary",
+    "context": "Each fictional backend states its own identity and access rules. Use the evidence at the receiving component, then identify the policy decision. Written reasoning is self-reviewed.",
+    "objectives": {
+      "trace-authentication": "Trace a claimed identity through credential verification to an authenticated actor.",
+      "evaluate-access": "Evaluate an access decision for an actor, action and resource using authoritative policy inputs.",
+      "distinguish-actors": "Distinguish the represented actor, the request sender and the principal used by Spring Security.",
+      "assign-responsibility": "Explain who verifies proof, who asserts identity and who guards the protected resource.",
+      "compare-request-paths": "Compare human and workload requests and diagnose a denial without expanding permissions."
+    },
+    "questions": [
+      {
+        "id": "unverified-account",
+        "objective": "trace-authentication",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A task dashboard receives an account name that matches a directory row. No credential or validated session accompanies the request. What can the server conclude?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "validated": "It can establish the identified account as the current caller because the lookup succeeded.",
+          "identified": "It can identify the account being claimed, while verification is still pending.",
+          "principal": "It can treat the directory row as an authenticated principal with empty authorities.",
+          "transport": "It can accept the account name as caller evidence because the request used HTTPS."
+        }
+      },
+      {
+        "id": "sender-on-hop",
+        "objective": "distinguish-actors",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A verified human named Lee clicks Export in a browser. The dashboard makes a server-to-server request to the archive API using only its own service identity. Which statement describes the archive request?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "human": "Lee is the verified principal for the archive request because Lee clicked Export.",
+          "browser": "The browser is the archive API’s client because it started the workflow.",
+          "archive": "The archive API is the request client because it owns the export data.",
+          "dashboard": "The dashboard is the client, and its service identity is the verified caller at the archive API."
+        }
+      },
+      {
+        "id": "granted-action",
+        "objective": "evaluate-access",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "Nora’s valid session establishes her account and workspace membership. Her only grant is task:create. In this system GET /tasks/17 requires task:read even for a task in her workspace. Which decision explains the refusal?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "action": "Authorization rejected the requested read because task:create does not grant task:read.",
+          "lookup": "Authentication failed because the session did not contain a read grant.",
+          "scope": "The resource scope failed because create grants are restricted to new resources.",
+          "operation": "The read should be permitted because creating tasks implies reading them."
+        }
+      },
+      {
+        "id": "anonymous-context",
+        "objective": "distinguish-actors",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "Anonymous authentication is enabled. This request has no verified session or credential, and the diagnostic output below is captured after anonymous handling. Which conclusion is warranted?",
+        "sample": "Authentication auth = context.getAuthentication();\nObject actor = auth.getPrincipal();\nvar grants = auth.getAuthorities();\n// Logged: actor=anonymousUser, grants=[ROLE_ANONYMOUS]",
+        "language": "java",
+        "choices": {
+          "normal": "The principal establishes that a human signed in, while the authority list says what they can do.",
+          "absence": "The diagnostic output must be stale because an unauthenticated request always has a null Authentication.",
+          "anonymous": "The context represents anonymous access. A non-null Authentication alone cannot prove a sign-in.",
+          "grant": "ROLE_ANONYMOUS grants access wherever an authenticated user is required."
+        }
+      },
+      {
+        "id": "two-policy-inputs",
+        "objective": "evaluate-access",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "Session verification established Casey as a North member. For this request auth.getAuthorities() includes task:read, and the database lookup returned a South task. What does the policy below decide, and why?",
+        "sample": "boolean canRead = auth.getAuthorities().stream()\n    .anyMatch(g -> \"task:read\".equals(g.getAuthority()));\nboolean inScope = task.workspace().equals(actorWorkspace);\nreturn canRead && inScope;",
+        "language": "java",
+        "choices": {
+          "grant": "Allow. GrantedAuthority represents permission for each resource served by the endpoint.",
+          "human": "Deny. Spring Security can only check an authority if getPrincipal() is a UserDetails.",
+          "scope": "Deny. The action grant is present, but the stored resource is outside Casey’s workspace.",
+          "session": "Authenticate again. The workspace comparison is part of validating the session."
+        }
+      },
+      {
+        "id": "validated-session",
+        "objective": "trace-authentication",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "The application validated the request’s session and bound it to Rowan. The optional X-User field below is caller-supplied and has no role in authentication. Which identity should the task policy evaluate?",
+        "sample": "GET /tasks/17 HTTP/1.1\nCookie: sid=[redacted]\nX-User: jordan",
+        "language": "http",
+        "choices": {
+          "session": "Rowan, because the verified session establishes that account as the caller.",
+          "header": "Jordan, because the explicit header is newer than the session record.",
+          "mixed": "Rowan for logging, but Jordan for policy because the header names the target user.",
+          "fresh": "No caller until another password is verified for this HTTP request."
+        }
+      },
+      {
+        "id": "assertion-handoff",
+        "objective": "assign-responsibility",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A trusted identity provider issues a signed assertion after verifying evidence for a caller. The task API receives it directly and its design requires assertion validation before establishing the local principal. Which division of responsibility satisfies that design?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "provider": "The provider validates the assertion it issued. The API can accept the received subject field and apply local policy.",
+          "gateway": "The API validates the assertion. The provider’s successful sign-in establishes permission for every task in the API.",
+          "ui": "The dashboard validates the assertion and hides inaccessible actions. The task API can then return the task by ID.",
+          "api": "The API validates and maps the assertion, then evaluates and enforces policy for the actual task."
+        }
+      },
+      {
+        "id": "worker-denial",
+        "objective": "compare-request-paths",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "An ingest worker can no longer read Task 21 after a deployment. This is the complete decision trace for one request. Which investigation comes first?",
+        "sample": "verified_actor=ingest-worker\nrequired_action=task:read\naction_check=denied\nscope_check=skipped",
+        "language": "text",
+        "choices": {
+          "proof": "Rotate the worker’s credential and retry because access was denied.",
+          "mapping": "Compare the worker’s effective action grant with the task API’s read requirement.",
+          "person": "Check which developer last used the dashboard because the worker may inherit their client identity.",
+          "workspace": "Inspect the task’s workspace because a resource-scope denial has already been recorded."
+        }
+      },
+      {
+        "id": "audit-attribution",
+        "objective": "compare-request-paths",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "An export request passed authentication and authorization. A trusted trace identifies nightly-export as the caller. The deploy record names Ari. Both are valid records; the report merged their actors. Which adjustment corrects attribution without changing access?",
+        "sample": "deployment: actor=ari, target=nightly-export\nverification: principal=nightly-export\nreport: read_task actor=ari",
+        "language": "text",
+        "choices": {
+          "events": "Keep Ari on the deployment event and write the verified workload identity on the runtime read event.",
+          "owner": "Make Ari the primary actor on the runtime read and include the workload in a diagnostic field.",
+          "assign": "Assign Ari’s account to the exporter so both events have a consistent actor.",
+          "receiver": "Record the task API’s service identity as the actor and store Ari and the worker as event labels."
+        }
+      },
+      {
+        "id": "scope-correction",
+        "objective": "evaluate-access",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A design review finds that an API plans to use a client-supplied workspace label when judging the workspace of a stored task. The requirement is to allow task:read only for tasks in the authenticated actor’s authorized workspace. Which correction preserves the requirement with the smallest policy change?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "grant": "Grant task:read at the workspace level and let the client dashboard filter the results.",
+          "confirm": "Require a fresh login for every read and continue using the submitted workspace label.",
+          "match": "Check that the submitted workspace matches the route’s workspace parameter and keep the existing grant check.",
+          "stored": "Keep the grant rule and compare the task’s persisted workspace with the actor’s trusted membership at the API boundary."
+        }
+      },
+      {
+        "id": "downstream-subject",
+        "objective": "assign-responsibility",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A reporting API accepts a provider assertion about Inez and authenticates her. It later calls the storage API using a verified service credential for reporting-service. Storage accepts that service identity. It receives no validated user delegation. Which statement is justified at the storage boundary?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "forwarded": "Inez remains the verified caller because the upstream assertion described her.",
+          "same": "Inez and reporting-service are interchangeable because both credentials are accepted by trusted services.",
+          "service": "Storage can attribute the request to reporting-service and apply its policy. User attribution would require separate validated delegation.",
+          "none": "Storage cannot make any authorization decision because it did not authenticate a human."
+        }
+      },
+      {
+        "id": "write-the-incident-review",
+        "objective": "compare-request-paths",
+        "type": "written",
+        "difficulty": "Advanced",
+        "prompt": "Write an incident review in English. A verified human named Sal ran a task read from the dashboard. Later the unattended export worker, authenticated as archive-worker, tried to read Task 72. Both have task:read and independent North memberships; Task 72 is stored in South. A merged report names Sal as the actor for the worker request and labels the denial a login failure. Explain the actors and verified evidence at each boundary, the actual policy decision, safe audit fields, and how you would investigate and test the correction.",
+        "sample": "Dashboard verification: principal=sal\nTask API worker verification: principal=archive-worker\nWorker grant: task:read\nTask 72 persisted workspace: South\nMerged event: actor=sal, stage=authentication, outcome=failed",
+        "language": "text",
+        "choices": {}
+      }
+    ]
+  },
+  "keys": {
+    "unverified-account": {
+      "anchor": "study-credential",
+      "correct": [
+        "identified"
+      ],
+      "feedback": {
+        "identified": "The directory match gives the lookup target. A verifier still needs evidence associated with that account.",
+        "validated": "Finding a record proves the account exists. It says nothing about who supplied the name.",
+        "principal": "Empty authorities affect permission. They cannot stand in for verified authentication.",
+        "transport": "HTTPS protects the transport. Ordinary server-authenticated HTTPS does not prove the client's account name."
+      },
+      "reason": "The directory match gives the lookup target. A verifier still needs evidence associated with that account.",
+      "rubric": [],
+      "topics": [
+        "study-credential",
+        "study-identity",
+        "study-authentication"
+      ]
+    },
+    "sender-on-hop": {
+      "anchor": "study-client",
+      "correct": [
+        "dashboard"
+      ],
+      "feedback": {
+        "human": "Lee initiated the browser action. No evidence establishing Lee as the archive caller was supplied.",
+        "dashboard": "Name the software and verified identity for the hop being examined. The dashboard made this request as itself.",
+        "browser": "The browser sent the first HTTP request. The dashboard sent the archive request.",
+        "archive": "Owning the resource makes it the receiving service on this hop."
+      },
+      "reason": "Name the software and verified identity for the hop being examined. The dashboard made this request as itself.",
+      "rubric": [],
+      "topics": [
+        "study-client",
+        "study-user",
+        "study-service",
+        "study-subject"
+      ]
+    },
+    "granted-action": {
+      "anchor": "study-authorization",
+      "correct": [
+        "action"
+      ],
+      "feedback": {
+        "lookup": "The session still establishes the caller. The read grant belongs to the action policy.",
+        "scope": "The stated workspace matches. The decision fails on the missing read grant.",
+        "action": "The verified actor and matching workspace do not satisfy the separately required read authority.",
+        "operation": "The scenario defines separate authorities and no grant hierarchy."
+      },
+      "reason": "The verified actor and matching workspace do not satisfy the separately required read authority.",
+      "rubric": [],
+      "topics": [
+        "study-authorization",
+        "study-resource"
+      ]
+    },
+    "anonymous-context": {
+      "anchor": "study-principal",
+      "correct": [
+        "anonymous"
+      ],
+      "feedback": {
+        "normal": "The configured anonymous principal does not represent a verified human sign-in.",
+        "absence": "Spring Security can install an anonymous Authentication during a request.",
+        "grant": "An anonymous authority is distinct from the configured requirement for an authenticated caller.",
+        "anonymous": "Identify the authentication state through the configured security mechanism. The principal and authorities describe the anonymous representation here."
+      },
+      "reason": "Identify the authentication state through the configured security mechanism. The principal and authorities describe the anonymous representation here.",
+      "rubric": [],
+      "topics": [
+        "study-principal",
+        "study-authentication"
+      ]
+    },
+    "two-policy-inputs": {
+      "anchor": "study-access-control",
+      "correct": [
+        "scope"
+      ],
+      "feedback": {
+        "scope": "The authorization expression requires both the read grant and a matching task workspace.",
+        "grant": "The authority supplies the action input. The separate scope condition still applies.",
+        "human": "The code uses GrantedAuthority directly. The principal’s concrete Java type does not explain the result.",
+        "session": "The method evaluates resource scope after authentication has already established Casey."
+      },
+      "reason": "The authorization expression requires both the read grant and a matching task workspace.",
+      "rubric": [],
+      "topics": [
+        "study-access-control",
+        "study-authorization",
+        "study-principal",
+        "study-resource"
+      ]
+    },
+    "validated-session": {
+      "anchor": "study-human-to-service",
+      "correct": [
+        "session"
+      ],
+      "feedback": {
+        "header": "Recency does not make a client claim trusted.",
+        "session": "The cookie only locates a session. The server’s successful validation and binding determine the actor.",
+        "mixed": "The header is neither verified delegation nor the requested protected resource in this scenario.",
+        "fresh": "The stated configuration accepts the valid session as evidence for subsequent requests."
+      },
+      "reason": "The cookie only locates a session. The server’s successful validation and binding determine the actor.",
+      "rubric": [],
+      "topics": [
+        "study-human-to-service",
+        "study-credential",
+        "study-authentication",
+        "study-identity"
+      ]
+    },
+    "assertion-handoff": {
+      "anchor": "study-identity-provider",
+      "correct": [
+        "api"
+      ],
+      "feedback": {
+        "provider": "The receiving API still has to validate the received assertion before using its subject.",
+        "gateway": "Identity verification does not decide access to individual tasks.",
+        "api": "Verifying the assertion establishes the caller. The resource boundary still owns the access decision.",
+        "ui": "Interface controls cannot enforce policy at the resource boundary."
+      },
+      "reason": "Verifying the assertion establishes the caller. The resource boundary still owns the access decision.",
+      "rubric": [],
+      "topics": [
+        "study-identity-provider",
+        "study-authentication-server",
+        "study-resource-server",
+        "study-authorization"
+      ]
+    },
+    "worker-denial": {
+      "anchor": "study-service-to-service",
+      "correct": [
+        "mapping"
+      ],
+      "feedback": {
+        "proof": "The verifier already established the worker. A new credential alone does not explain the policy refusal.",
+        "person": "The verified runtime identity is the worker. There is no delegation in the trace.",
+        "workspace": "The trace says scope was skipped. Inspect the earlier failed check first.",
+        "mapping": "Authentication passed, and the action check rejected the read before scope was reached."
+      },
+      "reason": "Authentication passed, and the action check rejected the read before scope was reached.",
+      "rubric": [],
+      "topics": [
+        "study-service-to-service",
+        "study-authentication",
+        "study-authorization",
+        "study-credential"
+      ]
+    },
+    "audit-attribution": {
+      "anchor": "study-service-to-service",
+      "correct": [
+        "events"
+      ],
+      "feedback": {
+        "events": "The two records answer different questions. Preserve the verified caller for the request and the human deployer for the deployment.",
+        "owner": "Ownership does not establish which identity performed the request.",
+        "assign": "Changing runtime identity would alter the security model instead of fixing record attribution.",
+        "receiver": "The API is the receiving service. Its identity does not represent the verified caller on this hop."
+      },
+      "reason": "The two records answer different questions. Preserve the verified caller for the request and the human deployer for the deployment.",
+      "rubric": [],
+      "topics": [
+        "study-service-to-service",
+        "study-identity",
+        "study-principal",
+        "study-user",
+        "study-service"
+      ]
+    },
+    "scope-correction": {
+      "anchor": "study-resource-server",
+      "correct": [
+        "stored"
+      ],
+      "feedback": {
+        "grant": "The resource server still must check which workspace owns the actual task.",
+        "stored": "Only the resource fact changes source. The action grant and server-side enforcement remain intact.",
+        "confirm": "Reauthentication does not establish a stored task’s workspace.",
+        "match": "Agreement between two request values does not verify the stored resource scope."
+      },
+      "reason": "Only the resource fact changes source. The action grant and server-side enforcement remain intact.",
+      "rubric": [],
+      "topics": [
+        "study-resource-server",
+        "study-access-control",
+        "study-authorization",
+        "study-resource"
+      ]
+    },
+    "downstream-subject": {
+      "anchor": "study-subject",
+      "correct": [
+        "service"
+      ],
+      "feedback": {
+        "forwarded": "The assertion established Inez upstream. Storage did not receive or validate user delegation.",
+        "same": "The credentials establish different identities at different boundaries.",
+        "service": "Follow the evidence actually validated at the receiving hop. The upstream subject is not automatically the downstream principal.",
+        "none": "It can authorize the verified workload identity under its own rules."
+      },
+      "reason": "Follow the evidence actually validated at the receiving hop. The upstream subject is not automatically the downstream principal.",
+      "rubric": [],
+      "topics": [
+        "study-subject",
+        "study-client",
+        "study-credential",
+        "study-identity-provider",
+        "study-resource-server"
+      ]
+    },
+    "write-the-incident-review": {
+      "anchor": "study-resource-server",
+      "correct": [],
+      "feedback": {},
+      "reason": "Treat the dashboard read and the worker read as separate requests. The validated dashboard session establishes Sal at its boundary; the worker’s verified credential establishes archive-worker at the task API. There is no evidence of delegation. The API owns the resource decision: archive-worker has the read grant, but Task 72 belongs to South and the worker is scoped to North. Record a correlation ID, the authenticated workload identifier, requested action, task identifier or approved surrogate, and the scope-denial outcome according to logging policy. Keep Sal on the separate dashboard event. Omit passwords, session tokens, and raw credential material. Trace verification, effective grant, stored task workspace, and event correlation separately. Verify that the same worker can read a North task, that the South task remains denied, that invalid evidence stops before policy, and that the corrected audit attributes each event to the correct actor.",
+      "rubric": [
+        "Attribute the two requests to Sal and archive-worker with separate valid evidence and no assumed delegation.",
+        "Distinguish successful authentication and action authorization from the South resource-scope denial.",
+        "Identify the trust boundaries and the task API’s enforcement responsibility.",
+        "Propose safe, useful audit fields and keep raw credentials and tokens out of the record.",
+        "Use controlled comparisons to confirm caller verification, scope behavior, and corrected attribution."
+      ],
+      "topics": [
+        "study-resource-server",
+        "study-human-to-service",
+        "study-service-to-service",
+        "study-authentication-server",
+        "study-authorization"
+      ]
+    }
+  }
+}

@@ -286,7 +286,7 @@ class LearningIT {
         System.out.println("Learning pilot resolved to " + id);
     }
 
-    @Test void mapsEveryVocabularyTopicAndKeepsAssessmentOnThePilot() throws Exception {
+    @Test void mapsEveryVocabularyTopicAndListsBothAssessments() throws Exception {
         UUID id = session("Session 1.1 — Identity and Access Vocabulary");
         var before = progressSnapshot();
         var lesson = get("/sessions/" + id + "/lesson");
@@ -313,9 +313,56 @@ class LearningIT {
                 "study-resource-server", "study-authentication-server", "study-identity-provider", "study-human-to-service", "study-service-to-service");
         assertThat(links).hasSize(16);
         assertThat(get("/sessions/" + id + "/topics").statusCode()).isEqualTo(200);
-        assertThat(learning.assessmentCatalog()).containsExactly(pilotSession());
-        assertThat(get("/sessions/" + id + "/assessment").statusCode()).isEqualTo(404);
-        assertThat(get("/sessions/" + id + "/assessment/draft").statusCode()).isEqualTo(404);
+        assertThat(learning.assessmentCatalog()).containsExactly(id, pilotSession());
+        var paper = get("/sessions/" + id + "/assessment");
+        assertThat(paper.statusCode()).isEqualTo(200);
+        assertThat(paper.body()).contains("identity-and-access-vocabulary", "\"release\":1", "\"readingRelease\":4")
+                .doesNotContain("\"correct\"", "\"rubric\"", "\"reason\"", "\"feedback\"");
+        assertThat(progressSnapshot()).isEqualTo(before);
+    }
+
+    @Test void vocabularyDraftAndHistoryStayScopedToTheirOwnAssessment() throws Exception {
+        UUID id = session("Session 1.1 — Identity and Access Vocabulary");
+        UUID pilot = pilotSession();
+        String before = progressSnapshot();
+        var mapper = new tools.jackson.databind.ObjectMapper();
+        var draft = mapper.readTree(post(id,"draft","{}").body());
+        String attempt = draft.get("id").asString();
+        assertThat(draft.get("paper").get("key").asString()).isEqualTo("identity-and-access-vocabulary");
+        assertThat(draft.get("paper").get("release").asInt()).isOne();
+        assertThat(mapper.readTree(post(id,"draft","{}").body()).get("id").asString()).isEqualTo(attempt);
+        String edit = """
+                {"id":"%s","version":%d,"position":"@review","answers":[
+                  {"question":"unverified-account","choices":["identified"]},
+                  {"question":"sender-on-hop","choices":["dashboard"]},
+                  {"question":"write-the-incident-review","choices":[],"text":"Verify each caller and compare stored scope."}]}
+                """.formatted(attempt,draft.get("version").asLong());
+        assertThat(submit(id,"{\"key\":\"http-401-and-403\",\"release\":1,\"answers\":[]}").statusCode()).isEqualTo(409);
+        assertThat(submit(pilot,"{\"key\":\"identity-and-access-vocabulary\",\"release\":1,\"answers\":[]}").statusCode()).isEqualTo(409);
+        assertThat(post(pilot,"draft/save",edit).statusCode()).isEqualTo(409);
+        var checked = post(id,"draft/check/unverified-account",edit);
+        assertThat(checked.statusCode()).isEqualTo(200);
+        var current = mapper.readTree(checked.body());
+        var resumed = mapper.readTree(get("/sessions/" + id + "/assessment/draft").body()).get("draft");
+        assertThat(resumed).isEqualTo(current);
+        assertThat(resumed.get("guided").get("unverified-account").get("outcome").asString()).isEqualTo("Correct");
+        String submission = """
+                {"id":"%s","version":%d,"rating":"Needs review"}
+                """.formatted(attempt,resumed.get("version").asLong());
+        var response = post(id,"draft/submit",submission);
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(post(id,"draft/submit",submission).body()).isEqualTo(response.body());
+        var summary = mapper.readTree(response.body()).get("summary");
+        assertThat(summary.get("guided").asInt()).isOne();
+        assertThat(summary.get("correct").asInt()).isOne();
+        assertThat(summary.get("rating").asString()).isEqualTo("Needs review");
+        assertThat(get("/sessions/" + id + "/assessment/attempts").body()).contains(attempt);
+        assertThat(get("/sessions/" + id + "/assessment/attempts/" + attempt).body()).isEqualTo(response.body());
+        assertThat(get("/sessions/" + pilot + "/assessment/attempts").body()).doesNotContain(attempt);
+        assertThat(get("/sessions/" + pilot + "/assessment/attempts/" + attempt).statusCode()).isEqualTo(404);
+        var fresh = mapper.readTree(post(id,"draft","{}").body());
+        assertThat(fresh.get("id").asString()).isNotEqualTo(attempt);
+        assertThat(post(id,"draft/discard","{\"id\":\"" + fresh.get("id").asString() + "\",\"version\":0}").statusCode()).isEqualTo(200);
         assertThat(progressSnapshot()).isEqualTo(before);
     }
 

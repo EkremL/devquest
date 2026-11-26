@@ -5,6 +5,7 @@ import { it, expect, vi } from 'vitest'
 import { AssessmentHistory } from './AssessmentHistory'
 import { DraftWorkspace } from './DraftWorkspace'
 import pack from '../../../../backend/src/main/resources/assessments/http-401-and-403/3/assessment.json'
+import vocabulary from '../../../../backend/src/main/resources/assessments/identity-and-access-vocabulary/1/assessment.json'
 
 const base='/learn/pilot/assessment'
 const summary={id:'first',release:3,key:pack.paper.key,submittedAt:'2026-11-25T10:00:00Z',startedAt:'2026-11-25T09:00:00Z',
@@ -26,6 +27,25 @@ function mount(initial:string){
   render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
     <RouterProvider router={router}/></QueryClientProvider>)
 }
+
+it('renders the vocabulary release from its saved result and retains the pinned Reading link', async()=>{
+  const paper = vocabulary.paper
+  const snapshot = {
+    format:1,paper,answers:[],revealed:[],
+    results:paper.questions.map(({id})=>({
+      question:id,outcome:'Unanswered',guide:vocabulary.keys[id as keyof typeof vocabulary.keys],
+    })),
+  }
+  vi.spyOn(globalThis,'fetch').mockResolvedValue(Response.json({
+    summary:{...summary,key:paper.key,release:paper.release,correct:0,incorrect:0,guided:0,skipped:11,written:false,rating:null},
+    snapshot,
+  }))
+  mount('/learn/vocabulary/assessment/history/first')
+  const links = await screen.findAllByRole('link',{name:'Review the relevant passage'})
+  expect(links[0]).toHaveAttribute('href','/learn/vocabulary/read?release=4#study-credential')
+  expect(links).toHaveLength(12)
+  expect(screen.getByRole('heading',{name:paper.questions[0].prompt})).toBeVisible()
+})
 
 it('opens historical evidence read-only and returns to the independent draft',async()=>{
   const fetcher=vi.spyOn(globalThis,'fetch').mockImplementation(async(url,init)=>{

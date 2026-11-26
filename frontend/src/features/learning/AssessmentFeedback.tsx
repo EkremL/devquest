@@ -4,6 +4,11 @@ import { AssessmentBadge, correctSelectionCount, QuestionNavigator, questionStat
 import { Link } from 'react-router'
 import type { Paper, Question, Answer, Feedback } from './AssessmentPage'
 
+export function assessmentReadingUrl(session: string, paper: Paper, anchor?: string) {
+  return '/learn/'+encodeURIComponent(session)+'/read'
+    +(paper.readingRelease ? '?release='+paper.readingRelease : '')+(anchor ? '#'+anchor : '')
+}
+
 export function SelectionFeedback({question, response, feedback}: {question: Question; response?: Answer; feedback: Feedback}) {
   const {guide, outcome} = feedback
   const selected = response?.choices ?? []
@@ -90,7 +95,7 @@ export function PracticeResults({paper,results,answers,guided,session,historical
           <AssessmentBadge tone="neutral">{c.skipped + ' skipped'}</AssessmentBadge>
           <AssessmentBadge tone="guided">{c.guided + ' guided'}</AssessmentBadge>
         </div>
-        <p>{revisit.feedback.guide.reason}</p><Link className="as-action" to={'/learn/'+session+'/read#'+revisit.feedback.guide.anchor}><BookOpen size={16} aria-hidden="true"/>Revisit this objective</Link></section>
+        <p>{revisit.feedback.guide.reason}</p><Link className="as-action" to={assessmentReadingUrl(session,paper,revisit.feedback.guide.anchor)}><BookOpen size={16} aria-hidden="true"/>Revisit this objective</Link></section>
     })}</section>
     {items.map(({question,feedback},i)=>{
       const checked = guided[question.id]
@@ -106,7 +111,7 @@ export function PracticeResults({paper,results,answers,guided,session,historical
         {historicalRating!==undefined && question.sample && <figure className="rd-sample"><figcaption>Question exhibit</figcaption><pre tabIndex={0}>{question.sample}</pre></figure>}
         {question.type==='written'?<WrittenReview historicalRating={historicalRating} feedback={feedback} response={answers[question.id]}/>:
           <SelectionFeedback question={question} response={answers[question.id]} feedback={feedback}/>}
-        <Link className="as-action" to={'/learn/'+session+'/read#'+feedback.guide.anchor}><BookOpen size={16} aria-hidden="true"/>Review the relevant passage</Link>
+        <Link className="as-action" to={assessmentReadingUrl(session,paper,feedback.guide.anchor)}><BookOpen size={16} aria-hidden="true"/>Review the relevant passage</Link>
       </section>
     })}
   </>

@@ -25,25 +25,38 @@ class LearningController {
 
     @GetMapping("/assessment-catalog")
     List<UUID> assessmentCatalog() {
-        return assessments.paper().isPresent() ? packages.pilot().flatMap(this::resolve).stream().map(Session::getId).toList() : List.of();
+        return packages.published().stream()
+                .filter(content -> assessments.paper(content.getManifest().getKey()).isPresent())
+                .flatMap(content -> resolve(content).stream()).map(Session::getId).toList();
     }
 
     @GetMapping("/sessions/{sessionId}/assessment")
     ResponseEntity<AssessmentEngine.Paper> assessment(@PathVariable UUID sessionId) {
-        return ResponseEntity.of(assessments.paper().filter(p -> assessmentCatalog().contains(sessionId)));
+        return ResponseEntity.of(assessmentPaper(sessionId));
+    }
+
+    Optional<AssessmentEngine.Paper> assessmentPaper(UUID sessionId) {
+        return findLesson(sessionId, packages.published()).flatMap(lesson -> assessments.paper(lesson.getKey()));
+    }
+
+    private void requireAssessmentBinding(UUID sessionId, AssessmentEngine.Submission submission) {
+        var paper = assessmentPaper(sessionId).orElseThrow(() ->
+                new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));
+        if (!paper.getKey().equals(submission.getKey()))
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT);
     }
 
     @PostMapping("/sessions/{sessionId}/assessment/submit")
     ResponseEntity<List<AssessmentEngine.Feedback>> submit(@PathVariable UUID sessionId,
             @jakarta.validation.Valid @RequestBody AssessmentEngine.Submission responses) {
-        if (!assessmentCatalog().contains(sessionId)) return ResponseEntity.notFound().build();
+        requireAssessmentBinding(sessionId, responses);
         return ResponseEntity.ok(assessments.grade(responses));
     }
 
     @PostMapping("/sessions/{sessionId}/assessment/check")
     ResponseEntity<AssessmentEngine.Feedback> check(@PathVariable UUID sessionId,
             @jakarta.validation.Valid @RequestBody AssessmentEngine.Submission response) {
-        if (!assessmentCatalog().contains(sessionId)) return ResponseEntity.notFound().build();
+        requireAssessmentBinding(sessionId, response);
         return ResponseEntity.ok(assessments.check(response));
     }
 

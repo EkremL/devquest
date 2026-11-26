@@ -1,5 +1,6 @@
 package com.ekrem.devquest.learning;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -17,6 +18,8 @@ class AssessmentEngine {
     @Data static class Paper {
         private String key;
         private int release;
+        @JsonInclude(JsonInclude.Include.NON_NULL) private Integer readingRelease;
+        @JsonInclude(JsonInclude.Include.NON_NULL) private String title, context;
         private Map<String, String> objectives;
         private List<Question> questions;
     }
@@ -41,34 +44,52 @@ class AssessmentEngine {
     }
     @Value static class Feedback { String question; String outcome; Key guide; }
 
-    private static final int ACTIVE_RELEASE = 3;
-    private final Map<Integer, Package> releases = new HashMap<>();
+    private static final String PILOT = "http-401-and-403";
+    private static final Map<String, Integer> ACTIVE_RELEASES = Map.of(PILOT, 3, "identity-and-access-vocabulary", 1);
+    private final Map<String, Map<Integer, Package>> releases = new HashMap<>();
 
     AssessmentEngine(ObjectMapper mapper, LessonPackage lessons) {
-        lessons.pilot().ifPresent(lesson -> {
-            var anchors = new HashSet<String>();
-            lesson.getSections().forEach(section -> {
-                anchors.add(section.getAnchor());
-                section.getBlocks().stream().filter(b -> "passage".equals(b.getKind())).forEach(b -> anchors.add(b.getText()));
-            });
-            for (int release = 1; release <= ACTIVE_RELEASE; release++) {
-                String path = "/assessments/http-401-and-403/" + release + "/assessment.json";
+        for (var lesson : lessons.published()) {
+            String key = lesson.getManifest().getKey();
+            int active = ACTIVE_RELEASES.getOrDefault(key, 0);
+            if (active == 0) continue;
+            var versions = new HashMap<Integer, Package>();
+            for (int release = 1; release <= active; release++) {
+                String path = "/assessments/" + key + "/" + release + "/assessment.json";
                 try (var file = getClass().getResourceAsStream(path)) {
                     var content = mapper.readValue(file, Package.class);
                     require(content.paper.release == release);
-                    validate(content, lesson.getManifest().getKey(), anchors);
-                    releases.put(release, content);
+                    var reading = lesson;
+                    if (content.paper.readingRelease != null) {
+                        reading = lessons.releases(content.paper.readingRelease).stream()
+                                .filter(candidate -> key.equals(candidate.getManifest().getKey())).findFirst().orElseThrow();
+                        require(content.paper.objectives.keySet().equals(reading.getManifest().getObjectives().keySet()));
+                        var topics = new HashSet<String>();
+                        reading.getManifest().getTopics().forEach(topic -> topics.addAll(topic.getPassages()));
+                        require(content.keys.values().stream().allMatch(guide -> topics.containsAll(guide.topics)));
+                    }
+                    var anchors = new HashSet<String>();
+                    reading.getSections().forEach(section -> {
+                        anchors.add(section.getAnchor());
+                        section.getBlocks().stream().filter(b -> "passage".equals(b.getKind())).forEach(b -> anchors.add(b.getText()));
+                    });
+                    validate(content, key, anchors);
+                    versions.put(release, content);
                 } catch (Exception ex) {
                     org.slf4j.LoggerFactory.getLogger(AssessmentEngine.class).warn("Unavailable assessment " + path, ex);
                 }
             }
-        });
+            releases.put(key, Map.copyOf(versions));
+        }
     }
 
     static void validate(Package content, String lessonKey, Set<String> anchors) {
         var paper = content.paper;
-        boolean original = paper.release == 1;
-        require(lessonKey.equals(paper.key) && paper.release >= 1 && paper.release <= ACTIVE_RELEASE);
+        boolean pilot = PILOT.equals(lessonKey);
+        boolean original = pilot && paper.release == 1;
+        require(lessonKey.equals(paper.key) && paper.release >= 1 && paper.release <= ACTIVE_RELEASES.getOrDefault(lessonKey, 0));
+        require(pilot || (paper.readingRelease != null && paper.readingRelease > 0 && paper.title != null &&
+                !paper.title.isBlank() && paper.context != null && !paper.context.isBlank()));
         require(paper.questions.size() == (original ? 6 : 12));
         var ids = new HashSet<String>();
         var objectives = new HashSet<String>();
@@ -96,18 +117,19 @@ class AssessmentEngine {
                         && guide.rubric.stream().noneMatch(String::isBlank));
             } else {
                 require(q.choices.size() >= (original ? 3 : 4) && q.choices.size() <= 5 && guide.rubric.isEmpty());
+                require(q.choices.values().stream().map(choice -> choice.strip().toLowerCase(Locale.ROOT)).distinct().count() == q.choices.size());
                 require(("single".equals(q.type) && guide.correct.size() == 1)
-                        || (paper.release < 3 && "multiple".equals(q.type) && guide.correct.size() >= 2));
+                        || (pilot && paper.release < 3 && "multiple".equals(q.type) && guide.correct.size() >= 2));
             }
         }
-        require(ids.equals(content.keys.keySet()) && objectives.equals(paper.objectives.keySet()) && objectives.size()==4 && written==1);
+        require(ids.equals(content.keys.keySet()) && objectives.equals(paper.objectives.keySet()) && written==1);
     }
     private static void require(boolean valid) {
         if (!valid) throw new IllegalArgumentException("Invalid assessment package");
     }
-    Optional<Paper> paper() { return paper(ACTIVE_RELEASE); }
+    Optional<Paper> paper(String key) { return paper(key, ACTIVE_RELEASES.getOrDefault(key, 0)); }
 
-    Optional<Paper> paper(int release) { return Optional.ofNullable(releases.get(release)).map(Package::getPaper); }
+    Optional<Paper> paper(String key, int release) { return Optional.ofNullable(releases.getOrDefault(key, Map.of()).get(release)).map(Package::getPaper); }
 
     Feedback check(Submission submission) {
         if (submission.answers.size() != 1) throw invalid();
@@ -117,8 +139,8 @@ class AssessmentEngine {
     }
 
     List<Feedback> grade(Submission submission) {
-        var content = releases.get(submission.release);
-        if (content == null || !content.paper.key.equals(submission.key))
+        var content = releases.getOrDefault(submission.key, Map.of()).get(submission.release);
+        if (content == null)
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Assessment release changed. Reload the assessment.");
         var answers = new HashMap<String,Answer>();
         for (var answer : submission.answers) {

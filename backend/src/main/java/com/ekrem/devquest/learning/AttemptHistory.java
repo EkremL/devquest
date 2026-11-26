@@ -36,12 +36,12 @@ class AttemptHistory {
     }
 
     @GetMapping List<Summary> list(@PathVariable UUID session,
-            @RequestParam(defaultValue="http-401-and-403") String key,@RequestParam(defaultValue="0") int page) {
+            @RequestParam(required=false) String key,@RequestParam(defaultValue="0") int page) {
         if (page < 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         return jdbc.query("""
             SELECT id, assessment_key, release, started_at, submitted_at, independent_correct,
                    independent_incorrect, guided, skipped, written, rating
-            FROM devquest.assessment_attempt WHERE session_id=? AND assessment_key=?
+            FROM devquest.assessment_attempt WHERE session_id=? AND assessment_key=COALESCE(?, assessment_key)
             ORDER BY submitted_at DESC,id DESC LIMIT 20 OFFSET ?
             """,(r,i)->summary(r),session,key,20L*page);
     }

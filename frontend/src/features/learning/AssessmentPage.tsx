@@ -6,7 +6,7 @@ import { ConfirmationDialog } from '../../components/DestructiveDialog'
 import { request } from '../curriculum/api'
 import { CodeSample } from './CodeSample'
 import type { Language } from './api'
-import { SelectionFeedback, PracticeResults } from './AssessmentFeedback'
+import { assessmentReadingUrl, SelectionFeedback, PracticeResults } from './AssessmentFeedback'
 import { AssessmentBadge, QuestionNavigator, questionState } from './AssessmentStates'
 import type { DraftControls } from './DraftWorkspace'
 import { labForLesson } from './labs/catalog'
@@ -16,7 +16,10 @@ export interface Question {
   difficulty: string; id: string; objective: string; type: 'single' | 'multiple' | 'written'
   prompt: string; sample: string; language: Language; choices: Record<string, string>
 }
-export interface Paper { key: string; release: number; objectives: Record<string,string>; questions: Question[] }
+export interface Paper {
+  key: string; release: number; title?: string; context?: string; readingRelease?: number
+  objectives: Record<string,string>; questions: Question[]
+}
 export interface Answer { question: string; choices: string[]; text?: string }
 export interface Feedback {
   question: string; outcome: string
@@ -84,10 +87,10 @@ export function Practice({paper,path,session,draft}: {paper: Paper; path: string
   return <div className="assessment reading-page">
     <nav className="as-nav-actions" aria-label="Session navigation">
       <Link className="as-action" to={'/roadmap/sessions/'+session}>Session checklist</Link>
-      <Link className="as-action" to={'/learn/'+session+'/read'}>Reading workspace</Link>
+      <Link className="as-action" to={assessmentReadingUrl(session,paper)}>Reading workspace</Link>
       {labForLesson(paper.key) && <Link className="as-action" to={'/learn/'+session+'/lab'}><FlaskConical size={16} aria-hidden="true"/>Coding Lab</Link>}
     </nav>
-    <header className="rd-hero"><div><p className="rd-kicker">Practice Mode · Session 2.6</p><h1>401 and 403</h1>
+    <header className="rd-hero"><div><p className="rd-kicker">{paper.title ? 'Practice Mode' : 'Practice Mode · Session 2.6'}</p><h1>{paper.title ?? '401 and 403'}</h1>
       <p>Assessment · {paper.questions.length} questions. {draft ? 'Only server-confirmed draft changes survive closing. Submitted results are saved in Past attempts.' : 'Attempts are unsaved. Refreshing or leaving clears this practice.'}</p></div></header>
     {draft && !result && draft.panel}
     {result ? <>
@@ -95,7 +98,7 @@ export function Practice({paper,path,session,draft}: {paper: Paper; path: string
       <PracticeResults paper={paper} results={result} answers={answers} guided={guided} session={session}/>
       <button className="primary-button" onClick={()=>{if(draft){draft.restart();return}submit.reset();check.reset();setGuided({});setAnswers({});setIndex(0)}}>Start new practice</button>
     </> : <>
-      <p>Use the pilot’s hypothetical Servlet Basic API. Each request starts fresh over HTTPS. The healthy summary endpoint requires TASK_READ. Examples are illustrative.</p>
+      <p>{paper.context ?? 'Use the pilot’s hypothetical Servlet Basic API. Each request starts fresh over HTTPS. The healthy summary endpoint requires TASK_READ. Examples are illustrative.'}</p>
       <QuestionNavigator questions={paper.questions} current={index} busy={busy}
         answers={answers} guided={guided} onSelect={setIndex}/>
       <section className="as-panel">{q ? <>
@@ -118,7 +121,7 @@ export function Practice({paper,path,session,draft}: {paper: Paper; path: string
           })}</fieldset>}
         {q.type!=='written' && <div className="as-guided">
           {checked && checkedState ? <><h3>Feedback revealed · {checkedState.label}</h3><p>This selection is locked for this practice.</p>
-            <SelectionFeedback question={q} response={answer} feedback={guided[q.id]}/><Link className="as-action" to={'/learn/'+session+'/read#'+checked.guide.anchor}><BookOpen size={16} aria-hidden="true"/>Review the relevant passage</Link></> :
+            <SelectionFeedback question={q} response={answer} feedback={guided[q.id]}/><Link className="as-action" to={assessmentReadingUrl(session,paper,checked.guide.anchor)}><BookOpen size={16} aria-hidden="true"/>Review the relevant passage</Link></> :
             <><p>Check answer reveals feedback and locks your selection. Checked answers count as guided practice.</p>
             <button className="secondary-button" disabled={!answered(q.id) || busy} onClick={()=>check.mutate(answer)}>Check answer</button></>}
           <span role="status">{check.isPending?'Checking selection…':checkedState?'Guided feedback available. '+checkedState.label+'.':''}</span>
@@ -144,6 +147,6 @@ export function Practice({paper,path,session,draft}: {paper: Paper; path: string
         {submit.isError && <div role="alert"><p>{submit.error.message}{draft && ' Retry submission or check whether it was saved.'}</p>
           {draft && <Link className="as-action" to={'/learn/'+session+'/assessment/history'}>Past attempts</Link>}</div>}</>}</section>
     </>}
-    <nav aria-label="Technical references"><a href="https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.2">RFC 9110 · HTTP status codes</a> · <a href="https://docs.spring.io/spring-security/reference/7.1/servlet/authentication/passwords/basic.html">Spring Security 7.1 · HTTP Basic</a></nav>
+    {!paper.title && <nav aria-label="Technical references"><a href="https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.2">RFC 9110 · HTTP status codes</a> · <a href="https://docs.spring.io/spring-security/reference/7.1/servlet/authentication/passwords/basic.html">Spring Security 7.1 · HTTP Basic</a></nav>}
   </div>
 }

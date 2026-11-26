@@ -49,8 +49,7 @@ class AssessmentDraftController {
     }
 
     private AssessmentEngine.Paper bound(UUID session) {
-        if (!learning.assessmentCatalog().contains(session)) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        return engine.paper().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return learning.assessmentPaper(session).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     @Value static class Active { Draft draft; }
@@ -74,7 +73,7 @@ class AssessmentDraftController {
     private Optional<Draft> find(UUID session, String key, boolean lock) {
         String sql = "SELECT * FROM devquest.assessment_draft WHERE session_id=? AND assessment_key=?";
         return jdbc.query(sql + (lock ? " FOR UPDATE" : ""), (r,i) -> {
-            var paper = engine.paper(r.getInt("release")).filter(p -> p.getKey().equals(key))
+            var paper = engine.paper(key, r.getInt("release"))
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,"Restore the pinned assessment package to resume."));
             var answers = Arrays.asList(json.readValue(r.getString("answers"), AssessmentEngine.Answer[].class));
             var revealed = Arrays.asList(json.readValue(r.getString("revealed"), String[].class));
