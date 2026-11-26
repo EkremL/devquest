@@ -1,0 +1,114 @@
+.sd-playground {
+  --sd-line: #36516a;
+  --sd-pass: var(--color-mint);
+  --sd-stop: #fda4af;
+  margin: 1.4rem 0 1.8rem;
+  overflow: hidden;
+  border: 1px solid var(--sd-line);
+  border-radius: var(--radius-card);
+  background: #101e30;
+}
+.sd-header, .sd-form, .sd-output { padding: clamp(.85rem, 2.5vw, 1.4rem) }
+.sd-header { background: linear-gradient(125deg, #132f43, #182539 56%, #252343) }
+.sd-header h4 { margin: .45rem 0 .6rem; font-size: clamp(1.25rem, 3vw, 1.75rem); line-height: 1.15 }
+.sd-header h4 span { display: block; color: var(--color-mint); margin-top: .23rem }
+.sd-playground .sd-header p { margin: 0; color: var(--color-foreground) }
+.sd-playground .sd-kicker { display: flex; gap: .48rem; align-items: center; color: var(--color-mint); font-size: .81rem }
+.sd-presets { display: flex; flex-wrap: wrap; gap: .4rem; padding: .6rem clamp(.85rem, 2.5vw, 1.4rem); border-bottom: 1px solid var(--sd-line) }
+.sd-presets button {
+  background: #162a40;
+  border: 1px solid var(--sd-line);
+  border-radius: var(--radius-control);
+  padding: .38rem .6rem;
+  min-height: 44px;
+  font-size: .78rem;
+}
+.sd-presets button:hover, .sd-choices label:hover { border-color: var(--color-aqua-teal) }
+.sd-config { display: grid; grid-template-columns: 1.45fr 1fr 1fr; gap: .65rem }
+.sd-choices { min-inline-size: 0; margin: 0; border: 0; padding: 0 }
+.sd-choices legend { font-size: .84rem; font-weight: 650; padding: 0 0 .4rem }
+.sd-choices > div { display: flex; flex-wrap: wrap; gap: .35rem }
+.sd-config .sd-choices > div { display: grid }
+.sd-choices label {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .42rem .55rem;
+  min-height: 44px;
+  min-width: 0;
+  cursor: pointer;
+  font-size: .84rem;
+  line-height: 1.25;
+  border: 1px solid var(--sd-line);
+  border-radius: var(--radius-control);
+  background: #121b31;
+}
+.sd-choices label:has(:checked) { border-color: var(--color-aqua-teal); background: #183b48; color: var(--sd-pass) }
+.sd-choices input { flex: none; accent-color: var(--color-aqua-teal) }
+.sd-playground button:focus-visible, .sd-choices label:has(:focus-visible) {
+  outline: 2px solid var(--color-mint);
+  outline-offset: 2px;
+}
+.sd-run { margin-top: .9rem }
+.sd-actions { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: .7rem }
+.sd-actions button { min-height: 44px }
+.sd-actions button:disabled { opacity: .55; cursor: default; transform: none }
+.sd-output { border-top: 1px solid var(--sd-line); background: #0c1727 }
+.sd-output .sd-path {
+  display: grid;
+  grid-template-columns: repeat(5,minmax(0,1fr));
+  gap: .55rem;
+  padding: 0;
+  margin: 0 0 .85rem;
+  list-style: none;
+}
+.sd-path li {
+  position: relative;
+  display: grid;
+  gap: .25rem;
+  min-width: 0;
+  padding: .55rem .4rem;
+  border: 1px solid var(--sd-line);
+  border-radius: var(--radius-control);
+  background: #121e30;
+  line-height: 1.2;
+}
+.sd-path li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 1.1rem;
+  left: 100%;
+  width: .56rem;
+  height: 2px;
+  background: var(--sd-line);
+}
+.sd-path strong { font-size: .82rem }
+.sd-path .sd-stage-icon { color: var(--color-subtle) }
+.sd-stage-status { display: inline-flex; align-items: center; gap: .2rem; font-size: .74rem; color: var(--color-muted) }
+.sd-path [data-state="Passed"] { border-color: #3d9c8e; background: #112f38 }
+.sd-path [data-state="Passed"]::after { background: #3d9c8e }
+.sd-path [data-state="Passed"] :is(.sd-stage-icon,.sd-stage-status) { color: var(--sd-pass) }
+.sd-path [data-state="Stopped"] { background: #362238; border-color: #c8768b }
+.sd-path [data-state="Stopped"] :is(.sd-stage-icon,.sd-stage-status) { color: var(--sd-stop) }
+.sd-path [data-state="Not reached"] { border-style: dashed }
+.sd-path li:is([data-state="Passed"], [data-state="Stopped"]) { animation: sd-activate 260ms ease-out backwards }
+@keyframes sd-activate { from { opacity: .55; transform: translateY(3px) } }
+.sd-playground :is(.sd-waiting,.sd-contract) { margin: .4rem 0 0; color: var(--color-muted); font-size: .84rem }
+.sd-result { border-inline-start: 3px solid var(--sd-stop); background: #172136; padding: .65rem .8rem }
+.sd-result[data-allowed=true] { border-color: var(--sd-pass) }
+.sd-result-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: .25rem .75rem }
+.sd-result-heading strong { color: var(--sd-stop); font-variant-numeric: tabular-nums }
+.sd-result[data-allowed=true] .sd-result-heading strong { color: var(--sd-pass) }
+.sd-playground .sd-result p { margin: .4rem 0 0; font-size: .9rem }
+.sd-next { display: flex; gap: .5rem; align-items: baseline }
+.sd-next svg { align-self: start; margin-top: .24rem; color: var(--color-aqua-teal) }
+@media (max-width: 620px) {
+  .sd-config { grid-template-columns: 1fr 1fr }
+  .sd-config > :first-child { grid-column: 1 / -1 }
+  .sd-output .sd-path { grid-template-columns: 1fr }
+  .sd-path li { grid-template-columns: 1.4rem minmax(0,1fr) auto; align-items: center }
+  .sd-path li:not(:last-child)::after { top: 100%; left: .98rem; width: 2px; height: .56rem }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sd-path li:is([data-state="Passed"], [data-state="Stopped"]) { animation: none }
+}

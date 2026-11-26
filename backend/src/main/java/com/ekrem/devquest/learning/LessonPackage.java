@@ -1,5 +1,6 @@
 package com.ekrem.devquest.learning;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.Value;
 import org.commonmark.node.*;
@@ -23,11 +24,15 @@ class LessonPackage {
     private static final String TOKEN = "[a-z][a-z0-9]*(?:-[a-z0-9]+)*";
     private final Optional<Content> pilot;
     private final List<Content> published;
+    private final List<Content> archived;
 
     LessonPackage(ObjectMapper json) {
         pilot = load(json, "http-401-and-403", 4);
         published = java.util.stream.Stream.concat(
-                load(json, "identity-and-access-vocabulary", 1).stream(), pilot.stream()).toList();
+                load(json, "identity-and-access-vocabulary", 4).stream(), pilot.stream()).toList();
+        archived = java.util.stream.IntStream.of(1, 2, 3)
+                .mapToObj(release -> load(json, "identity-and-access-vocabulary", release))
+                .flatMap(Optional::stream).toList();
     }
 
     Optional<Content> pilot() {
@@ -36,6 +41,11 @@ class LessonPackage {
 
     List<Content> published() {
         return published;
+    }
+
+    List<Content> releases(int release) {
+        return java.util.stream.Stream.concat(published.stream(), archived.stream())
+                .filter(content -> content.getManifest().getRelease() == release).toList();
     }
 
     private Optional<Content> load(ObjectMapper json, String key, int release) {
@@ -86,6 +96,8 @@ class LessonPackage {
         var node = Parser.builder().build().parse(markdown).getFirstChild();
         var reading = new ArrayList<ReadingSection>();
         var passageIds = new HashSet<String>();
+        var visuals = manifest.getVisuals() == null ? Map.<String, Visual>of() : manifest.getVisuals();
+        var visualIds = new HashSet<String>();
         for (var section : sections) {
             require(section != null && matches(section.getAnchor(), TOKEN) && nonBlank(section.getTitle())
                     && section.getObjectives() != null && !section.getObjectives().isEmpty()
@@ -103,6 +115,11 @@ class LessonPackage {
                     node = node.getNext();
                     require(node instanceof Heading heading && heading.getLevel() == 3, "Passage needs a heading");
                     blocks.add(new Block("passage", inline(node), null, anchor));
+                } else if (node instanceof FencedCodeBlock marker && "visual".equals(marker.getInfo())) {
+                    String id = marker.getLiteral().strip();
+                    var visual = visuals.get(id);
+                    require(matches(id, TOKEN) && visualIds.add(id) && validVisual(visual), "Invalid, missing or duplicate reading visual: " + id);
+                    blocks.add(new Block("visual", List.of(), null, null, visual));
                 } else {
                     blocks.add(block(node));
                 }
@@ -115,6 +132,7 @@ class LessonPackage {
             require(practiceMarkers == (practice == null ? 0 : 1), "Practice marker must match a prompt");
             if (practice != null) {
                 require(nonBlank(practice.prompt) && practice.choices != null && practice.choices.size() >= 2
+                        && (practice.presentation == null || matches(practice.presentation, "prediction|diagnosis|experiment"))
                         && practice.choices.stream().allMatch(c -> c != null && nonBlank(c.label) && nonBlank(c.reason))
                         && practice.choices.stream().map(Choice::getLabel).distinct().count() == practice.choices.size(),
                         "Invalid reading practice");
@@ -131,6 +149,7 @@ class LessonPackage {
                     section.getObjectives().stream().map(objectives::get).toList(), List.copyOf(blocks)));
         }
         require(node == null, "Unexpected section outside manifest");
+        require(visualIds.equals(visuals.keySet()), "Unused reading visual");
         require(reading.stream().noneMatch(section -> passageIds.contains(section.getAnchor())), "Anchor collision");
         var lines = new HashSet<Integer>();
         var referenced = new HashSet<String>();
@@ -149,6 +168,16 @@ class LessonPackage {
         return new Content(manifest, List.copyOf(reading));
     }
 
+    private static boolean validVisual(Visual visual) {
+        return visual != null && matches(visual.layout, "flow|comparison|trace|stepper") && nonBlank(visual.title)
+                && visual.groups != null && !visual.groups.isEmpty()
+                && (!Set.of("trace", "stepper").contains(visual.layout) || visual.groups.size() == 1)
+                && visual.groups.stream().allMatch(group -> group != null && nonBlank(group.title)
+                && group.items != null && !group.items.isEmpty() && (!"stepper".equals(visual.layout) || group.items.size() >= 2)
+                && group.items.stream()
+                        .allMatch(item -> item != null && nonBlank(item.label) && nonBlank(item.detail)));
+    }
+
     private static Block block(Node node) {
         if (node instanceof Paragraph) return new Block("paragraph", inline(node), null, null);
         if (node instanceof Heading heading && heading.getLevel() == 3) {
@@ -158,12 +187,12 @@ class LessonPackage {
                 && heading.getLevel() == 3 && heading.getFirstChild() instanceof Text label && label.getNext() == null
                 && heading.getNext() instanceof Paragraph paragraph && paragraph.getNext() == null) {
             require(Set.of("Engineering tip", "Common misconception", "Security warning", "Implementation details",
-                    "Guided explanation", "Key takeaway").contains(label.getLiteral()), "Unknown teaching note");
+                    "Guided explanation", "Going deeper", "Debugger mindset", "Key takeaway").contains(label.getLiteral()), "Unknown teaching note");
             return new Block("note", inline(paragraph), null, label.getLiteral());
         }
         if (node instanceof FencedCodeBlock marker && "reader".equals(marker.getInfo())) {
             String widget = marker.getLiteral().strip();
-            require(Set.of("outcomes", "request-flow", "practice", "evidence").contains(widget), "Unknown reading activity");
+            require(Set.of("outcomes", "request-flow", "practice", "evidence", "security-decision").contains(widget), "Unknown reading activity");
             return new Block(widget, List.of(), null, null);
         }
         if (node instanceof FencedCodeBlock code && Set.of("http", "text", "java", "json").contains(code.getInfo())) {
@@ -197,6 +226,7 @@ class LessonPackage {
     }
 
     @Data static class Manifest {
+        private Map<String, Visual> visuals;
         private String key;
         private int release;
         private Binding binding;
@@ -207,6 +237,22 @@ class LessonPackage {
         private List<Outcome> outcomes;
         private String request;
         private String transport;
+    }
+
+    @Data static class Visual {
+        private String layout;
+        private String title;
+        private List<VisualGroup> groups;
+    }
+
+    @Data static class VisualGroup {
+        private String title;
+        private List<VisualItem> items;
+    }
+
+    @Data static class VisualItem {
+        private String label;
+        private String detail;
     }
 
     @Data static class Topic {
@@ -240,6 +286,7 @@ class LessonPackage {
     @Data static class Practice {
         private String prompt;
         private List<Choice> choices;
+        @JsonInclude(JsonInclude.Include.NON_NULL) private String presentation;
     }
 
     @Data static class Outcome {
@@ -283,6 +330,19 @@ class LessonPackage {
         List<Span> spans;
         String language;
         String text;
+        @JsonInclude(JsonInclude.Include.NON_NULL) Visual visual;
+
+        Block(String kind, List<Span> spans, String language, String text) {
+            this(kind, spans, language, text, null);
+        }
+
+        Block(String kind, List<Span> spans, String language, String text, Visual visual) {
+            this.kind = kind;
+            this.spans = spans;
+            this.language = language;
+            this.text = text;
+            this.visual = visual;
+        }
     }
 
     @Value static class Span {

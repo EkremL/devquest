@@ -2,8 +2,17 @@ import { request } from '../curriculum/api'
 
 export interface Span { kind: 'text' | 'code' | 'link'; text: string; href: string | null }
 export type Language = 'http' | 'text' | 'java' | 'json'
-interface Block { kind: 'paragraph' | 'passage' | 'heading' | 'code' | 'note' | 'outcomes' | 'request-flow' | 'practice' | 'evidence'; spans: Span[]; language: Language | null; text: string | null }
-export interface Practice { prompt: string; choices: { label: string; reason: string }[] }
+interface Block { kind: 'paragraph' | 'passage' | 'heading' | 'code' | 'note' | 'outcomes' | 'request-flow' | 'practice' | 'evidence' | 'visual' | 'security-decision'; spans: Span[]; language: Language | null; text: string | null; visual?: InstructionVisual }
+export interface InstructionVisual {
+  layout: 'flow' | 'comparison' | 'trace' | 'stepper'
+  title: string
+  groups: { title: string; items: { label: string; detail: string }[] }[]
+}
+export interface Practice {
+  prompt: string
+  choices: { label: string; reason: string }[]
+  presentation?: 'prediction' | 'diagnosis' | 'experiment'
+}
 export interface Outcome { status: '401' | '403' | '200'; title: string; detail: string; action: string }
 export interface FlowCase {
   label: string; authentication: string; authorization: string | null; translation: string | null
@@ -30,7 +39,8 @@ interface Lesson {
 
 export const getLessonCatalog = () => request<string[]>('/learning/catalog')
 export const getAssessmentCatalog = () => request<string[]>('/learning/assessment-catalog')
-export const getLesson = (sessionId: string) => request<Lesson>(`/learning/sessions/${encodeURIComponent(sessionId)}/lesson`)
+export const getLesson = (sessionId: string, release: string | null = null) =>
+  request<Lesson>(`/learning/sessions/${encodeURIComponent(sessionId)}/lesson${release === null ? '' : '?release=' + encodeURIComponent(release)}`)
 
 export const getTopicLinks = (sessionId: string) =>
   request<Record<string, string>>(`/learning/sessions/${encodeURIComponent(sessionId)}/topics`)

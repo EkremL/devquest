@@ -200,3 +200,43 @@
   .rd-path { box-shadow: 0 5px 16px #080d1980; }
   .rd-article :is(h2, .rd-passage) { scroll-margin-top: calc(6rem + env(safe-area-inset-top, 0px)); }
 }
+.rd-instruction { margin:1.1rem 0; padding:clamp(.8rem,3vw,1.25rem); border:1px solid var(--color-border-strong); border-radius:var(--radius-card); background:var(--color-surface) }
+.rd-instruction figcaption { display:flex; align-items:center; gap:.55rem; font-weight:700; color:var(--color-foreground); margin-bottom:.85rem }
+.rd-instruction figcaption svg { flex:none; color:var(--color-aqua-teal) }
+.rd-instruction-groups { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr)); gap:.9rem }
+.rd-instruction-group { min-width:0; padding:.8rem; border:1px solid var(--color-border-strong); border-radius:var(--radius-control); background:var(--color-surface-raised) }
+.rd-instruction-group h4 { margin:0 0 .5rem; font-size:.94rem; font-weight:700; color:var(--color-mint) }
+.rd-instruction-group:nth-child(even) h4 { color:var(--color-soft-purple) }
+.rd-instruction-group :is(ol,dl) { margin:0 }
+.rd-instruction-group ol { padding-inline-start:1.35rem; list-style:decimal }
+.rd-instruction-group :is(li,dl > div) { padding-block:.38rem; line-height:1.5 }
+.rd-instruction-group :is(li,dl > div) + :is(li,div) { border-top:1px solid var(--color-border-strong) }
+.rd-instruction-group :is(dt,strong) { display:block; font-weight:650 }
+.rd-instruction-group :is(dd,li span) { display:block; margin:0; color:var(--color-muted); font-size:.9rem }
+.rd-instruction-flow li + li { border-top:0 }
+.rd-instruction-arrow { display:block; color:var(--color-aqua-teal); margin:-.1rem 0 .3rem }
+
+.rd-trace { margin:1.15rem 0 1.5rem; padding:.9rem 1rem; border-inline-start:3px solid var(--color-aqua-teal); background:var(--color-surface-raised); border-radius:var(--radius-control) }
+.rd-trace figcaption, .rd-stepper figcaption { font-weight:700; color:var(--color-foreground) }
+.rd-trace ol { margin:.7rem 0 0; padding:0; list-style:none }
+.rd-trace li { display:grid; grid-template-columns:minmax(5.25rem,auto) 1fr; align-items:baseline; gap:.5rem; padding:.6rem 0; border-block-start:1px solid var(--rd-line) }
+.rd-trace li strong { color:var(--color-mint); font:600 .83rem/1.4 var(--rd-mono) }
+.rd-trace li span { color:var(--rd-text); font-size:.93rem }
+.rd-stepper { margin:1.25rem 0; padding:clamp(.85rem,3vw,1.3rem); background:#112133; border:1px solid #345164; border-radius:var(--radius-card) }
+.rd-stepper figcaption { display:flex; align-items:center; gap:.55rem }
+.rd-stepper figcaption svg { color:var(--color-aqua-teal) }
+.rd-stepper-body { margin:.85rem 0; padding:.5rem .8rem; border-inline-start:2px solid var(--color-aqua-teal) }
+.rd-stepper-body > span { display:block; font:600 .78rem var(--rd-mono); color:var(--color-mint); margin-bottom:.35rem }
+.rd-stepper-body > strong { display:block; font-size:1.05rem }
+.rd-stepper-body > p { margin:.25rem 0; font-size:.95rem }
+.rd-stepper-controls { display:flex; gap:.5rem; flex-wrap:wrap }
+.rd-stepper-controls button { min-height:44px }
+.rd-stepper-controls [aria-disabled=true] { opacity:.6; cursor:default }
+.rd-stepper-controls button:focus-visible { outline:2px solid var(--color-mint); outline-offset:3px }
+.rd-practice.rd-practice-diagnosis { background:var(--color-surface); border-color:var(--color-border-strong); border-inline-start:3px solid var(--color-aqua-teal) }
+.rd-practice-diagnosis .rd-kicker, .rd-practice-experiment .rd-kicker { color:var(--color-mint) }
+.rd-practice-diagnosis .rd-choices { display:grid }
+.rd-practice.rd-practice-experiment { background:#14283a; border-color:#3a5d72 }
+.rd-practice-experiment .rd-choices { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr)) }
+.rd-practice-experiment .rd-answer { padding:.6rem .8rem; background:var(--color-surface); border-inline-start:2px solid var(--color-aqua-teal) }
+.rd-note.rd-debug-note { background:var(--color-surface-raised); border-inline-start:3px solid var(--color-aqua-teal) }

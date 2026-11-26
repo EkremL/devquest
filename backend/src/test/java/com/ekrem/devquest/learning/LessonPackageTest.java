@@ -25,13 +25,31 @@ class LessonPackageTest {
     }
 
     @Test void vocabularyCoverageMatchesTheReviewedBaseline() {
-        var lesson = new LessonPackage(new ObjectMapper()).published().stream()
+        var packages = new LessonPackage(new ObjectMapper());
+        var lesson = packages.published().stream()
                 .filter(item -> item.getManifest().getKey().equals("identity-and-access-vocabulary")).findFirst().orElseThrow();
         var manifest = lesson.getManifest();
         assertThat(manifest.getBinding().getModuleTitle()).isEqualTo("Module 1 — Authentication Foundations");
         assertThat(manifest.getBinding().getSessionTitle()).isEqualTo("Session 1.1 — Identity and Access Vocabulary");
-        assertThat(manifest.getRelease()).isEqualTo(1);
+        assertThat(manifest.getRelease()).isEqualTo(4);
         assertThat(lesson.getSections()).hasSize(5);
+        for (int release : new int[]{1, 2, 3}) {
+            var archived = packages.releases(release).getFirst();
+            assertThat(archived.getManifest().getRelease()).isEqualTo(release);
+            assertThat(archived.getManifest().getTopics()).isEqualTo(manifest.getTopics());
+            assertThat(archived.getManifest().getBinding()).isEqualTo(manifest.getBinding());
+            assertThat(lesson.getSections()).extracting(LessonPackage.ReadingSection::getAnchor)
+                    .containsExactlyInAnyOrderElementsOf(archived.getSections().stream().map(LessonPackage.ReadingSection::getAnchor).toList());
+        }
+        assertThat(lesson.getSections().stream().filter(chapter -> chapter.getPractice() != null)
+                .map(chapter -> chapter.getPractice().getPresentation()))
+                .containsExactly("prediction", "diagnosis", "diagnosis", "prediction");
+        assertThat(lesson.getSections().stream().filter(chapter ->
+                chapter.getBlocks().stream().anyMatch(block -> "security-decision".equals(block.getKind())))
+                .map(LessonPackage.ReadingSection::getAnchor)).containsExactly("separate-policy-from-proof");
+        assertThat(lesson.getSections().stream().flatMap(chapter -> chapter.getBlocks().stream())
+                .filter(block -> block.getVisual() != null).map(block -> block.getVisual().getLayout()))
+                .containsExactly("trace", "comparison", "flow", "stepper", "trace");
         assertThat(manifest.getTopics()).extracting(LessonPackage.Topic::getSourceLabel).containsExactly(
                 "Identity", "Credential", "Authentication", "Authorization", "Access control", "Principal", "Subject", "User",
                 "Client", "Service", "Resource", "Resource server", "Authentication server", "Identity provider",
@@ -45,6 +63,20 @@ class LessonPackageTest {
             assertThat(available).containsAll(topic.getPassages());
         }
         assertThat(available).containsExactlyInAnyOrderElementsOf(primaryAnchors);
+    }
+
+    @Test void rejectsMisspelledOrMissingVisualReferences() throws Exception {
+        var mapper = new ObjectMapper();
+        var root = "/lessons/identity-and-access-vocabulary/2/";
+        try (var manifest = getClass().getResourceAsStream(root + "manifest.json");
+             var reading = getClass().getResourceAsStream(root + "reading.md")) {
+            var data = mapper.readValue(manifest, LessonPackage.Manifest.class);
+            var markdown = new String(reading.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            assertThatIllegalArgumentException().isThrownBy(() ->
+                    LessonPackage.parse(data, markdown.replace("claim-and-proof", "unknown-visual")));
+            assertThatIllegalArgumentException().isThrownBy(() ->
+                    LessonPackage.parse(data, markdown.replaceFirst("(?m)^claim-and-proof$", "access-path")));
+        }
     }
 
     private String reading() throws java.io.IOException {

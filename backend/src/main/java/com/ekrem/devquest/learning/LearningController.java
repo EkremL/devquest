@@ -53,12 +53,12 @@ class LearningController {
     }
 
     @GetMapping("/sessions/{sessionId}/lesson")
-    ResponseEntity<Lesson> lesson(@PathVariable UUID sessionId) {
-        return ResponseEntity.of(findLesson(sessionId));
+    ResponseEntity<Lesson> lesson(@PathVariable UUID sessionId, @RequestParam(required = false) Integer release) {
+        return ResponseEntity.of(findLesson(sessionId, release == null ? packages.published() : packages.releases(release)));
     }
 
-    private Optional<Lesson> findLesson(UUID sessionId) {
-        return packages.published().stream().flatMap(content -> resolve(content)
+    private Optional<Lesson> findLesson(UUID sessionId, List<LessonPackage.Content> candidates) {
+        return candidates.stream().flatMap(content -> resolve(content)
                 .filter(session -> session.getId().equals(sessionId))
                 .map(session -> new Lesson(session, content)).stream()).findFirst();
     }
@@ -67,7 +67,7 @@ class LearningController {
     @GetMapping("/sessions/{sessionId}/topics")
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     Map<UUID, String> topicLinks(@PathVariable UUID sessionId) {
-        var matched = findLesson(sessionId);
+        var matched = findLesson(sessionId, packages.published());
         if (matched.isEmpty()) return Map.of();
         var manifest = matched.orElseThrow().content.getManifest();
         var binding = manifest.getBinding();

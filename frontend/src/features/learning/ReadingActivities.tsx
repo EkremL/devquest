@@ -1,7 +1,61 @@
 import { useId, useState } from 'react'
-import { ArrowDown, Check, CheckCheck, ChevronDown, CircleHelp, Fingerprint, GitBranch, KeyRound, LockKeyhole, Network, Route, Send, ShieldCheck, Terminal } from 'lucide-react'
-import type { FlowCase, Outcome, Practice } from './api'
+import { ArrowDown, ArrowLeft, ArrowRight, Check, CheckCheck, ChevronDown, CircleHelp, Fingerprint, FlaskConical, GitBranch, KeyRound, LockKeyhole, Network, Route, Search, Send, ShieldCheck, Terminal } from 'lucide-react'
+import type { FlowCase, InstructionVisual, Outcome, Practice } from './api'
 const outcomeIcons = { '401': KeyRound, '403': LockKeyhole, '200': ShieldCheck }
+
+export function InstructionFigure({ visual }: { visual: InstructionVisual }) {
+  if (visual.layout === 'stepper') return <InstructionStepper visual={visual}/>
+  if (visual.layout === 'trace') return <figure className="rd-trace">
+    <figcaption>{visual.title}</figcaption>
+    <ol aria-label={visual.groups[0].title}>{visual.groups[0].items.map(item => <li key={item.label}>
+      <strong>{item.label}</strong><span>{item.detail}</span>
+    </li>)}</ol>
+  </figure>
+  return <figure className={'rd-instruction rd-instruction-' + visual.layout}>
+    <figcaption><GitBranch size={17} aria-hidden="true"/>{visual.title}</figcaption>
+    <div className="rd-instruction-groups">
+      {visual.groups.map((group, groupIndex) => <div key={groupIndex} className="rd-instruction-group">
+        <h4>{group.title}</h4>
+        {visual.layout === 'flow' ? <ol>
+          {group.items.map((item, index) => <li key={index}>
+            {index > 0 && <ArrowDown className="rd-instruction-arrow" size={13} aria-hidden="true"/>}
+            <strong>{item.label}</strong><span>{item.detail}</span>
+          </li>)}
+        </ol> : <dl>
+          {group.items.map((item, index) => <div key={index}>
+            <dt>{item.label}</dt><dd>{item.detail}</dd>
+          </div>)}
+        </dl>}
+      </div>)}
+    </div>
+  </figure>
+}
+
+function InstructionStepper({ visual }: { visual: InstructionVisual }) {
+  const [step, setStep] = useState(0)
+  const items = visual.groups[0].items
+  const current = items[step]
+  return <figure className="rd-stepper">
+    <figcaption><Route size={17} aria-hidden="true"/>{visual.title}</figcaption>
+    <div className="rd-stepper-body" role="status" aria-atomic="true">
+      <span>Step {step + 1} of {items.length}</span>
+      <strong>{current.label}</strong>
+      <p>{current.detail}</p>
+    </div>
+    <div className="rd-stepper-controls">
+      <button type="button" className="secondary-button" aria-disabled={step === 0}
+        onClick={() => setStep(Math.max(0, step - 1))}><ArrowLeft size={16} aria-hidden="true"/>Previous step</button>
+      <button type="button" className="secondary-button" aria-disabled={step === items.length - 1}
+        onClick={() => setStep(Math.min(items.length - 1, step + 1))}>Next step<ArrowRight size={16} aria-hidden="true"/></button>
+    </div>
+  </figure>
+}
+
+const practiceLabels = {
+  prediction: { heading: 'Make a prediction', reveal: 'See what the server knows', icon: CircleHelp },
+  diagnosis: { heading: 'Inspect the evidence', reveal: 'Check the reasoning', icon: Search },
+  experiment: { heading: 'Change one variable', reveal: 'Run this case', icon: FlaskConical },
+}
 
 export function OutcomeCards({ outcomes }: { outcomes: Outcome[] }) {
   return <figure className="rd-outcomes">
@@ -19,8 +73,10 @@ export function ReadingPractice({ practice }: { practice: Practice }) {
   const group = useId()
   const [choice, setChoice] = useState<number | null>(null)
   const [revealed, setRevealed] = useState(false)
-  return <div className="rd-practice">
-    <div className="rd-kicker"><CircleHelp size={16} /> Think it through</div>
+  const presentation = practice.presentation && practiceLabels[practice.presentation]
+  const Icon = presentation ? presentation.icon : CircleHelp
+  return <div className={practice.presentation ? 'rd-practice rd-practice-' + practice.presentation : 'rd-practice'}>
+    <div className="rd-kicker"><Icon size={16} aria-hidden="true"/> {presentation ? presentation.heading : 'Think it through'}</div>
     <fieldset><legend>{practice.prompt}</legend>
       <div className="rd-choices">{practice.choices.map((item, index) => <label key={item.label}>
         <input type="radio" name={group} checked={choice === index} onChange={() => { setChoice(index); setRevealed(false) }} />
@@ -28,7 +84,7 @@ export function ReadingPractice({ practice }: { practice: Practice }) {
       </label>)}</div>
     </fieldset>
     <button type="button" className="rd-reveal" disabled={choice === null} aria-expanded={revealed}
-      aria-controls={group + '-reason'} onClick={() => setRevealed(!revealed)}>{revealed ? 'Hide reasoning' : 'Reveal reasoning'}</button>
+      aria-controls={group + '-reason'} onClick={() => setRevealed(!revealed)}>{revealed ? 'Hide reasoning' : presentation ? presentation.reveal : 'Reveal reasoning'}</button>
     <div id={group + '-reason'} aria-live="polite">{revealed && choice !== null && <p className="rd-answer">{practice.choices[choice].reason}</p>}</div>
   </div>
 }

@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, ArrowRight, BookOpen, ChevronDown, ChevronRight, Flag, FlaskConical, Layers, Lightbulb, ListTree, LockKeyhole, MessageCircle, ShieldAlert, Target } from 'lucide-react'
 import { ApiError } from '../curriculum/api'
 import { getAssessmentCatalog, getLesson, type FlowCase, type Outcome, type ReadingSection, type Span } from './api'
-import { OutcomeCards, ReadingPractice, RequestFlow } from './ReadingActivities'
+import { InstructionFigure, OutcomeCards, ReadingPractice, RequestFlow } from './ReadingActivities'
 import { CodeSample } from './CodeSample'
+import { SecurityDecisionPlayground } from './SecurityDecisionPlayground'
 import { labForLesson } from './labs/catalog'
 import './reading.css'
 
@@ -13,12 +14,13 @@ export function ReadingPage() {
   const { sessionId = '' } = useParams()
   const location = useLocation()
   const navigate = useNavigate()
+  const requestedRelease = new URLSearchParams(location.search).get('release')
   const fromTopic = location.state?.fromTopic
   const checklist = `/roadmap/sessions/${encodeURIComponent(sessionId)}` +
     (typeof fromTopic === 'string' ? '#topic-' + encodeURIComponent(fromTopic) : '')
   const query = useQuery({
-    queryKey: ['learning', 'lesson', sessionId],
-    queryFn: () => getLesson(sessionId),
+    queryKey: requestedRelease === null ? ['learning', 'lesson', sessionId] : ['learning', 'lesson', sessionId, requestedRelease],
+    queryFn: () => getLesson(sessionId, requestedRelease),
     retry: false,
   })
   const anchor = location.hash.slice(1)
@@ -105,12 +107,12 @@ export function ReadingPage() {
         <nav aria-label="Lesson path" className="rd-path">
           <h2><ListTree size={17}/> Lesson path</h2>
           <ol>{sections.map((section, i) => <li key={section.anchor}>
-            <Link to={{ hash: '#' + section.anchor }} state={location.state} aria-label={section.title} aria-current={index === i ? 'step' : undefined}>
+            <Link to={{ search: location.search, hash: '#' + section.anchor }} state={location.state} aria-label={section.title} aria-current={index === i ? 'step' : undefined}>
               <span className="rd-node" aria-hidden="true">{i + 1}</span>{section.title}
             </Link>
           </li>)}</ol>
           <label className="rd-mobile-path"><span className="sr-only">Choose a section</span>
-            <select value={current.anchor} onChange={e => void navigate({hash: '#' + e.target.value}, {state: location.state})}>
+            <select value={current.anchor} onChange={e => void navigate({search: location.search, hash: '#' + e.target.value}, {state: location.state})}>
               {sections.map((section, i) => <option value={section.anchor} key={section.anchor}>{i + 1}. {section.title}</option>)}
             </select><ChevronDown size={16} aria-hidden="true"/>
           </label>
@@ -131,7 +133,7 @@ export function ReadingPage() {
           {Array.isArray(assessments.data) && assessments.data.includes(session.id) && <p>Try the <Link to={`/learn/${session.id}/assessment`}>practice assessment</Link> to explain and check your decisions.</p>}
           {lab && <Link className="secondary-button" to={`/learn/${session.id}/lab`}><FlaskConical size={16} aria-hidden="true"/>Open Coding Lab</Link>}
           <nav className="rd-turn" aria-label="After reading">
-            <Link to={{ hash: '' }} state={location.state}>Back to top</Link>
+            <Link to={{ search: location.search, hash: '' }} state={location.state}>Back to top</Link>
             <Link className="rd-next" to={checklist}>Return to session checklist<ArrowRight size={16}/></Link>
           </nav>
         </section>
@@ -149,14 +151,14 @@ function Inline({ spans }: { spans: Span[] }) {
 }
 
 function TeachingNote({ title, spans }: { title: string; spans: Span[] }) {
-  if (title === 'Implementation details' || title === 'Guided explanation') {
-    const Icon = title === 'Implementation details' ? Layers : MessageCircle
+  if (title === 'Implementation details' || title === 'Guided explanation' || title === 'Going deeper') {
+    const Icon = title === 'Guided explanation' ? MessageCircle : Layers
     return <details className="rd-disclosure"><summary><Icon size={17}/>{title}<ChevronDown size={16}/></summary>
       <p><Inline spans={spans}/></p></details>
   }
   const warning = title === 'Security warning' || title === 'Common misconception'
   const Icon = warning ? ShieldAlert : title === 'Engineering tip' ? Lightbulb : Flag
-  return <aside className={'rd-note ' + (warning ? 'caution' : 'insight')}><Icon size={19}/>
+  return <aside className={'rd-note ' + (warning ? 'caution' : title === 'Debugger mindset' ? 'rd-debug-note' : 'insight')}><Icon size={19}/>
     <div><h3>{title}</h3><p><Inline spans={spans}/></p></div></aside>
 }
 
@@ -169,6 +171,8 @@ function LessonSection({ section, number, total, cases, outcomes, request }: { n
         case 'outcomes': return outcomes && <OutcomeCards key={i} outcomes={outcomes}/>
         case 'request-flow': return cases && request && <RequestFlow key={i} cases={cases} request={request}/>
         case 'practice': return section.practice && <ReadingPractice key={i} practice={section.practice}/>
+        case 'security-decision': return <SecurityDecisionPlayground key={i}/>
+        case 'visual': return block.visual && <InstructionFigure key={i} visual={block.visual}/>
         case 'evidence': return <table key={i} className="rd-evidence">
           <caption>Observed responses · hypothetical</caption>
           <thead><tr><th scope="col">Request</th><th scope="col">Status</th><th scope="col">WWW-Authenticate</th></tr></thead>

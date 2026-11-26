@@ -1,0 +1,448 @@
+{
+  "key": "identity-and-access-vocabulary",
+  "release": 3,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 1 — Authentication Foundations",
+    "sessionTitle": "Session 1.1 — Identity and Access Vocabulary"
+  },
+  "objectives": {
+    "trace-authentication": "Trace a claimed identity through credential verification to an authenticated actor.",
+    "evaluate-access": "Evaluate an access decision for an actor, action and resource using authoritative policy inputs.",
+    "distinguish-actors": "Distinguish the represented actor, the request sender and the principal used by Spring Security.",
+    "assign-responsibility": "Explain who verifies proof, who asserts identity and who guards the protected resource.",
+    "compare-request-paths": "Compare human and workload requests and diagnose a denial without expanding permissions."
+  },
+  "sections": [
+    {
+      "anchor": "read-the-access-decision",
+      "title": "Separate an identity from its proof",
+      "objectives": [
+        "trace-authentication"
+      ],
+      "practice": {
+        "presentation": "prediction",
+        "prompt": "At 02:13 the request contains Maya’s account name. The backend has received no proof for it. What fact could it safely record?",
+        "choices": [
+          {
+            "label": "An account name was claimed.",
+            "reason": "The name tells the server which account is being claimed. A claimed field can be logged only if policy allows it, and it must be labelled as unverified."
+          },
+          {
+            "label": "Maya signed in successfully.",
+            "reason": "That would record an authentication result before evidence was verified."
+          },
+          {
+            "label": "Maya had permission to export.",
+            "reason": "The request has established neither a verified caller nor an access decision."
+          }
+        ]
+      }
+    },
+    {
+      "anchor": "name-the-actor",
+      "title": "Name the actor at each boundary",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "practice": {
+        "presentation": "diagnosis",
+        "prompt": "A sign-in attempt returned a generic failure. Which diagnostic event would you keep?",
+        "choices": [
+          {
+            "label": "request_id=r-14 stage=authentication outcome=failed",
+            "reason": "This records the stage and outcome without storing the proof or implying a verified actor."
+          },
+          {
+            "label": "request_id=r-14 submitted_password=<captured value>",
+            "reason": "A submitted password is secret material. Avoid storing it in diagnostic logs even when authentication fails."
+          },
+          {
+            "label": "request_id=r-14 verified_actor=maya",
+            "reason": "No verified actor was established. The claimed account cannot be promoted to an authenticated identity in the audit record."
+          }
+        ]
+      }
+    },
+    {
+      "anchor": "separate-policy-from-proof",
+      "title": "Decide access to a specific resource",
+      "objectives": [
+        "evaluate-access"
+      ],
+      "practice": {
+        "presentation": "experiment",
+        "prompt": "Baseline: Maya is authenticated, has task:read, and belongs to North. Task 17 is in North. Change one input, then predict the result before running it.",
+        "choices": [
+          {
+            "label": "Move task 17 to South.",
+            "reason": "Denied · scope check. The read grant is unchanged, but the task’s stored workspace no longer matches Maya’s."
+          },
+          {
+            "label": "Replace task:read with task:create.",
+            "reason": "Denied · action check. The task stays in North. A create grant does not permit reading an existing task."
+          },
+          {
+            "label": "Change Maya’s display name.",
+            "reason": "Allowed · both checks still pass. The policy uses trusted authority and membership, not a mutable display label."
+          }
+        ]
+      }
+    },
+    {
+      "anchor": "locate-the-trust-boundaries",
+      "title": "Locate the trust boundaries",
+      "objectives": [
+        "assign-responsibility"
+      ],
+      "practice": {
+        "presentation": "diagnosis",
+        "prompt": "The task API accepts the exporter’s verified identity but denies its read of a South task. Where do you investigate first?",
+        "choices": [
+          {
+            "label": "The task API’s policy inputs.",
+            "reason": "The API owns the access decision. Compare its trusted grants and the actual resource scope before changing permissions."
+          },
+          {
+            "label": "The exporter’s sign-in secret.",
+            "reason": "Verified identity already reached the API. Rotating a secret does not explain an authorization denial."
+          },
+          {
+            "label": "The deployment location of the identity verifier.",
+            "reason": "Moving the verifier does not change which component enforces policy or what scope the task belongs to."
+          }
+        ]
+      }
+    },
+    {
+      "anchor": "follow-human-and-service-requests",
+      "title": "Follow a person and a workload",
+      "objectives": [
+        "compare-request-paths"
+      ],
+      "practice": {
+        "presentation": "prediction",
+        "prompt": "The deployment audit says Maya deployed the exporter. At 02:13 the exporter calls the API with its own workload proof. Which identity goes in the verified runtime actor field?",
+        "choices": [
+          {
+            "label": "The verified exporter identity.",
+            "reason": "That is the caller established for this request. Keep Maya separately as the deployment actor."
+          },
+          {
+            "label": "Maya’s human account.",
+            "reason": "Deployment ownership is a separate event. It does not establish intent, delegation or runtime identity."
+          },
+          {
+            "label": "The task API identity.",
+            "reason": "The API is the receiver on this hop. It can have its own identity on a different outgoing call."
+          }
+        ]
+      }
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 49,
+      "sourceLabel": "Identity",
+      "objectives": [
+        "trace-authentication"
+      ],
+      "passages": [
+        "study-identity"
+      ]
+    },
+    {
+      "sourceLine": 50,
+      "sourceLabel": "Credential",
+      "objectives": [
+        "trace-authentication"
+      ],
+      "passages": [
+        "study-credential"
+      ]
+    },
+    {
+      "sourceLine": 51,
+      "sourceLabel": "Authentication",
+      "objectives": [
+        "trace-authentication"
+      ],
+      "passages": [
+        "study-authentication",
+        "study-human-to-service",
+        "study-service-to-service"
+      ]
+    },
+    {
+      "sourceLine": 52,
+      "sourceLabel": "Authorization",
+      "objectives": [
+        "evaluate-access"
+      ],
+      "passages": [
+        "study-authorization",
+        "study-access-control"
+      ]
+    },
+    {
+      "sourceLine": 53,
+      "sourceLabel": "Access control",
+      "objectives": [
+        "evaluate-access"
+      ],
+      "passages": [
+        "study-access-control"
+      ]
+    },
+    {
+      "sourceLine": 54,
+      "sourceLabel": "Principal",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "passages": [
+        "study-principal"
+      ]
+    },
+    {
+      "sourceLine": 55,
+      "sourceLabel": "Subject",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "passages": [
+        "study-subject"
+      ]
+    },
+    {
+      "sourceLine": 56,
+      "sourceLabel": "User",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "passages": [
+        "study-user"
+      ]
+    },
+    {
+      "sourceLine": 57,
+      "sourceLabel": "Client",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "passages": [
+        "study-client"
+      ]
+    },
+    {
+      "sourceLine": 58,
+      "sourceLabel": "Service",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "passages": [
+        "study-service"
+      ]
+    },
+    {
+      "sourceLine": 59,
+      "sourceLabel": "Resource",
+      "objectives": [
+        "evaluate-access"
+      ],
+      "passages": [
+        "study-resource"
+      ]
+    },
+    {
+      "sourceLine": 60,
+      "sourceLabel": "Resource server",
+      "objectives": [
+        "assign-responsibility"
+      ],
+      "passages": [
+        "study-resource-server"
+      ]
+    },
+    {
+      "sourceLine": 61,
+      "sourceLabel": "Authentication server",
+      "objectives": [
+        "assign-responsibility"
+      ],
+      "passages": [
+        "study-authentication-server"
+      ]
+    },
+    {
+      "sourceLine": 62,
+      "sourceLabel": "Identity provider",
+      "objectives": [
+        "assign-responsibility"
+      ],
+      "passages": [
+        "study-identity-provider"
+      ]
+    },
+    {
+      "sourceLine": 63,
+      "sourceLabel": "Human-to-service authentication",
+      "objectives": [
+        "compare-request-paths"
+      ],
+      "passages": [
+        "study-human-to-service"
+      ]
+    },
+    {
+      "sourceLine": 64,
+      "sourceLabel": "Service-to-service authentication",
+      "objectives": [
+        "compare-request-paths"
+      ],
+      "passages": [
+        "study-service-to-service"
+      ]
+    }
+  ],
+  "visuals": {
+    "overnight-trace": {
+      "layout": "trace",
+      "title": "Incident review · Two reads, one familiar name",
+      "groups": [
+        {
+          "title": "Audit clues in time order",
+          "items": [
+            {
+              "label": "17:42",
+              "detail": "Maya reads Task 17 in North through the dashboard."
+            },
+            {
+              "label": "18:05",
+              "detail": "Maya deploys the nightly exporter."
+            },
+            {
+              "label": "02:13",
+              "detail": "The exporter requests Task 17. A dashboard audit view shows Maya’s name again."
+            }
+          ]
+        }
+      ]
+    },
+    "role-contrast": {
+      "layout": "comparison",
+      "title": "Four labels for one request",
+      "groups": [
+        {
+          "title": "The person and the statement",
+          "items": [
+            {
+              "label": "User",
+              "detail": "Maya, the human operating the dashboard."
+            },
+            {
+              "label": "Subject",
+              "detail": "The entity described by the statement under review. In Maya’s sign-in, that is Maya’s account."
+            }
+          ]
+        },
+        {
+          "title": "The application and the request",
+          "items": [
+            {
+              "label": "Principal",
+              "detail": "The application’s representation of the verified caller."
+            },
+            {
+              "label": "Client",
+              "detail": "The software sending the request on this hop. It can be the dashboard calling the task API."
+            }
+          ]
+        }
+      ]
+    },
+    "access-path": {
+      "layout": "flow",
+      "title": "Signing in opens the policy decision",
+      "groups": [
+        {
+          "title": "Authentication · establish the actor",
+          "items": [
+            {
+              "label": "Claim + proof",
+              "detail": "The dashboard looks up the account and verifies the submitted evidence."
+            },
+            {
+              "label": "Verified actor",
+              "detail": "The request can now be evaluated as Maya."
+            }
+          ]
+        },
+        {
+          "title": "Authorization · decide the operation",
+          "items": [
+            {
+              "label": "Actor and action",
+              "detail": "Maya asks to read Task 17 and has task:read."
+            },
+            {
+              "label": "Resource and scope",
+              "detail": "Task 17 belongs to North. Permit the read only if the stored workspace matches Maya’s membership."
+            }
+          ]
+        }
+      ]
+    },
+    "trust-path": {
+      "layout": "stepper",
+      "title": "Follow the request across the trust boundary",
+      "groups": [
+        {
+          "title": "Request stages",
+          "items": [
+            {
+              "label": "Receive the evidence",
+              "detail": "The sign-in entry point receives the claimed account and its proof. The request fields are still caller-supplied."
+            },
+            {
+              "label": "Verify the actor",
+              "detail": "A local verifier checks the proof. If a deployment accepts an external assertion, the provider makes it and the receiving application validates it."
+            },
+            {
+              "label": "Evaluate access",
+              "detail": "The task API uses a trusted actor, the action, and the resource’s stored workspace. An identity claim cannot decide that scope."
+            },
+            {
+              "label": "Enforce the decision",
+              "detail": "The resource boundary releases the task only when policy allows it. This responsibility still exists when verifier and resource API share a process."
+            }
+          ]
+        }
+      ]
+    },
+    "runtime-trace": {
+      "layout": "trace",
+      "title": "Repair the audit story",
+      "groups": [
+        {
+          "title": "Runtime audit and deployment audit",
+          "items": [
+            {
+              "label": "17:42",
+              "detail": "Verified actor: Maya’s human account · Action: read task · Scope: North."
+            },
+            {
+              "label": "18:05",
+              "detail": "Deployment actor: Maya’s human account · Action: deploy exporter."
+            },
+            {
+              "label": "02:13",
+              "detail": "Verified actor: the exporter’s workload account · Action: read task · Scope: North."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

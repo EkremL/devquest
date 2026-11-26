@@ -291,7 +291,17 @@ class LearningIT {
         var before = progressSnapshot();
         var lesson = get("/sessions/" + id + "/lesson");
         assertThat(lesson.statusCode()).isEqualTo(200);
-        assertThat(lesson.body()).contains("\"key\":\"identity-and-access-vocabulary\"", "\"release\":1", "TaskReadPolicy");
+        assertThat(lesson.body()).contains("\"key\":\"identity-and-access-vocabulary\"", "\"release\":4", "TaskReadPolicy", "security-decision");
+        var archived = get("/sessions/" + id + "/lesson?release=1");
+        assertThat(archived.statusCode()).isEqualTo(200);
+        assertThat(archived.body()).contains("\"release\":1", "study-principal").doesNotContain("Walk through the Java policy");
+        var second = get("/sessions/" + id + "/lesson?release=2");
+        assertThat(second.statusCode()).isEqualTo(200);
+        assertThat(second.body()).contains("\"release\":2", "Walk through the Java policy").doesNotContain("Repair the audit story");
+        var third = get("/sessions/" + id + "/lesson?release=3");
+        assertThat(third.statusCode()).isEqualTo(200);
+        assertThat(third.body()).contains("\"release\":3", "Repair the audit story").doesNotContain("security-decision");
+        assertThat(get("/sessions/" + id + "/lesson?release=99").statusCode()).isEqualTo(404);
         var links = learning.topicLinks(id);
         var items = jdbc.queryForList("""
                 SELECT m.item_id FROM devquest.source_item_mapping m JOIN devquest.curriculum_node n ON n.id=m.node_id
@@ -379,7 +389,7 @@ class LearningIT {
 
     private void assertUnavailable(UUID id) {
         assertThat(learning.catalog()).doesNotContain(id);
-        assertThat(learning.lesson(id).getStatusCode().value()).isEqualTo(404);
+        assertThat(learning.lesson(id, null).getStatusCode().value()).isEqualTo(404);
     }
 
     private UUID pilotSession() {
