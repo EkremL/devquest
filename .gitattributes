@@ -4,3 +4,6 @@
 *.ps1 text eol=crlf
 *.java text eol=lf
 *.sql text eol=lf
+frontend/src/features/learning/labs/**/starter/pom.xml text eol=lf
+frontend/src/features/learning/labs/**/starter/README.md text eol=lf
+frontend/src/features/learning/labs/**/starter/src/main/resources/application.properties text eol=lf

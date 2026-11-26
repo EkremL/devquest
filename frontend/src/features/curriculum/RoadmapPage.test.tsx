@@ -30,6 +30,37 @@ beforeEach(() => vi.stubGlobal('scrollTo', vi.fn()))
 afterEach(() => vi.unstubAllGlobals())
 
 describe('interactive roadmap', () => {
+  it('opens the lab for its bound lesson key and links to Reading and Assessment without writes', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', Object.create(navigator, { clipboard: { value: { writeText } } }))
+    const fetch = vi.fn(async (path: string, options?: RequestInit) => {
+      expect(options?.method ?? 'GET').toBe('GET')
+      if (path.endsWith('/catalog') || path.endsWith('/assessment-catalog')) return ok(['session-a'])
+      if (path.endsWith('/topics')) return ok({})
+      if (path.endsWith('/lesson')) return ok({
+        session: { id: 'session-a', title: 'Session 2.6 — 401 and 403', moduleId: 'module-a', moduleTitle: 'Module 2' },
+        key: 'http-401-and-403', release: 4,
+      })
+      return ok(fixture())
+    })
+    vi.stubGlobal('fetch', fetch)
+    mount('/roadmap/sessions/session-a')
+    fireEvent.click(await screen.findByRole('link', { name: 'Coding Lab' }))
+    const title = await screen.findByRole('heading', { name: /Diagnose and Repair HTTP Basic/ })
+    await waitFor(() => expect(title).toHaveFocus())
+    const starter = screen.getByRole('link', { name: 'Download starter project' })
+    expect(starter).toHaveAttribute('download', 'devquest-lab-01-http-basic-starter.zip')
+    expect(starter).toHaveAttribute('href', '/labs/http-401-and-403/1/devquest-lab-01-http-basic-starter.zip')
+    expect(screen.getByText('Spring Boot 4.1.0')).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Assessment' })).toHaveAttribute('href','/learn/session-a/assessment')
+    expect(screen.getByRole('link', { name: 'Follow the Spring Security decision' })).toHaveAttribute('href','/learn/session-a/read#spring-failure-flow')
+    const hint = screen.getByText('Hint 1 · Compare the complete response').closest('details')
+    expect(hint).not.toHaveAttribute('open')
+    fireEvent.click(screen.getByRole('button', { name: 'Copy command: Run the security contract' }))
+    await screen.findByText(/Copied command/)
+    expect(writeText).toHaveBeenCalledWith('mvn -Dtest=SummarySecurityTest test')
+  })
+
   it('opens authored reading from a bookmarked checklist and returns without writes', async () => {
     const fetch = vi.fn(async (path: string, _options?: RequestInit) => {
       if (path === '/api/learning/catalog') return ok(['session-a'])
@@ -77,6 +108,7 @@ describe('interactive roadmap', () => {
     expect(study).toHaveAttribute('href', '/learn/session-a/read#study-second')
     const actions = within(screen.getByRole('navigation', { name: 'Learning workspaces' }))
     expect(actions.getByRole('link', { name: 'Read lesson' })).toHaveAttribute('href', '/learn/session-a/read')
+    expect(actions.queryByRole('link', { name: 'Coding Lab' })).toBeNull()
     expect(actions.getByRole('link', { name: 'Practice assessment' })).toHaveAttribute('href', '/learn/session-a/assessment')
     const card = within(study.closest('li')!)
     expect(card.getByRole('link', { name: 'Second concept' })).toHaveAttribute('href', '/learn/session-a/read#study-second')

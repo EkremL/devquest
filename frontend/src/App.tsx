@@ -8,6 +8,7 @@ import { DataSafetyPage } from './features/data-safety/DataSafetyPage'
 import { ReadingPage } from './features/learning/ReadingPage'
 import { AssessmentHistory } from './features/learning/AssessmentHistory'
 import { DraftWorkspace } from './features/learning/DraftWorkspace'
+import { CodingLabPage } from './features/learning/labs/CodingLabPage'
 const SkillTreePage = lazy(() => import('./features/skill-tree/SkillAtlas'))
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 15_000 } } })
@@ -38,7 +39,7 @@ export function AppRoutes() {
       <div className="profile"><div className="avatar">E</div><div><strong>Ekrem’s workspace</strong><span>Local · Single user</span></div><ShieldCheck size={17} /></div>
     </aside>
     <div className="main-area">
-      <header className="topbar"><span className="breadcrumb">Workspace / {location.pathname.startsWith('/roadmap') ? 'Learning roadmap' : location.pathname.includes('/assessment') ? 'Assessment' : location.pathname.startsWith('/learn/') ? 'Reading' : location.pathname === '/skill-tree' ? 'Skill tree' : location.pathname === '/data-safety' ? 'Data safety' : 'Overview'}</span><span className="local-badge"><ShieldCheck size={14} />Local environment</span></header>
+      <header className="topbar"><span className="breadcrumb">Workspace / {location.pathname.startsWith('/roadmap') ? 'Learning roadmap' : location.pathname.includes('/assessment') ? 'Assessment' : location.pathname.endsWith('/lab') ? 'Coding Lab' : location.pathname.startsWith('/learn/') ? 'Reading' : location.pathname === '/skill-tree' ? 'Skill tree' : location.pathname === '/data-safety' ? 'Data safety' : 'Overview'}</span><span className="local-badge"><ShieldCheck size={14} />Local environment</span></header>
       <main id="main" tabIndex={-1}>
         <Routes>
           <Route path="/" element={<Overview />} />
@@ -48,6 +49,7 @@ export function AppRoutes() {
           <Route path="/roadmap/modules/:moduleId" element={<RoadmapPage />} />
           <Route path="/roadmap/sessions/:sessionId" element={<RoadmapPage />} />
           <Route path="/learn/:sessionId/read" element={<ReadingPage />} />
+          <Route path="/learn/:sessionId/lab" element={<CodingLabPage />} />
           <Route path="/learn/:sessionId/assessment/history" element={<AssessmentHistory/>}/>
           <Route path="/learn/:sessionId/assessment/history/:attemptId" element={<AssessmentHistory/>}/>
           <Route path="/learn/:sessionId/assessment" element={<DraftWorkspace />} />

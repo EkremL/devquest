@@ -1,0 +1,33 @@
+.coding-lab { display:grid; gap:1.15rem; max-width:1050px }
+.lab-links,.lab-intro { display:flex; flex-wrap:wrap; gap:.75rem }
+.coding-lab .lab-links a { min-height:44px; text-decoration:none }
+.lab-intro > section { flex:1 1 19rem; align-content:start }
+.coding-lab .rd-hero h1 { font-size:clamp(1.9rem,4vw,3rem) }
+.coding-lab h2 { font-size:1.25rem; font-weight:650 }
+.coding-lab h3 { font-size:1rem }
+.lab-files { overflow-wrap:anywhere }
+.lab-starter { border-color:var(--color-electric-blue) }
+.lab-starter .lab-starter-details { display:flex; flex-wrap:wrap; gap:.45rem 1rem; list-style:none; padding:0; color:var(--color-muted); font-size:.875rem }
+.lab-starter .lab-starter-details li { margin:0 }
+.lab-download { justify-self:start; min-height:44px }
+.lab-starter a.primary-button.lab-download { color:var(--color-on-accent); text-decoration:none }
+.lab-files,.lab-cases,.lab-steps { display:grid; gap:.85rem }
+.lab-files dt,.lab-cases dt,.lab-commands figcaption { font-weight:650 }
+.lab-files dd,.lab-cases dd,.coding-lab p { color:var(--color-muted) }
+.lab-cases > div { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr)); gap:.3rem 1rem; border-block-end:1px solid var(--color-border-strong); padding-block:.45rem }
+.lab-cases strong { color:var(--color-mint); margin-inline-end:.4rem }
+.lab-steps { list-style:decimal; padding-inline-start:1.3rem }
+.lab-commands { display:grid; gap:.6rem; min-width:0 }
+.lab-commands figure { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:.45rem .75rem; padding:.65rem; background:var(--color-surface-raised); border:1px solid var(--color-border-strong); border-radius:var(--radius-control) }
+.lab-commands figcaption { grid-column:1/-1 }
+.lab-commands pre { overflow:auto; padding:.35rem; color:var(--color-mint); font-size:.875rem }
+.lab-commands [role=status]:empty { display:none }
+.coding-lab details { border:1px solid var(--color-border-strong); border-radius:var(--radius-control); padding:0 .75rem }
+.coding-lab summary { cursor:pointer; padding-block:.75rem; min-height:44px }
+.coding-lab details p { padding-block-end:.75rem }
+.coding-lab :is(a,button,summary,pre):focus-visible { outline:2px solid var(--color-mint); outline-offset:3px }
+@media (max-width:480px) {
+  .lab-commands figcaption { grid-column:1 }
+  .lab-commands pre { grid-row:2; grid-column:1/-1 }
+  .lab-commands button { grid-row:1; grid-column:2 }
+}

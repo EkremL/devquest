@@ -1,0 +1,74 @@
+{
+  "key": "basic-auth-response-contract",
+  "lessonKey": "http-401-and-403",
+  "release": 1,
+  "title": "Lab 01 — Diagnose and Repair HTTP Basic Authentication and Authorization",
+  "difficulty": "Intermediate · guided debugging",
+  "scenario": "A task summary API still rejects unauthorized requests, but Basic authentication stopped working as expected for a client that relies on a challenge. Reproduce the response contract in tests, trace which component writes each response, and make the smallest Java configuration change that restores the contract.",
+  "endpoint": "GET /api/tasks/summary",
+  "starter": {
+    "filename": "devquest-lab-01-http-basic-starter.zip",
+    "java": "25",
+    "springBoot": "4.1.0"
+  },
+  "prerequisites": [
+    "JDK 25 (DevQuest uses 25.0.3), Maven 3.9.16, and IntelliJ IDEA with Maven support.",
+    "Know how to read an HTTP response, run a JUnit test, and navigate Java code in IntelliJ.",
+    "The service uses fake in-memory accounts on localhost. The first Maven run may need internet access to download dependencies."
+  ],
+  "objectives": [
+    "Distinguish authentication failure from an authorization denial after successful authentication.",
+    "Trace anonymous and invalid Basic requests through the SecurityFilterChain to the response writer.",
+    "Explain why a 401 challenge matters to a client and keep authentication failures free of account and provider details.",
+    "Fix the configuration and use JUnit checks to protect the 401, 403, and 200 contracts."
+  ],
+  "files": [
+    {"name": "SecurityConfig.java", "purpose": "The filter chain, authentication entry point, access-denied handler, and demo users."},
+    {"name": "LabApplication.java", "purpose": "The application entry point and protected summary endpoint."},
+    {"name": "SummarySecurityTest.java", "purpose": "Executable contracts using actual Basic request headers and the configured security chain."}
+  ],
+  "tasks": [
+    {"title": "Open a working copy in IntelliJ", "body": "Download the ZIP and extract it into a folder of your choice. In IntelliJ use File → Open and select the extracted pom.xml as a project. In File → Project Structure select JDK 25. In Settings → Build Tools → Maven use Maven 3.9.16 and set the runner JRE to the project JDK. Run the commands in the extracted folder."},
+    {"title": "Establish the failing baseline", "body": "Compile and run the verification suite. Predict the status, challenge, and body of each case first. Two header assertions should fail while the other three tests pass. The statuses and public error bodies should already match the contract."},
+    {"title": "Trace both 401 paths", "body": "Open SecurityConfig.java and put a breakpoint inside the authentication response writer. In IntelliJ run each failing test with Debug and compare the call stacks. Follow the absent-credentials path from the authorization decision and the bad-password path from the Basic filter. Compare both with the valid creator's access-denied handler."},
+    {"title": "Repair the response and verify", "body": "Change the production security configuration in your copy. Keep TASK_READ as the required authority and leave the test expectations intact. Rerun the focused suite and then the full suite. Check that all five tests are green and compare the 401 and 403 response bodies and headers."}
+  ],
+  "commands": [
+    {"label": "Confirm Maven and Java", "text": "mvn -version"},
+    {"label": "Compile the starter", "text": "mvn -DskipTests package"},
+    {"label": "Run the security contract", "text": "mvn -Dtest=SummarySecurityTest test"},
+    {"label": "Run all tests after the repair", "text": "mvn test"}
+  ],
+  "cases": [
+    {"caller": "Anonymous", "status": 401, "challenge": "Basic realm=\"task-lab\""},
+    {"caller": "Wrong password", "status": 401, "challenge": "Basic realm=\"task-lab\""},
+    {"caller": "Unknown account", "status": 401, "challenge": "Same public error body as a wrong password"},
+    {"caller": "Valid creator · TASK_CREATE", "status": 403, "challenge": "No challenge"},
+    {"caller": "Valid reader · TASK_READ", "status": 200, "challenge": "No challenge"}
+  ],
+  "hints": [
+    {"title": "Compare the complete response", "body": "The failed assertions are about response metadata. Start by comparing status, headers, and body as three independent parts of the contract."},
+    {"title": "Find the response writer", "body": "The Basic filter can reject invalid credentials directly. For an anonymous request, exception translation handles the denial later in the chain. Find the component both paths call in this starter."},
+    {"title": "Keep the contract narrow", "body": "The Basic scheme and realm are public protocol metadata. Keep the JSON error generic and write the required authentication metadata before the response is committed. An authenticated authorization denial should keep its own response."}
+  ],
+  "mistakes": [
+    "Changing the authorization rule or giving the creator TASK_READ to make a test pass.",
+    "Using a mock principal in the Basic tests, which would skip credential parsing and provider authentication.",
+    "Adding a challenge on 403 or returning authentication exception details in the JSON body."
+  ],
+  "reflection": [
+    "How can two requests return 401 while arriving at the same entry point from different filters?",
+    "For a 403, what evidence establishes that authentication already succeeded?",
+    "Which assertions would catch a future change that hides the challenge, leaks an account detail, or grants the wrong authority?"
+  ],
+  "reading": [
+    {"anchor": "http-semantics", "label": "Read the status and the challenge"},
+    {"anchor": "spring-failure-flow", "label": "Follow the Spring Security decision"},
+    {"anchor": "debug-the-challenge", "label": "Debug the missing challenge"}
+  ],
+  "sources": [
+    {"url": "https://docs.spring.io/spring-security/reference/7.1/servlet/authentication/passwords/basic.html", "label": "Spring Security 7.1 · HTTP Basic"},
+    {"url": "https://docs.spring.io/spring-security/reference/7.1/servlet/test/mockmvc/http-basic.html", "label": "Spring Security 7.1 · Test HTTP Basic with MockMvc"},
+    {"url": "https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.2", "label": "RFC 9110 · 401 Unauthorized"}
+  ]
+}

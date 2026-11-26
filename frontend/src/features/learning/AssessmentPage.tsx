@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { BookOpen } from 'lucide-react'
+import { BookOpen, FlaskConical } from 'lucide-react'
 import { ConfirmationDialog } from '../../components/DestructiveDialog'
 import { request } from '../curriculum/api'
 import { CodeSample } from './CodeSample'
@@ -9,6 +9,7 @@ import type { Language } from './api'
 import { SelectionFeedback, PracticeResults } from './AssessmentFeedback'
 import { AssessmentBadge, QuestionNavigator, questionState } from './AssessmentStates'
 import type { DraftControls } from './DraftWorkspace'
+import { labForLesson } from './labs/catalog'
 import './assessment.css'
 
 export interface Question {
@@ -81,7 +82,11 @@ export function Practice({paper,path,session,draft}: {paper: Paper; path: string
   const firstUnanswered = paper.questions.findIndex(item=>!answered(item.id))
   const result = submit.data
   return <div className="assessment reading-page">
-    <nav aria-label="Session navigation"><Link to={'/roadmap/sessions/'+session}>Session checklist</Link> / <Link to={'/learn/'+session+'/read'}>Reading workspace</Link></nav>
+    <nav className="as-nav-actions" aria-label="Session navigation">
+      <Link className="as-action" to={'/roadmap/sessions/'+session}>Session checklist</Link>
+      <Link className="as-action" to={'/learn/'+session+'/read'}>Reading workspace</Link>
+      {labForLesson(paper.key) && <Link className="as-action" to={'/learn/'+session+'/lab'}><FlaskConical size={16} aria-hidden="true"/>Coding Lab</Link>}
+    </nav>
     <header className="rd-hero"><div><p className="rd-kicker">Practice Mode · Session 2.6</p><h1>401 and 403</h1>
       <p>Assessment · {paper.questions.length} questions. {draft ? 'Only server-confirmed draft changes survive closing. Submitted results are saved in Past attempts.' : 'Attempts are unsaved. Refreshing or leaving clears this practice.'}</p></div></header>
     {draft && !result && draft.panel}

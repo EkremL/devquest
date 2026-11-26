@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, ArrowRight, BookOpen, ChevronDown, ChevronRight, Flag, Layers, Lightbulb, ListTree, LockKeyhole, MessageCircle, ShieldAlert, Target } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BookOpen, ChevronDown, ChevronRight, Flag, FlaskConical, Layers, Lightbulb, ListTree, LockKeyhole, MessageCircle, ShieldAlert, Target } from 'lucide-react'
 import { ApiError } from '../curriculum/api'
 import { getAssessmentCatalog, getLesson, type FlowCase, type Outcome, type ReadingSection, type Span } from './api'
 import { OutcomeCards, ReadingPractice, RequestFlow } from './ReadingActivities'
 import { CodeSample } from './CodeSample'
+import { labForLesson } from './labs/catalog'
 import './reading.css'
 
 export function ReadingPage() {
@@ -82,6 +83,7 @@ export function ReadingPage() {
   }
 
   const { session, sections, release, cases, outcomes, request, transport } = query.data
+  const lab = labForLesson(query.data.key)
   const index = Math.max(0, sections.findIndex(section => section.anchor === visibleAnchor))
   const current = sections[index]
   const [sessionNumber, title] = session.title.split(' — ', 2)
@@ -126,7 +128,8 @@ export function ReadingPage() {
           <h2 id="reading-next">From reading to practice</h2>
           <p>Try explaining these decisions from memory. Then revisit the passage where your explanation needs more evidence.</p>
           <ul>{[...new Set(sections.flatMap(section => section.objectives))].map(goal => <li key={goal}>{goal}</li>)}</ul>
-          <p>{Array.isArray(assessments.data) && assessments.data.includes(session.id) && <>Try the <Link to={`/learn/${session.id}/assessment`}>practice assessment</Link> to explain and check your decisions. </>}In the upcoming Coding Lab you’ll verify the response contract.</p>
+          {Array.isArray(assessments.data) && assessments.data.includes(session.id) && <p>Try the <Link to={`/learn/${session.id}/assessment`}>practice assessment</Link> to explain and check your decisions.</p>}
+          {lab && <Link className="secondary-button" to={`/learn/${session.id}/lab`}><FlaskConical size={16} aria-hidden="true"/>Open Coding Lab</Link>}
           <nav className="rd-turn" aria-label="After reading">
             <Link to={{ hash: '' }} state={location.state}>Back to top</Link>
             <Link className="rd-next" to={checklist}>Return to session checklist<ArrowRight size={16}/></Link>

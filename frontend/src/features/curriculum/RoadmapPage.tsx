@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, ClipboardList, BookOpen, Check, ChevronRight, Flag, Layers3, RefreshCw } from 'lucide-react'
+import { ArrowRight, ClipboardList, BookOpen, Check, ChevronRight, Flag, FlaskConical, Layers3, RefreshCw } from 'lucide-react'
 import { ApiError, getCurriculum, statusLabels, updateProgress, type Item, type ProgressStatus, type Section, type Statistics, type Stats } from './api'
 import './roadmap.css'
 import { getAssessmentCatalog, getLessonCatalog, getTopicLinks } from '../learning/api'
+import { labForLesson, useLabSession } from '../learning/labs/catalog'
 
 export function RoadmapPage() {
   const { moduleId, sessionId } = useParams()
@@ -16,6 +17,8 @@ export function RoadmapPage() {
     enabled: !!sessionId && query.isSuccess,
   })
   const authored = !!sessionId && Array.isArray(catalog.data) && catalog.data.includes(sessionId)
+  const labSession = useLabSession(sessionId ?? '', authored)
+  const lab = authored && labSession.data && labForLesson(labSession.data.key)
   const assessments = useQuery({
     queryKey: ['learning','assessment-catalog',query.data?.revisionId],
     queryFn: getAssessmentCatalog,
@@ -54,6 +57,7 @@ export function RoadmapPage() {
     <div className="page-heading"><div><p className="eyebrow">LEARN WITH INTENTION</p><h1>{section === root ? 'Your learning roadmap.' : section.title}</h1><p className="subtitle">{section === root ? 'From first principles to production security. One deliberate step at a time.' : session ? 'Explore the session topics and save your self-reported progress as you go.' : isFinal ? 'Reflect on the skills you can demonstrate across the entire curriculum.' : 'Explore your sessions and track module requirements separately.'}</p></div><span className="milestone-badge">M1 <span>Interactive roadmap</span></span></div>
     {session && (authored || (Array.isArray(assessments.data) && assessments.data.includes(session.id))) && <nav className="session-learning-actions" aria-label="Learning workspaces">
     {authored && <Link className="primary-button roadmap-reading-link" to={`/learn/${session.id}/read`}><BookOpen size={17} aria-hidden="true" />Read lesson</Link>}
+    {lab && <Link className="secondary-button roadmap-reading-link" to={`/learn/${session.id}/lab`}><FlaskConical size={17} aria-hidden="true"/>Coding Lab</Link>}
     {session && Array.isArray(assessments.data) && assessments.data.includes(session.id) &&
       <Link className="secondary-button roadmap-reading-link" to={`/learn/${session.id}/assessment`}><ClipboardList size={17} aria-hidden="true"/>Practice assessment</Link>}
     </nav>}

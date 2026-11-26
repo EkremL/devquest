@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useBlocker, useNavigate, useParams } from 'react-router'
-import { Check, History, Trash2 } from 'lucide-react'
+import { Check, FlaskConical, History, Trash2 } from 'lucide-react'
 import { ConfirmationDialog, DestructiveDialog } from '../../components/DestructiveDialog'
 import { ApiError, request } from '../curriculum/api'
 import type { SavedAttempt } from './AssessmentHistory'
 import { Practice, type Answer, type Feedback, type Paper } from './AssessmentPage'
+import { labForLesson, useLabSession } from './labs/catalog'
 
 interface Draft {
   id: string; session: string; paper: Paper; position: string; answers: Answer[]
@@ -24,6 +25,8 @@ function DraftEntry({session}: {session:string}) {
   const [open,setOpen] = useState(false)
   const [busy,setBusy] = useState(true)
   const [error,setError] = useState('')
+  const lesson = useLabSession(session)
+  const lab = lesson.data && labForLesson(lesson.data.key)
   const load = useCallback(async () => {
     setBusy(true); setError(''); setOpen(false)
     try {setDraft((await request<{draft:Draft|null}>(path)).draft)}
@@ -78,7 +81,10 @@ function DraftEntry({session}: {session:string}) {
           <Trash2 size={15} aria-hidden="true"/>Discard draft</button></div></> :
       <><p>Save your answers and return to the same question later.</p>
         <button ref={startButton} className="primary-button" onClick={start}>Start assessment draft</button></>}
-    <Link className="as-action" to={'/learn/'+session+'/assessment/history'}><History size={16} aria-hidden="true"/>Past attempts</Link>
+    <nav className="as-nav-actions" aria-label="Assessment navigation">
+      <Link className="as-action" to={'/learn/'+session+'/assessment/history'}><History size={16} aria-hidden="true"/>Past attempts</Link>
+      {lab && <Link className="as-action" to={'/learn/'+session+'/lab'}><FlaskConical size={16} aria-hidden="true"/>Coding Lab</Link>}
+    </nav>
     {confirming && <DestructiveDialog title="Discard saved draft?"
       description="This will remove the saved answers, written response, and question position for this assessment draft. This action cannot be undone."
       cancelLabel="Keep draft" confirmLabel="Discard draft" pending={discarding} onCancel={cancelDiscard} onConfirm={discard}/>}
