@@ -1,0 +1,253 @@
+{
+  "key": "identity-and-access-vocabulary",
+  "release": 1,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 1 — Authentication Foundations",
+    "sessionTitle": "Session 1.1 — Identity and Access Vocabulary"
+  },
+  "objectives": {
+    "trace-authentication": "Trace a claimed identity through credential verification to an authenticated actor.",
+    "evaluate-access": "Evaluate an access decision for an actor, action and resource using authoritative policy inputs.",
+    "distinguish-actors": "Distinguish the represented actor, the request sender and the principal used by Spring Security.",
+    "assign-responsibility": "Explain who verifies proof, who asserts identity and who guards the protected resource.",
+    "compare-request-paths": "Compare human and workload requests and diagnose a denial without expanding permissions."
+  },
+  "sections": [
+    {
+      "anchor": "read-the-access-decision",
+      "title": "Separate an identity from its proof",
+      "objectives": [
+        "trace-authentication"
+      ]
+    },
+    {
+      "anchor": "separate-policy-from-proof",
+      "title": "Decide access to a specific resource",
+      "objectives": [
+        "evaluate-access"
+      ],
+      "practice": {
+        "prompt": "A verified reader requests a task in a different workspace. The rule requires both task:read and the task's workspace. Which result fits the policy?",
+        "choices": [
+          {
+            "label": "Allow because task:read is present.",
+            "reason": "The authority satisfies only the action check. The workspace check still has to match the task's persisted workspace."
+          },
+          {
+            "label": "Deny because the task belongs to a different workspace.",
+            "reason": "Correct. The actor is verified, but this resource is outside the scope of the actor’s authority."
+          },
+          {
+            "label": "Ask the reader to sign in again.",
+            "reason": "There is no evidence that authentication failed. Repeating it does not change the workspace rule."
+          }
+        ]
+      }
+    },
+    {
+      "anchor": "name-the-actor",
+      "title": "Name the actor at each boundary",
+      "objectives": [
+        "distinguish-actors"
+      ]
+    },
+    {
+      "anchor": "locate-the-trust-boundaries",
+      "title": "Locate the trust boundaries",
+      "objectives": [
+        "assign-responsibility"
+      ]
+    },
+    {
+      "anchor": "follow-human-and-service-requests",
+      "title": "Follow a person and a workload",
+      "objectives": [
+        "compare-request-paths"
+      ],
+      "practice": {
+        "prompt": "An overnight job runs without a user. Which identity should appear as the caller of the task API?",
+        "choices": [
+          {
+            "label": "The person who deployed the job.",
+            "reason": "Deployment ownership is useful audit context. It does not establish which actor made this request."
+          },
+          {
+            "label": "The job’s verified workload identity.",
+            "reason": "Correct. Authenticate the actor actually making the request and give it only the operation and resource scope it needs."
+          },
+          {
+            "label": "Whichever user last opened the dashboard.",
+            "reason": "The scheduled job and the dashboard session are independent. Reusing a user identity blurs permission and audit boundaries."
+          }
+        ]
+      }
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 49,
+      "sourceLabel": "Identity",
+      "objectives": [
+        "trace-authentication"
+      ],
+      "passages": [
+        "study-identity"
+      ]
+    },
+    {
+      "sourceLine": 50,
+      "sourceLabel": "Credential",
+      "objectives": [
+        "trace-authentication"
+      ],
+      "passages": [
+        "study-credential"
+      ]
+    },
+    {
+      "sourceLine": 51,
+      "sourceLabel": "Authentication",
+      "objectives": [
+        "trace-authentication"
+      ],
+      "passages": [
+        "study-authentication",
+        "study-human-to-service",
+        "study-service-to-service"
+      ]
+    },
+    {
+      "sourceLine": 52,
+      "sourceLabel": "Authorization",
+      "objectives": [
+        "evaluate-access"
+      ],
+      "passages": [
+        "study-authorization",
+        "study-access-control"
+      ]
+    },
+    {
+      "sourceLine": 53,
+      "sourceLabel": "Access control",
+      "objectives": [
+        "evaluate-access"
+      ],
+      "passages": [
+        "study-access-control"
+      ]
+    },
+    {
+      "sourceLine": 54,
+      "sourceLabel": "Principal",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "passages": [
+        "study-principal"
+      ]
+    },
+    {
+      "sourceLine": 55,
+      "sourceLabel": "Subject",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "passages": [
+        "study-subject"
+      ]
+    },
+    {
+      "sourceLine": 56,
+      "sourceLabel": "User",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "passages": [
+        "study-user"
+      ]
+    },
+    {
+      "sourceLine": 57,
+      "sourceLabel": "Client",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "passages": [
+        "study-client"
+      ]
+    },
+    {
+      "sourceLine": 58,
+      "sourceLabel": "Service",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "passages": [
+        "study-service"
+      ]
+    },
+    {
+      "sourceLine": 59,
+      "sourceLabel": "Resource",
+      "objectives": [
+        "evaluate-access"
+      ],
+      "passages": [
+        "study-resource"
+      ]
+    },
+    {
+      "sourceLine": 60,
+      "sourceLabel": "Resource server",
+      "objectives": [
+        "assign-responsibility"
+      ],
+      "passages": [
+        "study-resource-server"
+      ]
+    },
+    {
+      "sourceLine": 61,
+      "sourceLabel": "Authentication server",
+      "objectives": [
+        "assign-responsibility"
+      ],
+      "passages": [
+        "study-authentication-server"
+      ]
+    },
+    {
+      "sourceLine": 62,
+      "sourceLabel": "Identity provider",
+      "objectives": [
+        "assign-responsibility"
+      ],
+      "passages": [
+        "study-identity-provider"
+      ]
+    },
+    {
+      "sourceLine": 63,
+      "sourceLabel": "Human-to-service authentication",
+      "objectives": [
+        "compare-request-paths"
+      ],
+      "passages": [
+        "study-human-to-service"
+      ]
+    },
+    {
+      "sourceLine": 64,
+      "sourceLabel": "Service-to-service authentication",
+      "objectives": [
+        "compare-request-paths"
+      ],
+      "passages": [
+        "study-service-to-service"
+      ]
+    }
+  ]
+}

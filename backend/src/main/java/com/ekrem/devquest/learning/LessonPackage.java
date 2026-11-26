@@ -20,30 +20,38 @@ import java.util.Set;
 
 @Component
 class LessonPackage {
-    private static final int RELEASE = 4;
-    private static final String ROOT = "/lessons/http-401-and-403/" + RELEASE + "/";
     private static final String TOKEN = "[a-z][a-z0-9]*(?:-[a-z0-9]+)*";
     private final Optional<Content> pilot;
+    private final List<Content> published;
 
     LessonPackage(ObjectMapper json) {
-        pilot = loadPilot(json);
+        pilot = load(json, "http-401-and-403", 4);
+        published = java.util.stream.Stream.concat(
+                load(json, "identity-and-access-vocabulary", 1).stream(), pilot.stream()).toList();
     }
 
     Optional<Content> pilot() {
         return pilot;
     }
 
-    private Optional<Content> loadPilot(ObjectMapper json) {
+    List<Content> published() {
+        return published;
+    }
+
+    private Optional<Content> load(ObjectMapper json, String key, int release) {
+        String root = "/lessons/" + key + "/" + release + "/";
         try {
-            return Optional.of(parse(json.readValue(read("manifest.json"), Manifest.class), read("reading.md")));
+            var manifest = json.readValue(read(root + "manifest.json"), Manifest.class);
+            require(key.equals(manifest.getKey()) && release == manifest.getRelease(), "Unexpected lesson package identity");
+            return Optional.of(parse(manifest, read(root + "reading.md")));
         } catch (IOException | RuntimeException ex) {
-            LoggerFactory.getLogger(LessonPackage.class).warn("Packaged pilot lesson unavailable", ex);
+            LoggerFactory.getLogger(LessonPackage.class).warn("Packaged lesson unavailable: {} release {}", key, release, ex);
             return Optional.empty();
         }
     }
 
     private static String read(String file) throws IOException {
-        try (var stream = LessonPackage.class.getResourceAsStream(ROOT + file)) {
+        try (var stream = LessonPackage.class.getResourceAsStream(file)) {
             if (stream == null) throw new IOException("Missing packaged resource " + file);
             return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         }
@@ -51,7 +59,7 @@ class LessonPackage {
 
     static Content parse(Manifest manifest, String markdown) {
         var binding = manifest.getBinding();
-        require("http-401-and-403".equals(manifest.getKey()) && manifest.getRelease() == RELEASE, "Unexpected lesson package identity");
+        require(matches(manifest.getKey(), TOKEN) && manifest.getRelease() > 0, "Invalid lesson package identity");
         require(binding != null && "spring-security-roadmap".equals(binding.getSourceKey())
                 && matches(binding.getSourceSha256(), "[a-f0-9]{64}")
                 && matches(binding.getModuleTitle(), "Module [0-9]+ — .+")
@@ -62,15 +70,18 @@ class LessonPackage {
         var sections = manifest.getSections();
         require(sections != null && !sections.isEmpty(), "Missing section outline");
         var cases = manifest.getCases();
-        require(nonBlank(manifest.getRequest()) && nonBlank(manifest.getTransport()), "Missing request context");
         var outcomes = manifest.getOutcomes();
-        require(outcomes != null && outcomes.size() == 3 && outcomes.stream().allMatch(o -> o != null
-                && nonBlank(o.title) && nonBlank(o.detail) && nonBlank(o.action) && matches(o.status, "401|403|200"))
-                && outcomes.stream().map(Outcome::getStatus).distinct().count() == outcomes.size(), "Invalid responses");
-        require(cases != null && cases.size() == 4 && cases.stream().allMatch(c -> c != null
-                && nonBlank(c.label) && nonBlank(c.authentication) && nonBlank(c.destination)
-                && nonBlank(c.explanation) && matches(c.status, "401|403|200"))
-                && cases.stream().map(FlowCase::getLabel).distinct().count() == cases.size(), "Invalid request cases");
+        boolean hasHttpContext = manifest.getRequest() != null || manifest.getTransport() != null || cases != null || outcomes != null;
+        if (hasHttpContext) {
+            require(nonBlank(manifest.getRequest()) && nonBlank(manifest.getTransport()), "Missing request context");
+            require(outcomes != null && outcomes.size() == 3 && outcomes.stream().allMatch(o -> o != null
+                            && nonBlank(o.title) && nonBlank(o.detail) && nonBlank(o.action) && matches(o.status, "401|403|200"))
+                    && outcomes.stream().map(Outcome::getStatus).distinct().count() == outcomes.size(), "Invalid responses");
+            require(cases != null && cases.size() == 4 && cases.stream().allMatch(c -> c != null
+                            && nonBlank(c.label) && nonBlank(c.authentication) && nonBlank(c.destination)
+                            && nonBlank(c.explanation) && matches(c.status, "401|403|200"))
+                    && cases.stream().map(FlowCase::getLabel).distinct().count() == cases.size(), "Invalid request cases");
+        }
 
         var node = Parser.builder().build().parse(markdown).getFirstChild();
         var reading = new ArrayList<ReadingSection>();
@@ -97,6 +108,8 @@ class LessonPackage {
                 }
             }
             require(!blocks.isEmpty(), "Empty reading section");
+            require(hasHttpContext || blocks.stream().noneMatch(b -> Set.of("outcomes", "request-flow").contains(b.kind)),
+                    "HTTP activity needs request context");
             var practice = section.getPractice();
             long practiceMarkers = blocks.stream().filter(b -> b.kind.equals("practice")).count();
             require(practiceMarkers == (practice == null ? 0 : 1), "Practice marker must match a prompt");
@@ -168,7 +181,8 @@ class LessonPackage {
             else if (node instanceof Link link && link.getFirstChild() instanceof Text label && label.getNext() == null) {
                 var destination = URI.create(link.getDestination());
                 require("https".equals(destination.getScheme())
-                        && Set.of("www.rfc-editor.org", "docs.spring.io").contains(destination.getHost() == null ? "" : destination.getHost())
+                        && Set.of("www.rfc-editor.org", "docs.spring.io", "docs.oracle.com", "pages.nist.gov")
+                                .contains(destination.getHost() == null ? "" : destination.getHost())
                         && destination.getRawUserInfo() == null && destination.getPort() == -1, "Unsupported reference URL");
                 spans.add(new Span("link", label.getLiteral(), destination.toASCIIString()));
             } else throw new IllegalArgumentException("Unsupported lesson markup: " + node.getClass().getSimpleName());

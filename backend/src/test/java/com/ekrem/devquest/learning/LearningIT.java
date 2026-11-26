@@ -264,8 +264,9 @@ class LearningIT {
 
     @Test void resolvesThisInstallationsSessionAndServesOnlyReadEndpoints() throws Exception {
         UUID id = pilotSession();
+        UUID vocabulary = session("Session 1.1 — Identity and Access Vocabulary");
         String before = progressSnapshot();
-        assertThat(get("/catalog").body()).isEqualTo("[\"" + id + "\"]");
+        assertThat(get("/catalog").body()).isEqualTo("[\"" + vocabulary + "\",\"" + id + "\"]");
         var lesson = get("/sessions/" + id + "/lesson");
         assertThat(lesson.statusCode()).isEqualTo(200);
         assertThat(lesson.body()).contains("http-401-and-403", "predict-the-response", "401 Unauthorized",
@@ -283,6 +284,29 @@ class LearningIT {
         assertThat(get("/sessions/" + id + "/topics").body()).contains(items.getFirst().toString(), "study-http-401");
         assertThat(progressSnapshot()).isEqualTo(before);
         System.out.println("Learning pilot resolved to " + id);
+    }
+
+    @Test void mapsEveryVocabularyTopicAndKeepsAssessmentOnThePilot() throws Exception {
+        UUID id = session("Session 1.1 — Identity and Access Vocabulary");
+        var before = progressSnapshot();
+        var lesson = get("/sessions/" + id + "/lesson");
+        assertThat(lesson.statusCode()).isEqualTo(200);
+        assertThat(lesson.body()).contains("\"key\":\"identity-and-access-vocabulary\"", "\"release\":1", "TaskReadPolicy");
+        var links = learning.topicLinks(id);
+        var items = jdbc.queryForList("""
+                SELECT m.item_id FROM devquest.source_item_mapping m JOIN devquest.curriculum_node n ON n.id=m.node_id
+                JOIN devquest.curriculum c ON c.current_revision_id=m.revision_id WHERE n.stable_id=? ORDER BY m.position
+                """, UUID.class, id);
+        assertThat(items.stream().map(links::get)).containsExactly(
+                "study-identity", "study-credential", "study-authentication", "study-authorization", "study-access-control",
+                "study-principal", "study-subject", "study-user", "study-client", "study-service", "study-resource",
+                "study-resource-server", "study-authentication-server", "study-identity-provider", "study-human-to-service", "study-service-to-service");
+        assertThat(links).hasSize(16);
+        assertThat(get("/sessions/" + id + "/topics").statusCode()).isEqualTo(200);
+        assertThat(learning.assessmentCatalog()).containsExactly(pilotSession());
+        assertThat(get("/sessions/" + id + "/assessment").statusCode()).isEqualTo(404);
+        assertThat(get("/sessions/" + id + "/assessment/draft").statusCode()).isEqualTo(404);
+        assertThat(progressSnapshot()).isEqualTo(before);
     }
 
     @Test @Transactional void failsClosedWhenBaselineIsMissing() {
@@ -344,7 +368,7 @@ class LearningIT {
 
     @Test @Transactional void identicalLabelInAnotherSessionDoesNotAcquireLink() {
         UUID id = pilotSession();
-        UUID other = curriculum.sections("SESSION").stream().filter(s -> !s.getId().equals(id)).findFirst().orElseThrow().getId();
+        UUID other = session("Session 1.2 — Security Philosophy");
         jdbc.update("""
                 UPDATE devquest.source_item_mapping m SET label='Meaning of 401 Unauthorized', source_line=257
                 FROM devquest.curriculum_node n WHERE n.id=m.node_id AND n.stable_id=? AND m.position=0
@@ -354,12 +378,16 @@ class LearningIT {
     }
 
     private void assertUnavailable(UUID id) {
-        assertThat(learning.catalog()).isEmpty();
+        assertThat(learning.catalog()).doesNotContain(id);
         assertThat(learning.lesson(id).getStatusCode().value()).isEqualTo(404);
     }
 
     private UUID pilotSession() {
-        return curriculum.sections("SESSION").stream().filter(node -> node.getTitle().equals("Session 2.6 — 401 and 403"))
+        return session("Session 2.6 — 401 and 403");
+    }
+
+    private UUID session(String title) {
+        return curriculum.sections("SESSION").stream().filter(node -> node.getTitle().equals(title))
                 .findFirst().orElseThrow().getId();
     }
 

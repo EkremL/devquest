@@ -21,10 +21,10 @@ interface Lesson {
   session: { id: string; title: string; moduleId: string; moduleTitle: string }
   key: string
   release: number
-  cases: FlowCase[]
-  outcomes: Outcome[]
-  request: string
-  transport: string
+  cases: FlowCase[] | null
+  outcomes: Outcome[] | null
+  request: string | null
+  transport: string | null
   sections: ReadingSection[]
 }
 

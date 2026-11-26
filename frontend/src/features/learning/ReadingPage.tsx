@@ -98,7 +98,7 @@ export function ReadingPage() {
         <h1 id="reading-title" tabIndex={-1}>{title ?? session.title}</h1>
         <p>{session.moduleTitle.split(' — ').at(-1)} <span> / </span> {sessionNumber}</p>
       </div>
-      <div className="rd-endpoint"><LockKeyhole size={19}/><div><small>{transport}</small><code>{request}</code></div></div>
+      {request && transport && <div className="rd-endpoint"><LockKeyhole size={19}/><div><small>{transport}</small><code>{request}</code></div></div>}
     </header>
     <div className="rd-layout">
       <aside className="rd-rail">
@@ -160,14 +160,14 @@ function TeachingNote({ title, spans }: { title: string; spans: Span[] }) {
     <div><h3>{title}</h3><p><Inline spans={spans}/></p></div></aside>
 }
 
-function LessonSection({ section, number, total, cases, outcomes, request }: { number: number; total: number; section: ReadingSection; cases: FlowCase[]; outcomes: Outcome[]; request: string }) {
+function LessonSection({ section, number, total, cases, outcomes, request }: { number: number; total: number; section: ReadingSection; cases: FlowCase[] | null; outcomes: Outcome[] | null; request: string | null }) {
   return <section className="rd-chapter" aria-labelledby={section.anchor}>
     <div className="rd-section-meta">Section {number} / {total}</div>
     <h2 id={section.anchor} tabIndex={-1}>{section.title}</h2>
     {section.blocks.map((block, i) => {
       switch (block.kind) {
-        case 'outcomes': return <OutcomeCards key={i} outcomes={outcomes}/>
-        case 'request-flow': return <RequestFlow key={i} cases={cases} request={request}/>
+        case 'outcomes': return outcomes && <OutcomeCards key={i} outcomes={outcomes}/>
+        case 'request-flow': return cases && request && <RequestFlow key={i} cases={cases} request={request}/>
         case 'practice': return section.practice && <ReadingPractice key={i} practice={section.practice}/>
         case 'evidence': return <table key={i} className="rd-evidence">
           <caption>Observed responses · hypothetical</caption>
@@ -178,7 +178,7 @@ function LessonSection({ section, number, total, cases, outcomes, request }: { n
           </tr>)}</tbody>
         </table>
         case 'note': return <TeachingNote key={i} title={block.text!} spans={block.spans}/>
-        case 'code': return <CodeSample key={i} language={block.language!} text={block.text!}/>
+        case 'code': return <CodeSample key={i} language={block.language!} text={block.text!} wrap={!request}/>
         case 'passage': return <h3 key={i} className="rd-passage" id={block.text!} tabIndex={-1}><Inline spans={block.spans}/></h3>
         case 'heading': return <h3 key={i}><Inline spans={block.spans}/></h3>
         case 'paragraph': return <p key={i}><Inline spans={block.spans}/></p>

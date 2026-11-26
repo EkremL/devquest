@@ -114,8 +114,10 @@
 .rd-sample { margin: .85rem 0; background: #090f1d; border: 1px solid #30425e; border-radius: 9px; overflow: hidden; }
 .rd-sample figcaption { display: flex; align-items: center; justify-content: space-between; padding: .47rem .9rem; color: #adc0dc; background: #152136; border-bottom: 1px solid var(--rd-line); }
 .rd-sample pre { overflow-x: auto; max-width: 100%; margin: 0; padding: 1rem; color: #dce6fa; line-height: 1.65; font: .86rem/1.65 var(--rd-mono); }
+.rd-sample-wrap pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .rd-sample pre:focus-visible { outline-offset: -3px; }
 .rd-sample pre code { white-space: pre; }
+.rd-sample-wrap pre code { white-space: inherit; }
 .rd-evidence { width: 100%; margin: 1rem 0 1.7rem; border-collapse: collapse; text-align: left; font-size: .9rem; background: var(--color-surface); }
 .rd-evidence caption { text-align: left; padding: .75rem .85rem; background: var(--color-surface-raised); font-weight: 650; border-radius: 8px 8px 0 0; }
 .rd-evidence td, .rd-evidence th { border-bottom: 1px solid var(--rd-line); padding: .65rem; }

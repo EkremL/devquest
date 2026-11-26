@@ -24,6 +24,29 @@ class LessonPackageTest {
                 .anyMatch(b -> "Key takeaway".equals(b.getText())));
     }
 
+    @Test void vocabularyCoverageMatchesTheReviewedBaseline() {
+        var lesson = new LessonPackage(new ObjectMapper()).published().stream()
+                .filter(item -> item.getManifest().getKey().equals("identity-and-access-vocabulary")).findFirst().orElseThrow();
+        var manifest = lesson.getManifest();
+        assertThat(manifest.getBinding().getModuleTitle()).isEqualTo("Module 1 — Authentication Foundations");
+        assertThat(manifest.getBinding().getSessionTitle()).isEqualTo("Session 1.1 — Identity and Access Vocabulary");
+        assertThat(manifest.getRelease()).isEqualTo(1);
+        assertThat(lesson.getSections()).hasSize(5);
+        assertThat(manifest.getTopics()).extracting(LessonPackage.Topic::getSourceLabel).containsExactly(
+                "Identity", "Credential", "Authentication", "Authorization", "Access control", "Principal", "Subject", "User",
+                "Client", "Service", "Resource", "Resource server", "Authentication server", "Identity provider",
+                "Human-to-service authentication", "Service-to-service authentication");
+        var primaryAnchors = new java.util.HashSet<String>();
+        var available = lesson.getSections().stream().flatMap(chapter -> chapter.getBlocks().stream())
+                .filter(block -> "passage".equals(block.getKind())).map(LessonPackage.Block::getText).toList();
+        for (var topic : manifest.getTopics()) {
+            assertThat(topic.getSourceLine()).isBetween(49, 64);
+            assertThat(primaryAnchors.add(topic.getPassages().getFirst())).isTrue();
+            assertThat(available).containsAll(topic.getPassages());
+        }
+        assertThat(available).containsExactlyInAnyOrderElementsOf(primaryAnchors);
+    }
+
     private String reading() throws java.io.IOException {
         try (var source = getClass().getResourceAsStream("/lessons/http-401-and-403/4/reading.md")) {
             return new String(source.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);

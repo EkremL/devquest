@@ -49,7 +49,7 @@ class AssessmentDraftController {
     }
 
     private AssessmentEngine.Paper bound(UUID session) {
-        if (!learning.catalog().contains(session)) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        if (!learning.assessmentCatalog().contains(session)) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         return engine.paper().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 

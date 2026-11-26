@@ -19,15 +19,17 @@ function highlighted(line: string, language: Language) {
   })
 }
 
-export function CodeSample({ language, text }: { language: Language; text: string }) {
+export function CodeSample({ language, text, wrap = false }: { language: Language; text: string; wrap?: boolean }) {
   const http = language === 'http'
-  const kind = http ? (text.startsWith('HTTP/') ? 'Response' : 'Request') : language === 'java' ? 'Configuration' : 'Body'
-  const label = http ? 'Illustrative HTTP message' : language === 'java' ? 'Illustrative Java configuration' : 'Illustrative JSON body'
+  const kind = http ? (text.startsWith('HTTP/') ? 'Response' : 'Request') :
+    language === 'java' ? (wrap ? 'Java example' : 'Configuration') : language === 'text' ? 'Decision flow' : 'Body'
+  const label = http ? 'Illustrative HTTP message' : language === 'java' ? (wrap ? 'Illustrative Java example' : 'Illustrative Java configuration') :
+    language === 'text' ? 'Decision flow' : 'Illustrative JSON body'
   const Icon = http ? Terminal : language === 'json' ? Braces : CodeXml
-  return <figure className="rd-sample">
+  return <figure className={wrap ? 'rd-sample rd-sample-wrap' : 'rd-sample'}>
     <figcaption><span><Icon size={15} />{kind}</span><span>{language.toUpperCase()}</span></figcaption>
     <pre tabIndex={0} aria-label={label}><code>{text.split('\n').map((line, i, all) => <span key={i}>
-      {highlighted(line, language)}{i < all.length - 1 ? '\n' : ''}
+      {language === 'text' ? line : highlighted(line, language)}{i < all.length - 1 ? '\n' : ''}
     </span>)}</code></pre>
   </figure>
 }

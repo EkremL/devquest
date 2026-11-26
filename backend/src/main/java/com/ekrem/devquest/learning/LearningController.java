@@ -25,12 +25,12 @@ class LearningController {
 
     @GetMapping("/assessment-catalog")
     List<UUID> assessmentCatalog() {
-        return assessments.paper().isPresent() ? catalog() : List.of();
+        return assessments.paper().isPresent() ? packages.pilot().flatMap(this::resolve).stream().map(Session::getId).toList() : List.of();
     }
 
     @GetMapping("/sessions/{sessionId}/assessment")
     ResponseEntity<AssessmentEngine.Paper> assessment(@PathVariable UUID sessionId) {
-        return ResponseEntity.of(assessments.paper().filter(p -> catalog().contains(sessionId)));
+        return ResponseEntity.of(assessments.paper().filter(p -> assessmentCatalog().contains(sessionId)));
     }
 
     @PostMapping("/sessions/{sessionId}/assessment/submit")
@@ -49,25 +49,27 @@ class LearningController {
 
     @GetMapping("/catalog")
     List<UUID> catalog() {
-        return packages.pilot().flatMap(this::resolve).stream().map(Session::getId).toList();
+        return packages.published().stream().flatMap(content -> resolve(content).stream()).map(Session::getId).toList();
     }
 
     @GetMapping("/sessions/{sessionId}/lesson")
     ResponseEntity<Lesson> lesson(@PathVariable UUID sessionId) {
-        return ResponseEntity.of(packages.pilot().flatMap(content -> resolve(content)
+        return ResponseEntity.of(findLesson(sessionId));
+    }
+
+    private Optional<Lesson> findLesson(UUID sessionId) {
+        return packages.published().stream().flatMap(content -> resolve(content)
                 .filter(session -> session.getId().equals(sessionId))
-                .map(session -> new Lesson(session, content.getManifest().getKey(),
-                        content.getManifest().getRelease(), content.getManifest().getRequest(), content.getManifest().getTransport(),
-                        content.getManifest().getOutcomes(), content.getManifest().getCases(), content.getSections()))));
+                .map(session -> new Lesson(session, content)).stream()).findFirst();
     }
 
     // Read the baseline and its accepted successor in one consistent snapshot.
     @GetMapping("/sessions/{sessionId}/topics")
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     Map<UUID, String> topicLinks(@PathVariable UUID sessionId) {
-        var content = packages.pilot();
-        if (content.flatMap(this::resolve).filter(session -> session.id.equals(sessionId)).isEmpty()) return Map.of();
-        var manifest = content.orElseThrow().getManifest();
+        var matched = findLesson(sessionId);
+        if (matched.isEmpty()) return Map.of();
+        var manifest = matched.orElseThrow().content.getManifest();
         var binding = manifest.getBinding();
         var rows = jdbc.query("""
                 SELECT original.source_line, original.label, current_item.item_id
@@ -132,12 +134,14 @@ class LearningController {
 
     @Value static class Lesson {
         Session session;
-        String key;
-        int release;
-        String request;
-        String transport;
-        List<LessonPackage.Outcome> outcomes;
-        List<LessonPackage.FlowCase> cases;
-        List<LessonPackage.ReadingSection> sections;
+        @lombok.Getter(lombok.AccessLevel.NONE) LessonPackage.Content content;
+
+        public String getKey() { return content.getManifest().getKey(); }
+        public int getRelease() { return content.getManifest().getRelease(); }
+        public String getRequest() { return content.getManifest().getRequest(); }
+        public String getTransport() { return content.getManifest().getTransport(); }
+        public List<LessonPackage.Outcome> getOutcomes() { return content.getManifest().getOutcomes(); }
+        public List<LessonPackage.FlowCase> getCases() { return content.getManifest().getCases(); }
+        public List<LessonPackage.ReadingSection> getSections() { return content.getSections(); }
     }
 }
