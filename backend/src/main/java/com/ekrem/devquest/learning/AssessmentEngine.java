@@ -62,9 +62,14 @@ class AssessmentEngine {
                     var content = mapper.readValue(file, Package.class);
                     require(content.paper.release == release);
                     var reading = lesson;
-                    if (content.paper.readingRelease != null) {
-                        reading = lessons.releases(content.paper.readingRelease).stream()
+                    Integer readingRelease = content.paper.readingRelease;
+                    // The legacy HTTP papers linked to Reading 4 before explicit pins were added.
+                    if (readingRelease == null && PILOT.equals(key)) readingRelease = 4;
+                    if (readingRelease != null) {
+                        reading = lessons.releases(readingRelease).stream()
                                 .filter(candidate -> key.equals(candidate.getManifest().getKey())).findFirst().orElseThrow();
+                    }
+                    if (content.paper.readingRelease != null) {
                         require(content.paper.objectives.keySet().equals(reading.getManifest().getObjectives().keySet()));
                         var topics = new HashSet<String>();
                         reading.getManifest().getTopics().forEach(topic -> topics.addAll(topic.getPassages()));

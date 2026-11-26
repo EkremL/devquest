@@ -1,0 +1,168 @@
+{
+  "key": "http-401-and-403",
+  "release": 5,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 2 — Spring Security Foundations",
+    "sessionTitle": "Session 2.6 — 401 and 403"
+  },
+  "objectives": {
+    "predict-status": "Predict when a protected endpoint returns 401, 403, or 200 under the stated policy.",
+    "explain-evidence": "Explain what a Basic challenge tells the client and why valid credentials alone may be insufficient.",
+    "interpret-challenge": "Use the status and challenge together to explain the client's next decision.",
+    "compare-exchanges": "Identify which change to a request explains a different outcome.",
+    "trace-handlers": "Trace three failure paths to their configured response handlers.",
+    "limit-disclosure": "Design a consistent response that preserves protocol evidence and limits disclosure.",
+    "diagnose-challenge": "Distinguish handler selection from response-writing faults and propose a discriminating check."
+  },
+  "sections": [
+    {
+      "anchor": "predict-the-response",
+      "title": "Triage the request",
+      "objectives": [
+        "predict-status",
+        "explain-evidence"
+      ]
+    },
+    {
+      "anchor": "spring-failure-flow",
+      "title": "Trace the filter path",
+      "objectives": [
+        "trace-handlers"
+      ]
+    },
+    {
+      "anchor": "http-semantics",
+      "title": "Route each response",
+      "objectives": [
+        "interpret-challenge"
+      ]
+    },
+    {
+      "anchor": "error-contract",
+      "title": "Repair the response",
+      "objectives": [
+        "limit-disclosure"
+      ]
+    },
+    {
+      "anchor": "request-evidence",
+      "title": "Match a request rule",
+      "objectives": [
+        "compare-exchanges"
+      ]
+    },
+    {
+      "anchor": "debug-the-challenge",
+      "title": "Debug the lab regression",
+      "objectives": [
+        "diagnose-challenge"
+      ]
+    },
+    {
+      "anchor": "security-incident",
+      "title": "Resolve the security incident",
+      "objectives": [
+        "compare-exchanges",
+        "trace-handlers",
+        "limit-disclosure",
+        "diagnose-challenge"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 257,
+      "sourceLabel": "Meaning of 401 Unauthorized",
+      "objectives": [
+        "interpret-challenge"
+      ],
+      "passages": [
+        "study-http-401"
+      ]
+    },
+    {
+      "sourceLine": 258,
+      "sourceLabel": "Meaning of 403 Forbidden",
+      "objectives": [
+        "interpret-challenge"
+      ],
+      "passages": [
+        "study-http-403"
+      ]
+    },
+    {
+      "sourceLine": 259,
+      "sourceLabel": "Missing credentials",
+      "objectives": [
+        "compare-exchanges"
+      ],
+      "passages": [
+        "study-missing-credentials",
+        "study-authentication-entry-point"
+      ]
+    },
+    {
+      "sourceLine": 260,
+      "sourceLabel": "Invalid credentials",
+      "objectives": [
+        "compare-exchanges"
+      ],
+      "passages": [
+        "study-invalid-credentials",
+        "study-authentication-entry-point"
+      ]
+    },
+    {
+      "sourceLine": 261,
+      "sourceLabel": "Authenticated but insufficient authority",
+      "objectives": [
+        "compare-exchanges"
+      ],
+      "passages": [
+        "study-insufficient-authority"
+      ]
+    },
+    {
+      "sourceLine": 262,
+      "sourceLabel": "`AuthenticationEntryPoint`",
+      "objectives": [
+        "trace-handlers"
+      ],
+      "passages": [
+        "study-authentication-entry-point"
+      ]
+    },
+    {
+      "sourceLine": 263,
+      "sourceLabel": "`AccessDeniedHandler`",
+      "objectives": [
+        "trace-handlers"
+      ],
+      "passages": [
+        "study-access-denied-handler"
+      ]
+    },
+    {
+      "sourceLine": 264,
+      "sourceLabel": "Consistent JSON security errors",
+      "objectives": [
+        "limit-disclosure"
+      ],
+      "passages": [
+        "study-json-errors"
+      ]
+    },
+    {
+      "sourceLine": 265,
+      "sourceLabel": "Avoiding information leakage in errors",
+      "objectives": [
+        "limit-disclosure"
+      ],
+      "passages": [
+        "study-safe-error-details"
+      ]
+    }
+  ]
+}

@@ -107,9 +107,13 @@ function ReadingContent({ lesson, checklist, visibleAnchor, missingAnchor, hasAs
   const states = missions.map(id => (isMissionId(id) ? activity[id] : undefined) ?? 'Not explored')
   const missionMode = missions.every(isMissionId) && missions.length > 0
   const completed = missionMode && states.every(state => state === 'Activity completed')
-  const labStyle = missions[0] === 'build-export-grants' ? 'policy' : missions[0] === 'build-http-request' ? 'http' : undefined
+  const labStyle = missions[0] === 'build-export-grants' ? 'policy' : missions[0] === 'build-http-request' ? 'http' :
+    missions[0] === 'follow-session-signin' ? 'sessions' : missions[0] === 'triage-security-request' ? 'spring-trace' : undefined
   const missionIntro = labStyle === 'policy' ? 'Build, break and repair a workspace export policy' :
-    labStyle === 'http' ? 'Construct requests, trace transport and diagnose responses' : 'Trace evidence, inspect a caller and decide access'
+    labStyle === 'http' ? 'Construct requests, trace transport and diagnose responses' :
+      labStyle === 'sessions' ? 'Operate a session from sign-in through expiration and logout' :
+        labStyle === 'spring-trace' ? 'Trace Spring Security calls, repair responses and prepare for the Coding Lab' :
+          'Trace evidence, inspect a caller and decide access'
 
   function report(id: MissionId, done = false) {
     setActivity(previous => {

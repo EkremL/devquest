@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, BookOpen, ClipboardList, Copy, Download, FlaskConical } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import { labForLesson, useLabSession } from './catalog'
+import '../reading.css'
 import './lab.css'
 
 export function CodingLabPage() {

@@ -67,7 +67,7 @@ it('reviews unanswered questions, submits choices and writing, explains results 
     expect(navigator.getByRole('button',{name:'Question 2, incomplete selection, guided practice'})).toHaveTextContent(/^2$/)
     expect(screen.getAllByText('1 independent')[0]).toBeVisible()
     expect(screen.getAllByText('1 guided')[0]).toBeVisible()
-    expect(screen.getAllByRole('link',{name:'Revisit this objective'})[0]).toHaveAttribute('href','/learn/pilot/read#study-http-403')
+    expect(screen.getAllByRole('link',{name:'Revisit this objective'})[0]).toHaveAttribute('href','/learn/pilot/read?release=4#study-http-403')
     fireEvent.click(screen.getAllByRole('checkbox')[0])
     expect(screen.getAllByRole('checkbox')[0]).toBeChecked()
     fireEvent.change(screen.getByRole('combobox'),{target:{value:'Needs review'}})
@@ -75,7 +75,7 @@ it('reviews unanswered questions, submits choices and writing, explains results 
     expect(screen.getByText('Self-review rubric')).toBeVisible()
     expect(screen.getByText('Check the challenge before commit.')).toBeVisible()
     expect(screen.getByRole('heading',{name:'Objective review'})).toBeVisible()
-    expect(screen.getAllByRole('link',{name:'Review the relevant passage'})[0]).toHaveAttribute('href','/learn/pilot/read#study-insufficient-authority')
+    expect(screen.getAllByRole('link',{name:'Review the relevant passage'})[0]).toHaveAttribute('href','/learn/pilot/read?release=4#study-insufficient-authority')
     fireEvent.click(screen.getByRole('button',{name:'Start new practice'}))
     expect(within(screen.getByRole('group')).getByRole('radio',{name:/403 with/})).not.toBeChecked()
   } finally { fetcher.mockRestore() }
@@ -172,6 +172,6 @@ it('renders eleven single-choice questions from release 3 and locks the one chec
     expect(await screen.findByRole('button',{name:'Question 2, correct, guided practice'})).toBeVisible()
     expect(screen.getAllByRole('radio',{name:/Correct answer/})).toHaveLength(1)
     expect(radios[1]).toBeDisabled()
-    expect(screen.getByRole('link',{name:'Review the relevant passage'})).toHaveAttribute('href','/learn/pilot/read#http-semantics')
+    expect(screen.getByRole('link',{name:'Review the relevant passage'})).toHaveAttribute('href','/learn/pilot/read?release=4#http-semantics')
   } finally { fetcher.mockRestore() }
 })

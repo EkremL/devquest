@@ -276,8 +276,11 @@ class LearningIT {
                 List.of(vocabulary, philosophySession(), httpAuthenticationSession(), statefulSession(), id)));
         var lesson = get("/sessions/" + id + "/lesson");
         assertThat(lesson.statusCode()).isEqualTo(200);
-        assertThat(lesson.body()).contains("http-401-and-403", "predict-the-response", "401 Unauthorized",
-                "\"release\":4", "request-flow", "BasicAuthenticationFilter", "Key takeaway");
+        assertThat(lesson.body()).contains("http-401-and-403", "predict-the-response",
+                "\"release\":5", "trace-security-filters", "repair-security-response", "study-http-401");
+        var archive = get("/sessions/" + id + "/lesson?release=4");
+        assertThat(archive.statusCode()).isEqualTo(200);
+        assertThat(archive.body()).contains("\"release\":4", "request-flow", "BasicAuthenticationFilter", "Key takeaway");
         assertThat(get("/sessions/" + UUID.randomUUID() + "/lesson").statusCode()).isEqualTo(404);
         var links = learning.topicLinks(id);
         var items = jdbc.queryForList("""
@@ -471,7 +474,7 @@ class LearningIT {
             "Session 1.3 — HTTP Authentication Basics, http-authentication-basics, 2, Session 1.4 — Stateful Authentication, "
                     + "pair-the-exchange, beta, request-and-response;authentication-headers;authorization-header;www-authenticate;"
                     + "basic-auth;bearer-auth;cookie-credentials;login-body;https-boundary;http-statuses;challenge-or-denial",
-            "Session 1.4 — Stateful Authentication, stateful-authentication, 1, Session 1.3 — HTTP Authentication Basics, "
+            "Session 1.4 — Stateful Authentication, stateful-authentication, 2, Session 1.3 — HTTP Authentication Basics, "
                     + "where-authentication-lives, gamma, server-side-state;session-identifiers;session-cookies;session-creation;"
                     + "session-lookup;session-expiration;session-invalidation;session-logout;shared-session-storage;session-fixation;"
                     + "session-theft;cookie-attributes;cookie-httponly;cookie-secure;cookie-samesite"

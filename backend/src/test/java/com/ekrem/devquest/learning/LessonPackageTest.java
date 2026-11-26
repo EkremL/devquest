@@ -9,7 +9,8 @@ import tools.jackson.databind.ObjectMapper;
 import static org.assertj.core.api.Assertions.*;
 
 class LessonPackageTest {
-    private final LessonPackage.Content pilot = new LessonPackage(new ObjectMapper()).pilot().orElseThrow();
+    private final LessonPackage.Content pilot = new LessonPackage(new ObjectMapper()).releases(4).stream()
+            .filter(lesson -> lesson.getManifest().getKey().equals("http-401-and-403")).findFirst().orElseThrow();
 
     @Test void loadsThePackagedLesson() {
         assertThat(pilot.getManifest().getKey()).isEqualTo("http-401-and-403");
@@ -89,7 +90,7 @@ class LessonPackageTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"security-philosophy, 12, 5", "http-authentication-basics, 11, 6"})
+    @CsvSource({"security-philosophy, 12, 5", "http-authentication-basics, 11, 6", "stateful-authentication, 15, 7"})
     void interactiveLaboratoriesPreserveThePublishedTopicAndChapterIdentities(String key, int topics, int missions) {
         var packages = new LessonPackage(new ObjectMapper());
         var active = packages.published().stream().filter(lesson -> key.equals(lesson.getManifest().getKey())).findFirst().orElseThrow();
@@ -125,9 +126,17 @@ class LessonPackageTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {1, 2, 3})
+    @ValueSource(ints = {1, 2, 3, 4})
     void preservesPublishedBookmarks(int release) throws java.io.IOException {
-        var current = pilot.getSections().stream().map(LessonPackage.ReadingSection::getAnchor).toList();
+        var packages = new LessonPackage(new ObjectMapper());
+        var active = packages.pilot().orElseThrow();
+        var archived = packages.releases(release).stream()
+                .filter(lesson -> lesson.getManifest().getKey().equals("http-401-and-403")).findFirst().orElseThrow();
+        assertThat(active.getManifest().getRelease()).isEqualTo(5);
+        assertThat(active.getManifest().getTopics()).hasSize(9).isEqualTo(pilot.getManifest().getTopics());
+        assertThat(active.getSections()).hasSize(7);
+        assertThat(archived.getManifest().getRelease()).isEqualTo(release);
+        var current = active.getSections().stream().map(LessonPackage.ReadingSection::getAnchor).toList();
         try (var file = getClass().getResourceAsStream("/lessons/http-401-and-403/" + release + "/manifest.json")) {
             var previous = new ObjectMapper().readTree(file);
             assertThat(previous.get("release").asInt()).isEqualTo(release);

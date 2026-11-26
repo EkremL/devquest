@@ -1,0 +1,222 @@
+{
+  "key": "stateful-authentication",
+  "release": 2,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 1 — Authentication Foundations",
+    "sessionTitle": "Session 1.4 — Stateful Authentication"
+  },
+  "objectives": {
+    "model-session-state": "Distinguish browser-held session identifiers from server-held authentication state.",
+    "trace-session-lifecycle": "Trace session creation, lookup, expiry and logout through a Java servlet application.",
+    "design-session-storage": "Explain how multiple application instances share session state and handle missing or unavailable state.",
+    "protect-session-credentials": "Choose session identifier rotation, storage controls and cookie attributes for their distinct security purposes."
+  },
+  "sections": [
+    {
+      "anchor": "locate-the-session",
+      "title": "Follow the sign-in",
+      "objectives": [
+        "model-session-state",
+        "trace-session-lifecycle"
+      ]
+    },
+    {
+      "anchor": "inspect-the-cookie",
+      "title": "Inspect cookie delivery",
+      "objectives": [
+        "model-session-state",
+        "protect-session-credentials"
+      ]
+    },
+    {
+      "anchor": "walk-the-lifecycle",
+      "title": "Test both time limits",
+      "objectives": [
+        "trace-session-lifecycle"
+      ]
+    },
+    {
+      "anchor": "follow-the-node",
+      "title": "Route across nodes",
+      "objectives": [
+        "design-session-storage"
+      ]
+    },
+    {
+      "anchor": "protect-the-handle",
+      "title": "Rotate the identifier",
+      "objectives": [
+        "protect-session-credentials"
+      ]
+    },
+    {
+      "anchor": "verify-logout",
+      "title": "Verify logout",
+      "objectives": [
+        "trace-session-lifecycle"
+      ]
+    },
+    {
+      "anchor": "session-incident",
+      "title": "Resolve the incident",
+      "objectives": [
+        "trace-session-lifecycle",
+        "design-session-storage"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 97,
+      "sourceLabel": "Server-side sessions",
+      "objectives": [
+        "model-session-state"
+      ],
+      "passages": [
+        "study-server-side-state"
+      ]
+    },
+    {
+      "sourceLine": 98,
+      "sourceLabel": "Session identifiers",
+      "objectives": [
+        "model-session-state"
+      ],
+      "passages": [
+        "study-session-identifiers"
+      ]
+    },
+    {
+      "sourceLine": 99,
+      "sourceLabel": "Session cookies",
+      "objectives": [
+        "model-session-state"
+      ],
+      "passages": [
+        "study-session-cookies"
+      ]
+    },
+    {
+      "sourceLine": 100,
+      "sourceLabel": "Session creation",
+      "objectives": [
+        "trace-session-lifecycle"
+      ],
+      "passages": [
+        "study-session-creation"
+      ]
+    },
+    {
+      "sourceLine": 101,
+      "sourceLabel": "Session lookup",
+      "objectives": [
+        "trace-session-lifecycle"
+      ],
+      "passages": [
+        "study-session-lookup"
+      ]
+    },
+    {
+      "sourceLine": 102,
+      "sourceLabel": "Session expiration",
+      "objectives": [
+        "trace-session-lifecycle"
+      ],
+      "passages": [
+        "study-session-expiration"
+      ]
+    },
+    {
+      "sourceLine": 103,
+      "sourceLabel": "Session invalidation",
+      "objectives": [
+        "trace-session-lifecycle"
+      ],
+      "passages": [
+        "study-session-invalidation"
+      ]
+    },
+    {
+      "sourceLine": 104,
+      "sourceLabel": "Logout with sessions",
+      "objectives": [
+        "trace-session-lifecycle"
+      ],
+      "passages": [
+        "study-session-logout"
+      ]
+    },
+    {
+      "sourceLine": 105,
+      "sourceLabel": "Horizontal scaling and shared session storage",
+      "objectives": [
+        "design-session-storage"
+      ],
+      "passages": [
+        "study-shared-session-storage"
+      ]
+    },
+    {
+      "sourceLine": 106,
+      "sourceLabel": "Session fixation",
+      "objectives": [
+        "protect-session-credentials"
+      ],
+      "passages": [
+        "study-session-fixation"
+      ]
+    },
+    {
+      "sourceLine": 107,
+      "sourceLabel": "Session theft",
+      "objectives": [
+        "protect-session-credentials"
+      ],
+      "passages": [
+        "study-session-theft"
+      ]
+    },
+    {
+      "sourceLine": 108,
+      "sourceLabel": "Cookie security attributes",
+      "objectives": [
+        "protect-session-credentials"
+      ],
+      "passages": [
+        "study-cookie-attributes"
+      ]
+    },
+    {
+      "sourceLine": 109,
+      "sourceLabel": "`HttpOnly`",
+      "objectives": [
+        "protect-session-credentials"
+      ],
+      "passages": [
+        "study-cookie-httponly"
+      ]
+    },
+    {
+      "sourceLine": 110,
+      "sourceLabel": "`Secure`",
+      "objectives": [
+        "protect-session-credentials"
+      ],
+      "passages": [
+        "study-cookie-secure"
+      ]
+    },
+    {
+      "sourceLine": 111,
+      "sourceLabel": "`SameSite`",
+      "objectives": [
+        "protect-session-credentials"
+      ],
+      "passages": [
+        "study-cookie-samesite"
+      ]
+    }
+  ]
+}

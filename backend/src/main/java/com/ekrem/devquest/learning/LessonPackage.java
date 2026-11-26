@@ -26,20 +26,26 @@ class LessonPackage {
             "verify-evidence", "inspect-context", "decide-access", "trace-boundary", "attribute-request", "review-request",
             "build-export-grants", "repair-default-policy", "simulate-policy-failure", "trace-export-enforcement", "review-export-release",
             "build-http-request", "inspect-basic-encoding", "trace-http-transport", "inspect-http-carriers",
-            "diagnose-http-response", "investigate-http-incident");
+            "diagnose-http-response", "investigate-http-incident",
+            "follow-session-signin", "inspect-session-cookie", "advance-session-clock", "trace-shared-session",
+            "rotate-session-id", "verify-session-logout", "investigate-session-incident",
+            "triage-security-request", "trace-security-filters", "route-security-handler", "repair-security-response",
+            "match-security-rule", "debug-lab-challenge", "investigate-security-incident");
     private final Optional<Content> pilot;
     private final List<Content> published;
     private final List<Content> archived;
 
     LessonPackage(ObjectMapper json) {
-        pilot = load(json, "http-401-and-403", 4);
+        pilot = load(json, "http-401-and-403", 5);
         published = java.util.stream.Stream.of(load(json, "identity-and-access-vocabulary", 5),
                 load(json, "security-philosophy", 2), load(json, "http-authentication-basics", 2),
-                load(json, "stateful-authentication", 1),
+                load(json, "stateful-authentication", 2),
                 pilot).flatMap(Optional::stream).toList();
-        archived = java.util.stream.Stream.concat(java.util.stream.IntStream.of(1, 2, 3, 4)
-                .mapToObj(release -> load(json, "identity-and-access-vocabulary", release)),
-                java.util.stream.Stream.of(load(json, "security-philosophy", 1), load(json, "http-authentication-basics", 1)))
+        archived = java.util.stream.Stream.concat(
+                java.util.stream.Stream.of("identity-and-access-vocabulary", "http-401-and-403")
+                        .flatMap(key -> java.util.stream.IntStream.rangeClosed(1, 4).mapToObj(release -> load(json, key, release))),
+                java.util.stream.Stream.of(load(json, "security-philosophy", 1), load(json, "http-authentication-basics", 1),
+                        load(json, "stateful-authentication", 1)))
                 .flatMap(Optional::stream).toList();
     }
 
@@ -167,7 +173,10 @@ class LessonPackage {
         var lines = new HashSet<Integer>();
         var referenced = new HashSet<String>();
         var topics = manifest.getTopics();
-        require(topics != null && !topics.isEmpty(), "Missing topic coverage");
+        // The first HTTP pilot archives predate authored topic mappings. Their chapter bookmarks still work.
+        boolean legacyHttpArchive = "http-401-and-403".equals(manifest.getKey()) && manifest.getRelease() <= 3;
+        if (legacyHttpArchive && topics == null) topics = List.of();
+        require(topics != null && (legacyHttpArchive || !topics.isEmpty()), "Missing topic coverage");
         for (var topic : topics) {
             require(topic != null && topic.sourceLine > 0 && lines.add(topic.sourceLine)
                     && nonBlank(topic.sourceLabel), "Invalid or duplicate source reference");

@@ -5,6 +5,9 @@ import { Feedback, LabHeading, Switcher, TechnicalPath, type PathNode } from './
 import { SecurityDecisionPlayground } from './SecurityDecisionPlayground'
 import { DefaultPolicyLab, EnforcementLab, FailureLab, PermissionMatrix, PolicyReleaseReview } from './PolicyLab'
 import { CarrierInspector, EncodingExplorer, HttpInvestigation, RequestBuilder, ResponseConsole, TransportExplorer } from './HttpLab'
+import { CookieWorkbench, DistributedSessionLab, LogoutLab, RotationExplorer, SessionIncident, SessionTimeMachine, SignInSequence } from './SessionControlLab'
+import { FilterPathDebugger, HandlerRouting, MatcherExplorer, MissingChallengeLab, RequestTriage,
+  ResponseContractLab, SecurityIncident } from './SecurityResponseLab'
 import type { MissionId, ReportActivity } from './missionIds'
 import './missions.css'
 
@@ -309,6 +312,20 @@ const activities = {
   'inspect-http-carriers': CarrierInspector,
   'diagnose-http-response': ResponseConsole,
   'investigate-http-incident': HttpInvestigation,
+  'follow-session-signin': SignInSequence,
+  'inspect-session-cookie': CookieWorkbench,
+  'advance-session-clock': SessionTimeMachine,
+  'trace-shared-session': DistributedSessionLab,
+  'rotate-session-id': RotationExplorer,
+  'verify-session-logout': LogoutLab,
+  'investigate-session-incident': SessionIncident,
+  'triage-security-request': RequestTriage,
+  'trace-security-filters': FilterPathDebugger,
+  'route-security-handler': HandlerRouting,
+  'repair-security-response': ResponseContractLab,
+  'match-security-rule': MatcherExplorer,
+  'debug-lab-challenge': MissingChallengeLab,
+  'investigate-security-incident': SecurityIncident,
 } satisfies Record<MissionId, ComponentType<{ report: ReportActivity }>>
 
 export function MissionActivity({ id, report }: { id: MissionId; report: ReportActivity }) {

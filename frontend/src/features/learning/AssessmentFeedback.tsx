@@ -5,8 +5,10 @@ import { Link } from 'react-router'
 import type { Paper, Question, Answer, Feedback } from './AssessmentPage'
 
 export function assessmentReadingUrl(session: string, paper: Paper, anchor?: string) {
+  // The legacy HTTP pilot papers used the published reader before explicit release pins existed.
+  const readingRelease = paper.readingRelease ?? (paper.key === 'http-401-and-403' ? 4 : undefined)
   return '/learn/'+encodeURIComponent(session)+'/read'
-    +(paper.readingRelease ? '?release='+paper.readingRelease : '')+(anchor ? '#'+anchor : '')
+    +(readingRelease ? '?release='+readingRelease : '')+(anchor ? '#'+anchor : '')
 }
 
 export function SelectionFeedback({question, response, feedback}: {question: Question; response?: Answer; feedback: Feedback}) {
