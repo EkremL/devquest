@@ -1,0 +1,310 @@
+{
+  "key": "stateful-authentication",
+  "release": 1,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 1 — Authentication Foundations",
+    "sessionTitle": "Session 1.4 — Stateful Authentication"
+  },
+  "objectives": {
+    "model-session-state": "Distinguish browser-held session identifiers from server-held authentication state.",
+    "trace-session-lifecycle": "Trace session creation, lookup, expiry and logout through a Java servlet application.",
+    "design-session-storage": "Explain how multiple application instances share session state and handle missing or unavailable state.",
+    "protect-session-credentials": "Choose session identifier rotation, storage controls and cookie attributes for their distinct security purposes."
+  },
+  "sections": [
+    {
+      "anchor": "locate-the-session",
+      "title": "Locate the state after sign-in",
+      "objectives": [
+        "model-session-state",
+        "trace-session-lifecycle"
+      ]
+    },
+    {
+      "anchor": "walk-the-lifecycle",
+      "title": "Trace the session lifecycle",
+      "objectives": [
+        "trace-session-lifecycle"
+      ]
+    },
+    {
+      "anchor": "follow-the-node",
+      "title": "Follow the state across nodes",
+      "objectives": [
+        "design-session-storage"
+      ],
+      "practice": {
+        "presentation": "diagnosis",
+        "prompt": "A valid browser cookie reaches node B after sign-in on node A. B reports a missing session, while A still loads the account. Both nodes report healthy process-local stores. What should you inspect first?",
+        "choices": [
+          {
+            "label": "Where the authenticated session was stored and whether B can read that same record.",
+            "reason": "The same cookie reaches both nodes and only A finds state. Compare repository ownership and routing before changing security settings."
+          },
+          {
+            "label": "Whether Secure prevented the browser from sending its cookie.",
+            "reason": "B already received the cookie. Browser delivery cannot explain why only A has a matching record."
+          },
+          {
+            "label": "Whether idle expiry is too short on both nodes.",
+            "reason": "A still finds the record. A shared expiry problem does not explain the node-specific result."
+          }
+        ]
+      }
+    },
+    {
+      "anchor": "protect-the-handle",
+      "title": "Protect the session handle",
+      "objectives": [
+        "protect-session-credentials"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 97,
+      "sourceLabel": "Server-side sessions",
+      "objectives": [
+        "model-session-state"
+      ],
+      "passages": [
+        "study-server-side-state"
+      ]
+    },
+    {
+      "sourceLine": 98,
+      "sourceLabel": "Session identifiers",
+      "objectives": [
+        "model-session-state"
+      ],
+      "passages": [
+        "study-session-identifiers"
+      ]
+    },
+    {
+      "sourceLine": 99,
+      "sourceLabel": "Session cookies",
+      "objectives": [
+        "model-session-state"
+      ],
+      "passages": [
+        "study-session-cookies"
+      ]
+    },
+    {
+      "sourceLine": 100,
+      "sourceLabel": "Session creation",
+      "objectives": [
+        "trace-session-lifecycle"
+      ],
+      "passages": [
+        "study-session-creation"
+      ]
+    },
+    {
+      "sourceLine": 101,
+      "sourceLabel": "Session lookup",
+      "objectives": [
+        "trace-session-lifecycle"
+      ],
+      "passages": [
+        "study-session-lookup"
+      ]
+    },
+    {
+      "sourceLine": 102,
+      "sourceLabel": "Session expiration",
+      "objectives": [
+        "trace-session-lifecycle"
+      ],
+      "passages": [
+        "study-session-expiration"
+      ]
+    },
+    {
+      "sourceLine": 103,
+      "sourceLabel": "Session invalidation",
+      "objectives": [
+        "trace-session-lifecycle"
+      ],
+      "passages": [
+        "study-session-invalidation"
+      ]
+    },
+    {
+      "sourceLine": 104,
+      "sourceLabel": "Logout with sessions",
+      "objectives": [
+        "trace-session-lifecycle"
+      ],
+      "passages": [
+        "study-session-logout"
+      ]
+    },
+    {
+      "sourceLine": 105,
+      "sourceLabel": "Horizontal scaling and shared session storage",
+      "objectives": [
+        "design-session-storage"
+      ],
+      "passages": [
+        "study-shared-session-storage"
+      ]
+    },
+    {
+      "sourceLine": 106,
+      "sourceLabel": "Session fixation",
+      "objectives": [
+        "protect-session-credentials"
+      ],
+      "passages": [
+        "study-session-fixation"
+      ]
+    },
+    {
+      "sourceLine": 107,
+      "sourceLabel": "Session theft",
+      "objectives": [
+        "protect-session-credentials"
+      ],
+      "passages": [
+        "study-session-theft"
+      ]
+    },
+    {
+      "sourceLine": 108,
+      "sourceLabel": "Cookie security attributes",
+      "objectives": [
+        "protect-session-credentials"
+      ],
+      "passages": [
+        "study-cookie-attributes"
+      ]
+    },
+    {
+      "sourceLine": 109,
+      "sourceLabel": "`HttpOnly`",
+      "objectives": [
+        "protect-session-credentials"
+      ],
+      "passages": [
+        "study-cookie-httponly"
+      ]
+    },
+    {
+      "sourceLine": 110,
+      "sourceLabel": "`Secure`",
+      "objectives": [
+        "protect-session-credentials"
+      ],
+      "passages": [
+        "study-cookie-secure"
+      ]
+    },
+    {
+      "sourceLine": 111,
+      "sourceLabel": "`SameSite`",
+      "objectives": [
+        "protect-session-credentials"
+      ],
+      "passages": [
+        "study-cookie-samesite"
+      ]
+    }
+  ],
+  "visuals": {
+    "browser-and-server": {
+      "layout": "comparison",
+      "title": "Two pieces of one authenticated session",
+      "groups": [
+        {
+          "title": "Client state",
+          "items": [
+            {
+              "label": "Browser cookie store",
+              "detail": "Keeps the opaque identifier and applies storage and send rules."
+            },
+            {
+              "label": "HTTP request",
+              "detail": "Sends the cookie name and value when the rules allow it."
+            }
+          ]
+        },
+        {
+          "title": "Server state",
+          "items": [
+            {
+              "label": "Session repository",
+              "detail": "Associates an identifier with stored state and lifecycle information."
+            },
+            {
+              "label": "Request security context",
+              "detail": "A configured repository restores authentication for this request. Authorization still evaluates the requested action."
+            }
+          ]
+        }
+      ]
+    },
+    "follow-a-session": {
+      "layout": "stepper",
+      "title": "Inspect one session across four requests",
+      "groups": [
+        {
+          "title": "An operator signs in, reads a roster, then signs out",
+          "items": [
+            {
+              "label": "Visit the login form",
+              "detail": "A pre-login session can carry form state. Its mere existence does not establish a signed-in operator."
+            },
+            {
+              "label": "Submit accepted evidence",
+              "detail": "The configured login establishes authentication. It changes the identifier of an existing session and saves the context for later use."
+            },
+            {
+              "label": "Read the roster",
+              "detail": "The next request presents the current identifier. The session is valid and the restored authentication is sent to the roster’s authorization decision."
+            },
+            {
+              "label": "Confirm logout",
+              "detail": "The logout handler invalidates the server session and clears authentication. A later request cannot restore the retired context from that identifier."
+            }
+          ]
+        }
+      ]
+    },
+    "where-the-record-lives": {
+      "layout": "flow",
+      "title": "Both application nodes use one session repository",
+      "groups": [
+        {
+          "title": "Write path",
+          "items": [
+            {
+              "label": "Sign in on A",
+              "detail": "A saves the authenticated session record under its current identifier."
+            },
+            {
+              "label": "Shared store",
+              "detail": "The repository owns availability, expiry and invalidation of the shared record."
+            }
+          ]
+        },
+        {
+          "title": "Read path",
+          "items": [
+            {
+              "label": "Next request on B",
+              "detail": "B receives the same cookie and asks the repository for the record."
+            },
+            {
+              "label": "Authorization",
+              "detail": "B applies the requested action’s policy after restoring valid authentication."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

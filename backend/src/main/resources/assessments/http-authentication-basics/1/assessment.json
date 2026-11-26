@@ -1,0 +1,409 @@
+{
+  "paper": {
+    "key": "http-authentication-basics",
+    "release": 1,
+    "readingRelease": 1,
+    "title": "HTTP Authentication Basics",
+    "context": "Read each fictional report-service exchange under its stated contract. Identify where the evidence moves and which observed fact changes the next debugging step.",
+    "objectives": {
+      "read-the-exchange": "Identify the authentication evidence, challenge and direction of each field in an HTTP exchange.",
+      "compare-credential-carriers": "Explain how Basic, Bearer, cookies and a login body carry different evidence.",
+      "protect-credentials": "Choose transport and diagnostic practices that keep credentials private.",
+      "classify-http-outcomes": "Diagnose protocol outcomes from response status, headers and the documented request contract."
+    },
+    "questions": [
+      {
+        "id": "pair-the-exchange",
+        "objective": "read-the-exchange",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A shared trace contains lines from two concurrent GETs. Which evidence would reliably pair a 401 with the failed download?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "A bearer realm matching the download service.",
+          "beta": "A shared correlation ID across the exact request method and target and its returned status.",
+          "gamma": "The nearest status line in log order.",
+          "delta": "A matching Accept header on both requests."
+        }
+      },
+      {
+        "id": "first-authentication-reply",
+        "objective": "read-the-exchange",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A new CLI calls an HTTPS API without credentials. Its first response is a 401 with a Basic challenge. Which field is the client's response if it supports this scheme and is configured for the target?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Cookie with the Basic credentials.",
+          "beta": "WWW-Authenticate carrying the encoded pair.",
+          "gamma": "Content-Type specifying Basic.",
+          "delta": "Authorization carrying Basic credentials."
+        }
+      },
+      {
+        "id": "read-a-bearer-field",
+        "objective": "compare-credential-carriers",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A request includes an opaque Bearer value. No verifier result is available. What does this observation establish?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The client chose the Bearer carrier. Validation and scope remain to be established.",
+          "beta": "The caller authenticated if the value has no separators.",
+          "gamma": "The API has a server-side session for the caller.",
+          "delta": "The credential belongs to the target host because it arrived there."
+        }
+      },
+      {
+        "id": "base64-diagnostic",
+        "objective": "compare-credential-carriers",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A Basic client sends the same encoded value on consecutive HTTPS requests. A developer proposes preserving the whole header in restricted logs to make failures reproducible. What diagnostic captures useful evidence without retaining credentials?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Record the last eight characters of the encoded value.",
+          "beta": "Decode and log the user and password only on rejected requests.",
+          "gamma": "Record the scheme, field presence, correlation ID and a bounded verifier outcome.",
+          "delta": "Keep the entire header because TLS protects it."
+        }
+      },
+      {
+        "id": "login-contract",
+        "objective": "compare-credential-carriers",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "The login endpoint requires JSON and establishes a server session after verifying the body. The client instead sends form data and the endpoint records a body format rejection before looking up a user. What change addresses that observed failure?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Switch the body and content type to the endpoint's JSON contract.",
+          "beta": "Replace the field names with a Basic Authorization header.",
+          "gamma": "Send the same form body with a more permissive Accept value.",
+          "delta": "Pretend the session cookie already exists and attach it."
+        }
+      },
+      {
+        "id": "cookie-route",
+        "objective": "compare-credential-carriers",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A secure login sets REPORT_SESSION with Path=/portal. The browser calls https://reports.example.test/api/files on the same host. The API expects this cookie and sees none. Which evidence explains the first failure without assuming a server bug?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The Secure attribute suppresses cookies on HTTPS.",
+          "beta": "The browser would turn the cookie into Authorization.",
+          "gamma": "The login body media type prevents future cookies.",
+          "delta": "The cookie's path does not match /api/files."
+        }
+      },
+      {
+        "id": "hop-after-tls",
+        "objective": "protect-credentials",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A client sends a password over HTTPS. A gateway terminates TLS and forwards to the login backend. Which change addresses the risk that a backend-bound hop exposes the password?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Add a browser cookie Secure attribute to the login request body.",
+          "beta": "Protect the gateway-to-backend connection and separately disable credential logging.",
+          "gamma": "Base64-encode the body fields before forwarding.",
+          "delta": "Return 401 instead of 400 on all login failures."
+        }
+      },
+      {
+        "id": "jobs-and-limits",
+        "objective": "classify-http-outcomes",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A job API documents POST /report-jobs as non-idempotent. One POST returns 201 with Location. A later polling GET returns 429 with Retry-After. What should the client do under this contract?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Poll the job's Location according to retry guidance once eligible.",
+          "beta": "Repeat the POST after the stated interval to obtain a new Location.",
+          "gamma": "Reauthenticate before attempting the same GET because 429 proves expiration.",
+          "delta": "Treat 201 as the polling response and parse it as completed report data."
+        }
+      },
+      {
+        "id": "challenge-on-forbidden",
+        "objective": "classify-http-outcomes",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A service records successful Bearer validation and returns 403 with a Bearer insufficient_scope parameter. A retry loop reacts solely to the presence of WWW-Authenticate. What correction follows from the recorded evidence?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Refresh the same permission set on every response containing the field.",
+          "beta": "Treat the challenge field as a custom gateway warning on all statuses.",
+          "gamma": "Classify the 403 with its scheme details and investigate policy before attempting a new credential.",
+          "delta": "Retry only after removing Authorization so the gateway can choose a default token."
+        }
+      },
+      {
+        "id": "code-path-on-401",
+        "objective": "classify-http-outcomes",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "The following routing fragment runs for a protected API. Under the API contract its 401 should announce Bearer credentials, but a captured 401 has no challenge. What should you instrument first?",
+        "sample": "if (!credentialAccepted) {\n    return unauthorized();\n}\nreturn evaluateReportPermission();",
+        "language": "java",
+        "choices": {
+          "alpha": "The report permission check after identity is established.",
+          "beta": "The JSON success serializer.",
+          "gamma": "The retry count in the report downloader.",
+          "delta": "The early unauthenticated response and any intermediaries rewriting its headers."
+        }
+      },
+      {
+        "id": "proxy-or-origin",
+        "objective": "read-the-exchange",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "An outbound proxy returns 407 and Proxy-Authenticate, before the request reaches a report origin that uses Bearer. The client already has a report token. Which action keeps the trust boundaries intact?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Supply only configured proxy credentials to the proxy and retain the Bearer token for the origin.",
+          "beta": "Use the report token in Proxy-Authorization to satisfy both checks.",
+          "gamma": "Ask the report endpoint to change its scope for the proxy.",
+          "delta": "Treat 407 as a report permission denial and resend the same fields."
+        }
+      },
+      {
+        "id": "review-a-report-rollout",
+        "objective": "classify-http-outcomes",
+        "type": "written",
+        "difficulty": "Advanced",
+        "prompt": "Write a short incident note. A browser logs in through HTTPS POST /portal/login and receives a portal-scoped cookie. A new batch client calls a separate report API, gets a Bearer 401, then receives 403 after obtaining a token the API accepts. Explain where each kind of evidence belongs, what to investigate at each failure, and how to verify the fix without collecting secret values.",
+        "sample": "",
+        "language": "text",
+        "choices": {}
+      }
+    ]
+  },
+  "keys": {
+    "pair-the-exchange": {
+      "anchor": "study-request-and-response",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Both requests can target the same realm.",
+        "beta": "This connects the response to the actual request.",
+        "gamma": "Concurrent logs can interleave.",
+        "delta": "Representation preferences do not identify a transaction."
+      },
+      "reason": "Correlate request and response before interpreting either.",
+      "rubric": [],
+      "topics": [
+        "study-request-and-response"
+      ]
+    },
+    "first-authentication-reply": {
+      "anchor": "study-www-authenticate",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "That requires a separate cookie contract.",
+        "beta": "The origin sends the challenge field.",
+        "gamma": "Content-Type describes a representation.",
+        "delta": "The client uses this field to answer the origin's challenge."
+      },
+      "reason": "The challenge is a response field and the credential is a request field.",
+      "rubric": [],
+      "topics": [
+        "study-www-authenticate",
+        "study-authentication-headers",
+        "study-authorization-header"
+      ]
+    },
+    "read-a-bearer-field": {
+      "anchor": "study-bearer-auth",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "The header shows the claimed credential mechanism.",
+        "beta": "Syntax cannot establish validity.",
+        "gamma": "The carrier does not reveal how identity state is stored.",
+        "delta": "Receipt is insufficient to establish intended audience or resource."
+      },
+      "reason": "The server needs its configured verification and authorization checks.",
+      "rubric": [],
+      "topics": [
+        "study-bearer-auth"
+      ]
+    },
+    "base64-diagnostic": {
+      "anchor": "study-basic-auth",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "A fragment still retains part of the credential representation.",
+        "beta": "The password remains sensitive even when rejected.",
+        "gamma": "The diagnosis can distinguish absent from rejected evidence without recording the secret.",
+        "delta": "TLS does not protect application log contents."
+      },
+      "reason": "Base64 gives the verifier a recoverable user/password representation. Record the outcome without the credential.",
+      "rubric": [],
+      "topics": [
+        "study-basic-auth",
+        "study-https-boundary"
+      ]
+    },
+    "login-contract": {
+      "anchor": "study-login-body",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "The observed failure precedes any password validation.",
+        "beta": "The stated endpoint consumes a JSON login body.",
+        "gamma": "Accept does not change how the request body is decoded.",
+        "delta": "The endpoint has not verified login or issued a session identifier."
+      },
+      "reason": "Fix the representation the endpoint consumes before debugging account evidence.",
+      "rubric": [],
+      "topics": [
+        "study-login-body"
+      ]
+    },
+    "cookie-route": {
+      "anchor": "study-cookie-credentials",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "Secure restricts the cookie to secure transport.",
+        "beta": "A cookie is sent as Cookie when applicable.",
+        "gamma": "Media type does not set a cookie's path scope.",
+        "delta": "The browser applies cookie path selection before sending the request."
+      },
+      "reason": "Compare the actual path with cookie scope and the intended API contract.",
+      "rubric": [],
+      "topics": [
+        "study-cookie-credentials"
+      ]
+    },
+    "hop-after-tls": {
+      "anchor": "study-https-boundary",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Cookie attributes do not govern this hop or body.",
+        "beta": "Termination creates a new transport boundary, and logging is independent.",
+        "gamma": "Encoding supplies no transit confidentiality.",
+        "delta": "A status change does not protect the path."
+      },
+      "reason": "Protect each credential-bearing transport segment and prevent endpoint recording.",
+      "rubric": [],
+      "topics": [
+        "study-https-boundary"
+      ]
+    },
+    "jobs-and-limits": {
+      "anchor": "study-http-statuses",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "Creation succeeded, and the separate GET hit the limit.",
+        "beta": "This can create another job and doesn't resolve polling.",
+        "gamma": "429 supplies evidence of rate limiting.",
+        "delta": "201 here describes job creation."
+      },
+      "reason": "Use the creation result and apply the rate-limit guidance to the operation that encountered it.",
+      "rubric": [],
+      "topics": [
+        "study-http-statuses"
+      ]
+    },
+    "challenge-on-forbidden": {
+      "anchor": "study-challenge-or-denial",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "Refreshing identical scope does not change the refused action.",
+        "beta": "The field conveys applicable authentication information, including here a Bearer scope error.",
+        "gamma": "The verifier succeeded and the applicable grant is missing.",
+        "delta": "An absent credential cannot satisfy the documented requirement."
+      },
+      "reason": "Interpret status and scheme together, with evidence of the reached stage.",
+      "rubric": [],
+      "topics": [
+        "study-challenge-or-denial",
+        "study-www-authenticate",
+        "study-bearer-auth"
+      ]
+    },
+    "code-path-on-401": {
+      "anchor": "study-http-statuses",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "The observed branch returns before that check.",
+        "beta": "The success representation does not build this response.",
+        "gamma": "Fewer retries do not diagnose the response construction.",
+        "delta": "Inspect where the applicable challenge should be generated and where it can be lost."
+      },
+      "reason": "Test the actual unauthenticated response at the origin and at the caller-facing hop.",
+      "rubric": [],
+      "topics": [
+        "study-http-statuses",
+        "study-challenge-or-denial",
+        "study-www-authenticate"
+      ]
+    },
+    "proxy-or-origin": {
+      "anchor": "study-authentication-headers",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "Proxy and origin authentication have independent recipients.",
+        "beta": "The token is intended for the report origin.",
+        "gamma": "The origin has yet to receive a request.",
+        "delta": "The observed challenge comes from a different recipient."
+      },
+      "reason": "Use the field and credential intended for the issuer of the challenge.",
+      "rubric": [],
+      "topics": [
+        "study-authentication-headers",
+        "study-authorization-header"
+      ]
+    },
+    "review-a-report-rollout": {
+      "anchor": "study-challenge-or-denial",
+      "correct": [],
+      "feedback": {},
+      "reason": "The portal's login body is processed by that endpoint and the browser returns its scoped cookie to matching routes. The batch API announces Bearer in WWW-Authenticate. An intended, accepted token goes in its Authorization request field over TLS. The 401 directs attention to applicable evidence and validation. Given the accepted token, the following 403 directs attention to grant and resource policy. Record correlation IDs, endpoint, field presence, scheme, verifier outcome and a bounded policy reason. Verify the missing-evidence response and challenge, the valid-but-underprivileged denial and success with a correctly scoped token. Check transport boundaries and omit tokens, login bodies and cookie values.",
+      "rubric": [
+        "Assign the login body, portal cookie and Bearer token to the intended receivers.",
+        "Explain the 401 and the later 403 using the stated verifier result.",
+        "Distinguish the challenge and request credential fields.",
+        "Give a privacy-preserving diagnostic plan and account for TLS.",
+        "Include separate missing-evidence, permission-denial and success cases."
+      ],
+      "topics": [
+        "study-challenge-or-denial",
+        "study-login-body",
+        "study-cookie-credentials",
+        "study-https-boundary",
+        "study-authorization-header"
+      ]
+    }
+  }
+}

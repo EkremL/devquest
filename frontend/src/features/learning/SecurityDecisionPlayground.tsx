@@ -53,7 +53,10 @@ function DecisionPath({ decision }: { decision: Decision | null }) {
 
 const predictions = ([200, 401, 403] as const).map(status => ({ value: status, label: `${status} ${responseNames[status]}` }))
 
-export function SecurityDecisionPlayground() {
+export function SecurityDecisionPlayground({ onExperiment, onRun }: {
+  onExperiment?: () => void
+  onRun?: (status: ResponseStatus, prediction: ResponseStatus) => void
+} = {}) {
   const id = useId()
   const [scenario, setScenario] = useState<SecurityScenario>(baseline)
   const [prediction, setPrediction] = useState<ResponseStatus | null>(null)
@@ -65,6 +68,7 @@ export function SecurityDecisionPlayground() {
     setNotice(run ? 'Request changed. Predict and run the new request.' : '')
     setRun(null)
     setPrediction(null)
+    onExperiment?.()
   }
 
   function loadPreset(changes: Partial<SecurityScenario>, message: string) {
@@ -72,12 +76,15 @@ export function SecurityDecisionPlayground() {
     setPrediction(null)
     setRun(null)
     setNotice(message)
+    onExperiment?.()
   }
 
   function runRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (prediction === null) return
-    setRun({ decision: evaluateSecurityDecision(scenario), prediction, sequence: (run?.sequence ?? 0) + 1 })
+    const decision = evaluateSecurityDecision(scenario)
+    setRun({ decision, prediction, sequence: (run?.sequence ?? 0) + 1 })
+    onRun?.(decision.status, prediction)
     setNotice('')
   }
 
@@ -104,6 +111,7 @@ export function SecurityDecisionPlayground() {
           setPrediction(value)
           setRun(null)
           setNotice('')
+          onExperiment?.()
         }}/>
         <div className="sd-actions">
           <button className="primary-button" type="submit" disabled={prediction === null}><Play size={16} aria-hidden="true"/>Run request</button>

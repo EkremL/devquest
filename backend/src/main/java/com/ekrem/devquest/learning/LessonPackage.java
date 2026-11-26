@@ -22,16 +22,24 @@ import java.util.Set;
 @Component
 class LessonPackage {
     private static final String TOKEN = "[a-z][a-z0-9]*(?:-[a-z0-9]+)*";
+    private static final Set<String> MISSIONS = Set.of(
+            "verify-evidence", "inspect-context", "decide-access", "trace-boundary", "attribute-request", "review-request",
+            "build-export-grants", "repair-default-policy", "simulate-policy-failure", "trace-export-enforcement", "review-export-release",
+            "build-http-request", "inspect-basic-encoding", "trace-http-transport", "inspect-http-carriers",
+            "diagnose-http-response", "investigate-http-incident");
     private final Optional<Content> pilot;
     private final List<Content> published;
     private final List<Content> archived;
 
     LessonPackage(ObjectMapper json) {
         pilot = load(json, "http-401-and-403", 4);
-        published = java.util.stream.Stream.of(load(json, "identity-and-access-vocabulary", 4),
-                load(json, "security-philosophy", 1), pilot).flatMap(Optional::stream).toList();
-        archived = java.util.stream.IntStream.of(1, 2, 3)
-                .mapToObj(release -> load(json, "identity-and-access-vocabulary", release))
+        published = java.util.stream.Stream.of(load(json, "identity-and-access-vocabulary", 5),
+                load(json, "security-philosophy", 2), load(json, "http-authentication-basics", 2),
+                load(json, "stateful-authentication", 1),
+                pilot).flatMap(Optional::stream).toList();
+        archived = java.util.stream.Stream.concat(java.util.stream.IntStream.of(1, 2, 3, 4)
+                .mapToObj(release -> load(json, "identity-and-access-vocabulary", release)),
+                java.util.stream.Stream.of(load(json, "security-philosophy", 1), load(json, "http-authentication-basics", 1)))
                 .flatMap(Optional::stream).toList();
     }
 
@@ -98,6 +106,7 @@ class LessonPackage {
         var passageIds = new HashSet<String>();
         var visuals = manifest.getVisuals() == null ? Map.<String, Visual>of() : manifest.getVisuals();
         var visualIds = new HashSet<String>();
+        var missions = new HashSet<String>();
         for (var section : sections) {
             require(section != null && matches(section.getAnchor(), TOKEN) && nonBlank(section.getTitle())
                     && section.getObjectives() != null && !section.getObjectives().isEmpty()
@@ -125,6 +134,9 @@ class LessonPackage {
                 }
             }
             require(!blocks.isEmpty(), "Empty reading section");
+            var sectionMissions = blocks.stream().filter(b -> b.kind.equals("mission")).toList();
+            require(sectionMissions.size() <= 1 && sectionMissions.stream().allMatch(b -> missions.add(b.text)),
+                    "A mission must occur once in its own section");
             require(hasHttpContext || blocks.stream().noneMatch(b -> Set.of("outcomes", "request-flow").contains(b.kind)),
                     "HTTP activity needs request context");
             var practice = section.getPractice();
@@ -149,6 +161,7 @@ class LessonPackage {
                     section.getObjectives().stream().map(objectives::get).toList(), List.copyOf(blocks)));
         }
         require(node == null, "Unexpected section outside manifest");
+        require(missions.isEmpty() || missions.size() == sections.size(), "Each mission section needs an activity");
         require(visualIds.equals(visuals.keySet()), "Unused reading visual");
         require(reading.stream().noneMatch(section -> passageIds.contains(section.getAnchor())), "Anchor collision");
         var lines = new HashSet<Integer>();
@@ -189,6 +202,11 @@ class LessonPackage {
             require(Set.of("Engineering tip", "Common misconception", "Security warning", "Implementation details",
                     "Guided explanation", "Going deeper", "Debugger mindset", "Key takeaway").contains(label.getLiteral()), "Unknown teaching note");
             return new Block("note", inline(paragraph), null, label.getLiteral());
+        }
+        if (node instanceof FencedCodeBlock marker && "mission".equals(marker.getInfo())) {
+            String mission = marker.getLiteral().strip();
+            require(MISSIONS.contains(mission), "Unknown mission activity");
+            return new Block("mission", List.of(), null, mission);
         }
         if (node instanceof FencedCodeBlock marker && "reader".equals(marker.getInfo())) {
             String widget = marker.getLiteral().strip();

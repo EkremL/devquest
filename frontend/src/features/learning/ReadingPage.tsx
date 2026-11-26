@@ -1,19 +1,21 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, ArrowRight, BookOpen, ChevronDown, ChevronRight, Flag, FlaskConical, Layers, Lightbulb, ListTree, LockKeyhole, MessageCircle, ShieldAlert, Target } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BookOpen, Check, ChevronDown, ChevronRight, Flag, FlaskConical, Layers, Lightbulb, ListTree, LockKeyhole, MessageCircle, ShieldAlert, Target } from 'lucide-react'
 import { ApiError } from '../curriculum/api'
-import { getAssessmentCatalog, getLesson, type FlowCase, type Outcome, type ReadingSection, type Span } from './api'
+import { getAssessmentCatalog, getLesson, type FlowCase, type Lesson, type Outcome, type ReadingSection, type Span } from './api'
 import { InstructionFigure, OutcomeCards, ReadingPractice, RequestFlow } from './ReadingActivities'
 import { CodeSample } from './CodeSample'
 import { SecurityDecisionPlayground } from './SecurityDecisionPlayground'
+import { MissionActivity, PolicyWalkthrough } from './MissionActivities'
+import { MissionProgress } from './MissionPrimitives'
+import { isMissionId, type MissionId, type MissionState, type ReportActivity } from './missionIds'
 import { labForLesson } from './labs/catalog'
 import './reading.css'
 
 export function ReadingPage() {
   const { sessionId = '' } = useParams()
   const location = useLocation()
-  const navigate = useNavigate()
   const requestedRelease = new URLSearchParams(location.search).get('release')
   const fromTopic = location.state?.fromTopic
   const checklist = `/roadmap/sessions/${encodeURIComponent(sessionId)}` +
@@ -84,21 +86,49 @@ export function ReadingPage() {
     </section>
   }
 
-  const { session, sections, release, cases, outcomes, request, transport } = query.data
-  const lab = labForLesson(query.data.key)
+  return <ReadingContent key={sessionId + ':' + query.data.release} lesson={query.data} checklist={checklist}
+    visibleAnchor={visibleAnchor} missingAnchor={Boolean(anchor && !target)}
+    hasAssessment={Array.isArray(assessments.data) && assessments.data.includes(sessionId)}/>
+}
+
+function ReadingContent({ lesson, checklist, visibleAnchor, missingAnchor, hasAssessment }: {
+  lesson: Lesson; checklist: string; visibleAnchor: string; missingAnchor: boolean; hasAssessment: boolean
+}) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [activity, setActivity] = useState<Partial<Record<MissionId, MissionState>>>({})
+  const [replay, setReplay] = useState(0)
+  const { session, sections, release, cases, outcomes, request, transport } = lesson
+  const lab = labForLesson(lesson.key)
   const index = Math.max(0, sections.findIndex(section => section.anchor === visibleAnchor))
   const current = sections[index]
   const [sessionNumber, title] = session.title.split(' — ', 2)
-  return <div className="reading-page">
+  const missions = sections.map(section => section.blocks.find(block => block.kind === 'mission')?.text ?? null)
+  const states = missions.map(id => (isMissionId(id) ? activity[id] : undefined) ?? 'Not explored')
+  const missionMode = missions.every(isMissionId) && missions.length > 0
+  const completed = missionMode && states.every(state => state === 'Activity completed')
+  const labStyle = missions[0] === 'build-export-grants' ? 'policy' : missions[0] === 'build-http-request' ? 'http' : undefined
+  const missionIntro = labStyle === 'policy' ? 'Build, break and repair a workspace export policy' :
+    labStyle === 'http' ? 'Construct requests, trace transport and diagnose responses' : 'Trace evidence, inspect a caller and decide access'
+
+  function report(id: MissionId, done = false) {
+    setActivity(previous => {
+      const next = done ? 'Activity completed' : 'In progress'
+      return previous[id] === next || previous[id] === 'Activity completed' ? previous : { ...previous, [id]: next }
+    })
+  }
+
+  return <div className={'reading-page' + (missionMode ? ' mx-reader' : '')} data-lab={labStyle}>
     <nav className="rd-crumbs" aria-label="Breadcrumb">
       <Link to="/roadmap">Roadmap</Link><ChevronRight size={13} />
       <Link to={`/roadmap/modules/${session.moduleId}`}>{session.moduleTitle.split(' — ')[0]}</Link><ChevronRight size={13} />
       <Link to={checklist}>{sessionNumber}</Link><ChevronRight size={13} /><span aria-current="page">Reading</span>
     </nav>
     <header className="rd-hero">
-      <div><div className="rd-kicker"><BookOpen size={16}/> Reading workspace</div>
+      <div><div className="rd-kicker"><BookOpen size={16} aria-hidden="true"/> {missionMode ? 'Interactive reading · ' + sessionNumber : 'Reading workspace'}</div>
         <h1 id="reading-title" tabIndex={-1}>{title ?? session.title}</h1>
-        <p>{session.moduleTitle.split(' — ').at(-1)} <span> / </span> {sessionNumber}</p>
+        <p>{missionMode ? `${missionIntro} across ${missions.length} hands-on missions.` :
+          <>{session.moduleTitle.split(' — ').at(-1)} <span> / </span> {sessionNumber}</>}</p>
       </div>
       {request && transport && <div className="rd-endpoint"><LockKeyhole size={19}/><div><small>{transport}</small><code>{request}</code></div></div>}
     </header>
@@ -107,30 +137,48 @@ export function ReadingPage() {
         <nav aria-label="Lesson path" className="rd-path">
           <h2><ListTree size={17}/> Lesson path</h2>
           <ol>{sections.map((section, i) => <li key={section.anchor}>
-            <Link to={{ search: location.search, hash: '#' + section.anchor }} state={location.state} aria-label={section.title} aria-current={index === i ? 'step' : undefined}>
-              <span className="rd-node" aria-hidden="true">{i + 1}</span>{section.title}
+            <Link to={{ search: location.search, hash: '#' + section.anchor }} state={location.state} aria-label={section.title}
+              aria-describedby={missionMode ? 'activity-' + section.anchor : undefined} aria-current={index === i ? 'step' : undefined}>
+              <span className="rd-node" aria-hidden="true">{missionMode && states[i] === 'Activity completed' ? <Check size={14}/> : i + 1}</span>{section.title}
+              {missionMode && <small id={'activity-' + section.anchor} className="mx-path-state" data-state={states[i]}>{states[i]}</small>}
             </Link>
           </li>)}</ol>
           <label className="rd-mobile-path"><span className="sr-only">Choose a section</span>
-            <select value={current.anchor} onChange={e => void navigate({search: location.search, hash: '#' + e.target.value}, {state: location.state})}>
-              {sections.map((section, i) => <option value={section.anchor} key={section.anchor}>{i + 1}. {section.title}</option>)}
+            <select value={current.anchor} aria-describedby={missionMode ? 'current-mission-status' : undefined}
+              onChange={e => void navigate({search: location.search, hash: '#' + e.target.value}, {state: location.state})}>
+              {sections.map((section, i) => <option value={section.anchor} key={section.anchor}>{i + 1}. {section.title}{missionMode && states[i] === 'Activity completed' ? ' ✓' : ''}</option>)}
             </select><ChevronDown size={16} aria-hidden="true"/>
+            {missionMode && <span className="sr-only" id="current-mission-status">{states[index]}</span>}
           </label>
         </nav>
+        {missionMode && <MissionProgress states={states} onReplay={() => {
+          setActivity({})
+          setReplay(previous => previous + 1)
+        }}/>}
         <div className="rd-goals" key={current.anchor}><h2><Target size={17}/> Learning objectives</h2>
           <ul>{current.objectives.map(goal => <li key={goal}>{goal}</li>)}</ul>
         </div>
         <Link className="rd-back" to={checklist}><ArrowLeft size={16}/> Back to checklist</Link>
       </aside>
       <article className="rd-article" aria-label={session.title}>
-        {anchor && !target && <p role="status">This bookmark is unavailable. Showing the first section.</p>}
-        {sections.map((section, i) => <LessonSection key={session.id + ':' + release + ':' + section.anchor}
-          section={section} number={i + 1} total={sections.length} cases={cases} outcomes={outcomes} request={request}/>)}
-        <section className="rd-ending" aria-labelledby="reading-next">
-          <h2 id="reading-next">From reading to practice</h2>
-          <p>Try explaining these decisions from memory. Then revisit the passage where your explanation needs more evidence.</p>
-          <ul>{[...new Set(sections.flatMap(section => section.objectives))].map(goal => <li key={goal}>{goal}</li>)}</ul>
-          {Array.isArray(assessments.data) && assessments.data.includes(session.id) && <p>Try the <Link to={`/learn/${session.id}/assessment`}>practice assessment</Link> to explain and check your decisions.</p>}
+        {missingAnchor && <p role="status">This bookmark is unavailable. Showing the first section.</p>}
+        {sections.map((section, i) => {
+          const id = missions[i]
+          return <LessonSection key={session.id + ':' + release + ':' + section.anchor + ':' + replay}
+            section={section} number={i + 1} total={sections.length} cases={cases} outcomes={outcomes} request={request}
+            mission={isMissionId(id) ? { id, state: states[i], report: done => report(id, done) } : undefined}/>
+        })}
+        <section className={'rd-ending' + (missionMode ? ' mx-ending' : '')} aria-labelledby="reading-next">
+          <h2 id="reading-next">{completed ? 'All mission activities complete' : 'From reading to practice'}</h2>
+          {missionMode ? <>
+            <p>{completed ? `You completed ${missions.length} formative activities in this visit. Take the independent assessment to check your reasoning.` :
+              'Continue with independent practice whenever you are ready.'}</p>
+            {hasAssessment && <Link className="primary-button" to={`/learn/${session.id}/assessment`}>Practice assessment <ArrowRight size={16} aria-hidden="true"/></Link>}
+          </> : <>
+            <p>Try explaining these decisions from memory. Then revisit the passage where your explanation needs more evidence.</p>
+            <ul>{[...new Set(sections.flatMap(section => section.objectives))].map(goal => <li key={goal}>{goal}</li>)}</ul>
+            {hasAssessment && <p>Try the <Link to={`/learn/${session.id}/assessment`}>practice assessment</Link> to explain and check your decisions.</p>}
+          </>}
           {lab && <Link className="secondary-button" to={`/learn/${session.id}/lab`}><FlaskConical size={16} aria-hidden="true"/>Open Coding Lab</Link>}
           <nav className="rd-turn" aria-label="After reading">
             <Link to={{ search: location.search, hash: '' }} state={location.state}>Back to top</Link>
@@ -162,9 +210,13 @@ function TeachingNote({ title, spans }: { title: string; spans: Span[] }) {
     <div><h3>{title}</h3><p><Inline spans={spans}/></p></div></aside>
 }
 
-function LessonSection({ section, number, total, cases, outcomes, request }: { number: number; total: number; section: ReadingSection; cases: FlowCase[] | null; outcomes: Outcome[] | null; request: string | null }) {
+function LessonSection({ section, number, total, cases, outcomes, request, mission }: {
+  number: number; total: number; section: ReadingSection; cases: FlowCase[] | null; outcomes: Outcome[] | null; request: string | null
+  mission?: { id: MissionId; state: MissionState; report: ReportActivity }
+}) {
   return <section className="rd-chapter" aria-labelledby={section.anchor}>
-    <div className="rd-section-meta">Section {number} / {total}</div>
+    <div className="rd-section-meta">{mission ? 'Mission' : 'Section'} {number} / {total}
+      {mission && <span className="mx-mission-state" data-state={mission.state}>{mission.state}</span>}</div>
     <h2 id={section.anchor} tabIndex={-1}>{section.title}</h2>
     {section.blocks.map((block, i) => {
       switch (block.kind) {
@@ -172,6 +224,7 @@ function LessonSection({ section, number, total, cases, outcomes, request }: { n
         case 'request-flow': return cases && request && <RequestFlow key={i} cases={cases} request={request}/>
         case 'practice': return section.practice && <ReadingPractice key={i} practice={section.practice}/>
         case 'security-decision': return <SecurityDecisionPlayground key={i}/>
+        case 'mission': return mission && <MissionActivity key={i} id={mission.id} report={mission.report}/>
         case 'visual': return block.visual && <InstructionFigure key={i} visual={block.visual}/>
         case 'evidence': return <table key={i} className="rd-evidence">
           <caption>Observed responses · hypothetical</caption>
@@ -182,7 +235,9 @@ function LessonSection({ section, number, total, cases, outcomes, request }: { n
           </tr>)}</tbody>
         </table>
         case 'note': return <TeachingNote key={i} title={block.text!} spans={block.spans}/>
-        case 'code': return <CodeSample key={i} language={block.language!} text={block.text!} wrap={!request}/>
+        case 'code': return mission?.id === 'decide-access' && block.language === 'java'
+          ? <PolicyWalkthrough key={i} text={block.text!}/>
+          : <CodeSample key={i} language={block.language!} text={block.text!} wrap={!request}/>
         case 'passage': return <h3 key={i} className="rd-passage" id={block.text!} tabIndex={-1}><Inline spans={block.spans}/></h3>
         case 'heading': return <h3 key={i}><Inline spans={block.spans}/></h3>
         case 'paragraph': return <p key={i}><Inline spans={block.spans}/></p>

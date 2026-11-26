@@ -2,7 +2,7 @@ import { request } from '../curriculum/api'
 
 export interface Span { kind: 'text' | 'code' | 'link'; text: string; href: string | null }
 export type Language = 'http' | 'text' | 'java' | 'json'
-interface Block { kind: 'paragraph' | 'passage' | 'heading' | 'code' | 'note' | 'outcomes' | 'request-flow' | 'practice' | 'evidence' | 'visual' | 'security-decision'; spans: Span[]; language: Language | null; text: string | null; visual?: InstructionVisual }
+interface Block { kind: 'paragraph' | 'passage' | 'heading' | 'code' | 'note' | 'outcomes' | 'request-flow' | 'practice' | 'evidence' | 'visual' | 'security-decision' | 'mission'; spans: Span[]; language: Language | null; text: string | null; visual?: InstructionVisual }
 export interface InstructionVisual {
   layout: 'flow' | 'comparison' | 'trace' | 'stepper'
   title: string
@@ -26,7 +26,7 @@ export interface ReadingSection {
   observations?: { request: string; status: string; challenge: string | null }[]
   blocks: Block[]
 }
-interface Lesson {
+export interface Lesson {
   session: { id: string; title: string; moduleId: string; moduleTitle: string }
   key: string
   release: number

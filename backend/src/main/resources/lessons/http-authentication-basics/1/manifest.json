@@ -1,0 +1,192 @@
+{
+  "key": "http-authentication-basics",
+  "release": 1,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 1 — Authentication Foundations",
+    "sessionTitle": "Session 1.3 — HTTP Authentication Basics"
+  },
+  "objectives": {
+    "read-the-exchange": "Identify the authentication evidence, challenge and direction of each field in an HTTP exchange.",
+    "compare-credential-carriers": "Explain how Basic, Bearer, cookies and a login body carry different evidence.",
+    "protect-credentials": "Choose transport and diagnostic practices that keep credentials private.",
+    "classify-http-outcomes": "Diagnose protocol outcomes from response status, headers and the documented request contract."
+  },
+  "sections": [
+    {
+      "anchor": "read-the-wire",
+      "title": "Read the HTTP exchange",
+      "objectives": [
+        "read-the-exchange"
+      ]
+    },
+    {
+      "anchor": "choose-the-carrier",
+      "title": "Trace the credential",
+      "objectives": [
+        "compare-credential-carriers"
+      ]
+    },
+    {
+      "anchor": "protect-the-exchange",
+      "title": "Protect credentials with TLS",
+      "objectives": [
+        "protect-credentials"
+      ]
+    },
+    {
+      "anchor": "diagnose-the-response",
+      "title": "Diagnose before retrying",
+      "objectives": [
+        "classify-http-outcomes"
+      ],
+      "observations": [
+        {
+          "request": "GET /reports/42 · no credentials",
+          "status": "401",
+          "challenge": "Bearer realm=\"reports\""
+        },
+        {
+          "request": "GET /reports/42 · accepted token without report:read",
+          "status": "403",
+          "challenge": "Bearer error=\"insufficient_scope\""
+        },
+        {
+          "request": "GET /reports/42 · accepted token with report:read",
+          "status": "200"
+        }
+      ],
+      "practice": {
+        "presentation": "diagnosis",
+        "prompt": "An Android app omits its token and receives the first listed response. It then sends a recognized token and receives the second. Which fact changed, and what should the engineer investigate now?",
+        "choices": [
+          {
+            "label": "The API now accepts the credential. Investigate the missing report permission.",
+            "reason": "The documented trace moves from missing evidence to accepted evidence followed by a permission denial. Repeating the same token does not change that permission."
+          },
+          {
+            "label": "The API still lacks usable credentials. Inspect only the header-writing code.",
+            "reason": "The second trace states that validation already succeeded. Inspecting header construction alone misses the policy decision."
+          },
+          {
+            "label": "The API has limited the request rate. Wait and resend the same token.",
+            "reason": "The reported response is a scope denial. Use the rate-limit policy when evidence identifies a 429 instead."
+          }
+        ]
+      }
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 83,
+      "sourceLabel": "HTTP request and response structure",
+      "objectives": [
+        "read-the-exchange"
+      ],
+      "passages": [
+        "study-request-and-response"
+      ]
+    },
+    {
+      "sourceLine": 84,
+      "sourceLabel": "Authentication-related headers",
+      "objectives": [
+        "read-the-exchange"
+      ],
+      "passages": [
+        "study-authentication-headers"
+      ]
+    },
+    {
+      "sourceLine": 85,
+      "sourceLabel": "`Authorization` header",
+      "objectives": [
+        "read-the-exchange"
+      ],
+      "passages": [
+        "study-authorization-header"
+      ]
+    },
+    {
+      "sourceLine": 86,
+      "sourceLabel": "`WWW-Authenticate` header",
+      "objectives": [
+        "read-the-exchange"
+      ],
+      "passages": [
+        "study-www-authenticate"
+      ]
+    },
+    {
+      "sourceLine": 87,
+      "sourceLabel": "Basic authentication",
+      "objectives": [
+        "compare-credential-carriers"
+      ],
+      "passages": [
+        "study-basic-auth"
+      ]
+    },
+    {
+      "sourceLine": 88,
+      "sourceLabel": "Bearer authentication",
+      "objectives": [
+        "compare-credential-carriers"
+      ],
+      "passages": [
+        "study-bearer-auth"
+      ]
+    },
+    {
+      "sourceLine": 89,
+      "sourceLabel": "Cookie-based credentials",
+      "objectives": [
+        "compare-credential-carriers"
+      ],
+      "passages": [
+        "study-cookie-credentials"
+      ]
+    },
+    {
+      "sourceLine": 90,
+      "sourceLabel": "Request body credentials for login",
+      "objectives": [
+        "compare-credential-carriers"
+      ],
+      "passages": [
+        "study-login-body"
+      ]
+    },
+    {
+      "sourceLine": 91,
+      "sourceLabel": "Why HTTPS is required",
+      "objectives": [
+        "protect-credentials"
+      ],
+      "passages": [
+        "study-https-boundary"
+      ]
+    },
+    {
+      "sourceLine": 92,
+      "sourceLabel": "Meaning of 200, 201, 400, 401, 403, and 429",
+      "objectives": [
+        "classify-http-outcomes"
+      ],
+      "passages": [
+        "study-http-statuses"
+      ]
+    },
+    {
+      "sourceLine": 93,
+      "sourceLabel": "Authentication challenge versus access denial",
+      "objectives": [
+        "classify-http-outcomes"
+      ],
+      "passages": [
+        "study-challenge-or-denial"
+      ]
+    }
+  ]
+}

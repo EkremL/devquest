@@ -1,0 +1,179 @@
+{
+  "key": "security-philosophy",
+  "release": 2,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 1 — Authentication Foundations",
+    "sessionTitle": "Session 1.2 — Security Philosophy"
+  },
+  "objectives": {
+    "identify-exposure": "Trace an export request across trust boundaries and identify assets, exposure and controls.",
+    "constrain-policy": "Design narrow permissions and safe defaults for an export operation.",
+    "fail-without-disclosure": "Choose independent enforcement layers and preserve confidentiality when a decision cannot be made.",
+    "place-enforcement": "Separate authentication evidence, trust decisions, written policy and runtime enforcement."
+  },
+  "sections": [
+    {
+      "anchor": "map-the-export",
+      "title": "Build minimum access",
+      "objectives": [
+        "identify-exposure"
+      ]
+    },
+    {
+      "anchor": "reduce-grants",
+      "title": "Repair the default policy",
+      "objectives": [
+        "constrain-policy"
+      ]
+    },
+    {
+      "anchor": "contain-failure",
+      "title": "Contain policy failures",
+      "objectives": [
+        "fail-without-disclosure"
+      ]
+    },
+    {
+      "anchor": "enforce-the-policy",
+      "title": "Find the enforcement gap",
+      "objectives": [
+        "place-enforcement",
+        "constrain-policy"
+      ]
+    },
+    {
+      "anchor": "review-export-policy",
+      "title": "Review the release",
+      "objectives": [
+        "identify-exposure",
+        "constrain-policy",
+        "fail-without-disclosure",
+        "place-enforcement"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 68,
+      "sourceLabel": "Assets and protected resources",
+      "objectives": [
+        "identify-exposure"
+      ],
+      "passages": [
+        "study-assets"
+      ]
+    },
+    {
+      "sourceLine": 69,
+      "sourceLabel": "Trust boundaries",
+      "objectives": [
+        "identify-exposure"
+      ],
+      "passages": [
+        "study-trust-boundaries"
+      ]
+    },
+    {
+      "sourceLine": 70,
+      "sourceLabel": "Basic threat modeling",
+      "objectives": [
+        "identify-exposure"
+      ],
+      "passages": [
+        "study-threat-modeling"
+      ]
+    },
+    {
+      "sourceLine": 71,
+      "sourceLabel": "Attack surface",
+      "objectives": [
+        "identify-exposure"
+      ],
+      "passages": [
+        "study-attack-surface"
+      ]
+    },
+    {
+      "sourceLine": 72,
+      "sourceLabel": "Principle of least privilege",
+      "objectives": [
+        "constrain-policy"
+      ],
+      "passages": [
+        "study-least-privilege"
+      ]
+    },
+    {
+      "sourceLine": 73,
+      "sourceLabel": "Deny-by-default security",
+      "objectives": [
+        "constrain-policy"
+      ],
+      "passages": [
+        "study-deny-by-default"
+      ]
+    },
+    {
+      "sourceLine": 74,
+      "sourceLabel": "Secure defaults",
+      "objectives": [
+        "constrain-policy"
+      ],
+      "passages": [
+        "study-secure-defaults"
+      ]
+    },
+    {
+      "sourceLine": 75,
+      "sourceLabel": "Defense in depth",
+      "objectives": [
+        "fail-without-disclosure"
+      ],
+      "passages": [
+        "study-defense-in-depth"
+      ]
+    },
+    {
+      "sourceLine": 76,
+      "sourceLabel": "Secure failure behavior",
+      "objectives": [
+        "fail-without-disclosure"
+      ],
+      "passages": [
+        "study-secure-failure"
+      ]
+    },
+    {
+      "sourceLine": 77,
+      "sourceLabel": "Authentication versus trust",
+      "objectives": [
+        "place-enforcement"
+      ],
+      "passages": [
+        "study-authentication-and-trust"
+      ]
+    },
+    {
+      "sourceLine": 78,
+      "sourceLabel": "Authentication versus authorization policy",
+      "objectives": [
+        "place-enforcement"
+      ],
+      "passages": [
+        "study-authentication-and-policy"
+      ]
+    },
+    {
+      "sourceLine": 79,
+      "sourceLabel": "Policy definition versus policy enforcement",
+      "objectives": [
+        "place-enforcement"
+      ],
+      "passages": [
+        "study-policy-enforcement"
+      ]
+    }
+  ]
+}

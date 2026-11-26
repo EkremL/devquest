@@ -5,11 +5,11 @@ import { CodeXml, GitBranch, LayoutDashboard, Map, Network, ShieldCheck, Waypoin
 import { Overview } from './Overview'
 import { RoadmapPage } from './features/curriculum/RoadmapPage'
 import { DataSafetyPage } from './features/data-safety/DataSafetyPage'
-import { ReadingPage } from './features/learning/ReadingPage'
 import { AssessmentHistory } from './features/learning/AssessmentHistory'
 import { DraftWorkspace } from './features/learning/DraftWorkspace'
 import { CodingLabPage } from './features/learning/labs/CodingLabPage'
 const SkillTreePage = lazy(() => import('./features/skill-tree/SkillAtlas'))
+const ReadingPage = lazy(() => import('./features/learning/ReadingPage').then(module => ({ default: module.ReadingPage })))
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 15_000 } } })
 let appRouter: ReturnType<typeof createBrowserRouter> | undefined
@@ -48,7 +48,7 @@ export function AppRoutes() {
           <Route path="/roadmap" element={<RoadmapPage />} />
           <Route path="/roadmap/modules/:moduleId" element={<RoadmapPage />} />
           <Route path="/roadmap/sessions/:sessionId" element={<RoadmapPage />} />
-          <Route path="/learn/:sessionId/read" element={<ReadingPage />} />
+          <Route path="/learn/:sessionId/read" element={<Suspense fallback={<p className="empty-state" role="status">Loading lesson…</p>}><ReadingPage /></Suspense>} />
           <Route path="/learn/:sessionId/lab" element={<CodingLabPage />} />
           <Route path="/learn/:sessionId/assessment/history" element={<AssessmentHistory/>}/>
           <Route path="/learn/:sessionId/assessment/history/:attemptId" element={<AssessmentHistory/>}/>

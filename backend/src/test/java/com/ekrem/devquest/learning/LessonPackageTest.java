@@ -2,6 +2,7 @@ package com.ekrem.devquest.learning;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import tools.jackson.databind.ObjectMapper;
 
@@ -31,9 +32,9 @@ class LessonPackageTest {
         var manifest = lesson.getManifest();
         assertThat(manifest.getBinding().getModuleTitle()).isEqualTo("Module 1 — Authentication Foundations");
         assertThat(manifest.getBinding().getSessionTitle()).isEqualTo("Session 1.1 — Identity and Access Vocabulary");
-        assertThat(manifest.getRelease()).isEqualTo(4);
-        assertThat(lesson.getSections()).hasSize(5);
-        for (int release : new int[]{1, 2, 3}) {
+        assertThat(manifest.getRelease()).isEqualTo(5);
+        assertThat(lesson.getSections()).hasSize(6);
+        for (int release : new int[]{1, 2, 3, 4}) {
             var archived = packages.releases(release).stream()
                     .filter(candidate -> manifest.getKey().equals(candidate.getManifest().getKey()))
                     .findFirst().orElseThrow();
@@ -41,17 +42,22 @@ class LessonPackageTest {
             assertThat(archived.getManifest().getTopics()).isEqualTo(manifest.getTopics());
             assertThat(archived.getManifest().getBinding()).isEqualTo(manifest.getBinding());
             assertThat(lesson.getSections()).extracting(LessonPackage.ReadingSection::getAnchor)
-                    .containsExactlyInAnyOrderElementsOf(archived.getSections().stream().map(LessonPackage.ReadingSection::getAnchor).toList());
+                    .containsAll(archived.getSections().stream().map(LessonPackage.ReadingSection::getAnchor).toList());
         }
-        assertThat(lesson.getSections().stream().filter(chapter -> chapter.getPractice() != null)
+        var previous = packages.releases(4).stream().filter(candidate -> manifest.getKey().equals(candidate.getManifest().getKey()))
+                .findFirst().orElseThrow();
+        assertThat(previous.getSections().stream().filter(chapter -> chapter.getPractice() != null)
                 .map(chapter -> chapter.getPractice().getPresentation()))
                 .containsExactly("prediction", "diagnosis", "diagnosis", "prediction");
-        assertThat(lesson.getSections().stream().filter(chapter ->
+        assertThat(previous.getSections().stream().filter(chapter ->
                 chapter.getBlocks().stream().anyMatch(block -> "security-decision".equals(block.getKind())))
                 .map(LessonPackage.ReadingSection::getAnchor)).containsExactly("separate-policy-from-proof");
-        assertThat(lesson.getSections().stream().flatMap(chapter -> chapter.getBlocks().stream())
+        assertThat(previous.getSections().stream().flatMap(chapter -> chapter.getBlocks().stream())
                 .filter(block -> block.getVisual() != null).map(block -> block.getVisual().getLayout()))
                 .containsExactly("trace", "comparison", "flow", "stepper", "trace");
+        assertThat(lesson.getSections().stream().flatMap(chapter -> chapter.getBlocks().stream())
+                .filter(block -> "mission".equals(block.getKind())).map(LessonPackage.Block::getText))
+                .containsExactly("verify-evidence", "inspect-context", "decide-access", "trace-boundary", "attribute-request", "review-request");
         assertThat(manifest.getTopics()).extracting(LessonPackage.Topic::getSourceLabel).containsExactly(
                 "Identity", "Credential", "Authentication", "Authorization", "Access control", "Principal", "Subject", "User",
                 "Client", "Service", "Resource", "Resource server", "Authentication server", "Identity provider",
@@ -65,6 +71,37 @@ class LessonPackageTest {
             assertThat(available).containsAll(topic.getPassages());
         }
         assertThat(available).containsExactlyInAnyOrderElementsOf(primaryAnchors);
+    }
+
+    @Test void rejectsUnknownDuplicateOrMissingMissionMarkers() throws Exception {
+        var root = "/lessons/identity-and-access-vocabulary/5/";
+        try (var manifest = getClass().getResourceAsStream(root + "manifest.json");
+             var reading = getClass().getResourceAsStream(root + "reading.md")) {
+            var data = new ObjectMapper().readValue(manifest, LessonPackage.Manifest.class);
+            var markdown = new String(reading.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            assertThatIllegalArgumentException().isThrownBy(() -> LessonPackage.parse(data,
+                    markdown.replace("trace-boundary", "unknown-mission")));
+            assertThatIllegalArgumentException().isThrownBy(() -> LessonPackage.parse(data,
+                    markdown.replace("trace-boundary", "verify-evidence")));
+            assertThatIllegalArgumentException().isThrownBy(() -> LessonPackage.parse(data,
+                    markdown.replaceAll("~~~mission\\Rtrace-boundary\\R~~~", "")));
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"security-philosophy, 12, 5", "http-authentication-basics, 11, 6"})
+    void interactiveLaboratoriesPreserveThePublishedTopicAndChapterIdentities(String key, int topics, int missions) {
+        var packages = new LessonPackage(new ObjectMapper());
+        var active = packages.published().stream().filter(lesson -> key.equals(lesson.getManifest().getKey())).findFirst().orElseThrow();
+        var archive = packages.releases(1).stream().filter(lesson -> key.equals(lesson.getManifest().getKey())).findFirst().orElseThrow();
+        assertThat(active.getManifest().getRelease()).isEqualTo(2);
+        assertThat(active.getManifest().getBinding()).isEqualTo(archive.getManifest().getBinding());
+        assertThat(active.getManifest().getTopics()).hasSize(topics).isEqualTo(archive.getManifest().getTopics());
+        assertThat(active.getSections()).hasSize(missions).allSatisfy(section ->
+                assertThat(section.getBlocks()).filteredOn(block -> block.getKind().equals("mission")).hasSize(1));
+        assertThat(active.getSections()).extracting(LessonPackage.ReadingSection::getAnchor)
+                .containsAll(archive.getSections().stream().map(LessonPackage.ReadingSection::getAnchor).toList());
+        assertThat(archive.getSections()).allMatch(section -> section.getBlocks().stream().noneMatch(block -> block.getKind().equals("mission")));
     }
 
     @Test void rejectsMisspelledOrMissingVisualReferences() throws Exception {

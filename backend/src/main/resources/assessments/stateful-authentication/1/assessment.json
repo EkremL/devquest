@@ -1,0 +1,418 @@
+{
+  "paper": {
+    "key": "stateful-authentication",
+    "release": 1,
+    "readingRelease": 1,
+    "title": "Stateful Authentication",
+    "context": "Reason about a fictional roster application that uses browser cookies and a server-side session repository. Use the exact lifetime, logout, storage and cookie assumptions of each scenario.",
+    "objectives": {
+      "model-session-state": "Distinguish browser-held session identifiers from server-held authentication state.",
+      "trace-session-lifecycle": "Trace session creation, lookup, expiry and logout through a Java servlet application.",
+      "design-session-storage": "Explain how multiple application instances share session state and handle missing or unavailable state.",
+      "protect-session-credentials": "Choose session identifier rotation, storage controls and cookie attributes for their distinct security purposes."
+    },
+    "questions": [
+      {
+        "id": "where-authentication-lives",
+        "objective": "model-session-state",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A scheduling app returns a cookie after verifying a user. The cookie has an opaque random-looking value and the application uses a server-side session store. Which state must remain readable on the next request to restore the signed-in identity?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The HTTP login response in the browser cache.",
+          "beta": "The account's raw password held by the browser.",
+          "gamma": "A valid session record with the saved authentication context.",
+          "delta": "The original Set-Cookie header including its flags."
+        }
+      },
+      {
+        "id": "lookup-without-creation",
+        "objective": "trace-session-lifecycle",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A metrics filter needs to detect an existing session for this request while keeping public traffic from allocating session records. Which Servlet call fits?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "request.getSession(false)",
+          "beta": "request.getSession(true)",
+          "gamma": "request.getSession()",
+          "delta": "request.getRequestedSessionId() followed only by a null check."
+        }
+      },
+      {
+        "id": "read-httponly",
+        "objective": "protect-session-credentials",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A same-origin browser script cannot read an HttpOnly session cookie through document.cookie. The cookie otherwise matches a same-origin HTTPS request made by that script. What should the tester observe?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The server sees no Cookie header on script-initiated requests.",
+          "beta": "The browser changes the request to a top-level navigation.",
+          "gamma": "The browser includes only the cookie name, without its value.",
+          "delta": "The browser can attach the cookie even though the script cannot read its value."
+        }
+      },
+      {
+        "id": "save-custom-login-context",
+        "objective": "trace-session-lifecycle",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A custom sign-in handler in a Spring Security 7.1 application verifies the operator and sets authentication in SecurityContextHolder. The current request sees the identity. The next request presents a valid session cookie but restores no context. The app uses explicit save with a session-backed repository. Which change directly addresses this failure?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Force a longer browser cookie lifetime.",
+          "beta": "Save the authenticated context through the configured SecurityContextRepository as part of login.",
+          "gamma": "Obtain the session through getSession(false) twice before responding.",
+          "delta": "Enable sticky routing for this already single-node deployment."
+        }
+      },
+      {
+        "id": "absolute-boundary",
+        "objective": "trace-session-lifecycle",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "The roster policy expires at 15 minutes idle or 8 hours after authentication, whichever comes first. Login was at 08:00 and the last server-recorded activity was at 15:59. At exactly 16:00 the browser presents its matching cookie. What follows?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The session is no longer usable because it reached the absolute limit.",
+          "beta": "The session remains usable for 14 more minutes.",
+          "gamma": "The session stays usable if the cookie has no Max-Age.",
+          "delta": "The next access extends the original absolute deadline by one minute."
+        }
+      },
+      {
+        "id": "server-side-logout",
+        "objective": "trace-session-lifecycle",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "After a logout request the browser deletes its cookie. A controlled server-side test still finds the corresponding authenticated session record valid. What should the logout change do?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Change the cookie path to / so the browser can delete more state.",
+          "beta": "Shorten the idle timeout to make the retained state expire sooner.",
+          "gamma": "Invalidate the server session and clear the security context through the configured logout flow.",
+          "delta": "Redirect the user to the sign-in route before cleaning the same cookie again."
+        }
+      },
+      {
+        "id": "after-provider-return",
+        "objective": "protect-session-credentials",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A browser returns from another site via a top-level HTTPS GET. The application requires its host-only pre-login cookie on that request and wants normal cross-site subresource requests to omit it. Assume supported modern browser behavior and no extra privacy restrictions. Which explicit SameSite value satisfies the stated delivery policy?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Strict",
+          "beta": "Lax",
+          "gamma": "None with Secure",
+          "delta": "Omit SameSite and rely exclusively on Secure."
+        }
+      },
+      {
+        "id": "different-node-after-rollout",
+        "objective": "design-session-storage",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "Node A uses process-local session storage. Node B runs the same build and can serve an authorized roster request only after its own sign-in. The deployment must allow a live session created on A to continue on B without affinity. Which architecture satisfies that requirement?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Give both nodes the same cookie name while keeping their separate memory stores.",
+          "beta": "Increase both nodes' idle limits without changing lookup.",
+          "gamma": "Route each browser to whichever node processed login.",
+          "delta": "Configure both nodes to use the same compatible session repository and verify expiry and logout visibility across nodes."
+        }
+      },
+      {
+        "id": "identity-boundary-ledger",
+        "objective": "protect-session-credentials",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A test ledger shows an existing anonymous session, then accepted evidence, then authenticated state saved under the same session identifier. The cookie's flags are correct. What needs to change at the sign-in boundary?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Replace the identifier and verify the old one no longer resolves to authenticated state.",
+          "beta": "Keep the identifier but shorten the cookie's client lifetime.",
+          "gamma": "Add a new display-name attribute to the session.",
+          "delta": "Change Path while leaving the authenticated association under the unchanged key."
+        }
+      },
+      {
+        "id": "respond-to-session-exposure",
+        "objective": "protect-session-credentials",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A restricted support export accidentally included a live authenticated session identifier. Logs show no password disclosure. Which immediate action cuts off use of that exposed credential across application nodes?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Ask the browser to add HttpOnly at the next login.",
+          "beta": "Invalidate the affected server session in the shared repository and require new sign-in.",
+          "gamma": "Remove the export from the support workspace and leave session lifetime unchanged.",
+          "delta": "Enable sign-in rotation for future sessions only."
+        }
+      },
+      {
+        "id": "unavailable-is-not-a-miss",
+        "objective": "design-session-storage",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "Every node uses a single shared session repository. A protected roster request includes the expected cookie. The repository reports a timeout, and the request has no other accepted authentication evidence. Which handling preserves the stated security policy and gives operations useful evidence?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Reuse a process-local identity from a previous request with that ID.",
+          "beta": "Consider the session valid because the cookie reached the application.",
+          "gamma": "Withhold the protected roster and record a bounded repository-unavailable reason distinct from a session miss.",
+          "delta": "Return the roster with a degraded-session warning so the user can retry."
+        }
+      },
+      {
+        "id": "review-the-roster-session",
+        "objective": "trace-session-lifecycle",
+        "type": "written",
+        "difficulty": "Advanced",
+        "prompt": "Write a rollout review. In a stateful roster application, A accepts sign-in but B sometimes reports no session. A simulated logout in the browser clears its cookie, yet a controlled server-side regression still finds the old authenticated state. Explain a diagnosis and design a defensive verification plan for the shared store, lifetime boundaries and credential handling. State what you would log.",
+        "sample": "",
+        "language": "text",
+        "choices": {}
+      }
+    ]
+  },
+  "keys": {
+    "where-authentication-lives": {
+      "anchor": "study-server-side-state",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "The next request does not restore authentication from a cached response.",
+        "beta": "Stateful authentication does not require resending the password.",
+        "gamma": "The identifier is resolved to the record containing the needed state.",
+        "delta": "The browser sends the pair when applicable. The flags are not the saved context."
+      },
+      "reason": "A session cookie carries a lookup key. Authentication is restored from valid server-side state.",
+      "rubric": [],
+      "topics": [
+        "study-server-side-state",
+        "study-session-identifiers",
+        "study-session-cookies"
+      ]
+    },
+    "lookup-without-creation": {
+      "anchor": "study-session-lookup",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "It returns a valid existing session or null without creation.",
+        "beta": "This can allocate a new session on a miss.",
+        "gamma": "The no-argument call can allocate too.",
+        "delta": "A supplied identifier may point to no valid record."
+      },
+      "reason": "Lookup without creation answers a different question from whether the client supplied an identifier.",
+      "rubric": [],
+      "topics": [
+        "study-session-lookup",
+        "study-session-creation"
+      ]
+    },
+    "read-httponly": {
+      "anchor": "study-cookie-httponly",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "HttpOnly is about direct script access, not request delivery.",
+        "beta": "The flag does not change how the request was initiated.",
+        "gamma": "If sent, the cookie pair includes its value.",
+        "delta": "Browser delivery and JavaScript visibility are separate."
+      },
+      "reason": "HttpOnly reduces direct exposure to script. Authorization and script-injection defenses still matter.",
+      "rubric": [],
+      "topics": [
+        "study-cookie-httponly",
+        "study-cookie-attributes"
+      ]
+    },
+    "save-custom-login-context": {
+      "anchor": "study-session-creation",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "The cookie is already presented and the session is valid.",
+        "beta": "The repository is the bridge between requests in this configuration.",
+        "gamma": "Repeated lookup does not write the context.",
+        "delta": "Routing cannot store an unsaved context."
+      },
+      "reason": "Use the configured login strategy and explicitly persist the context when using this custom flow.",
+      "rubric": [],
+      "topics": [
+        "study-session-creation",
+        "study-session-lookup"
+      ]
+    },
+    "absolute-boundary": {
+      "anchor": "study-session-expiration",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "Recent activity keeps the idle window open only.",
+        "beta": "That uses only the idle rule.",
+        "gamma": "Browser retention does not override server lifetime policy.",
+        "delta": "The absolute window is measured from authentication."
+      },
+      "reason": "Check both limits against trusted timestamps before accepting or extending activity.",
+      "rubric": [],
+      "topics": [
+        "study-session-expiration"
+      ]
+    },
+    "server-side-logout": {
+      "anchor": "study-session-logout",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "Client cleanup alone does not remove the server record.",
+        "beta": "An older session remains valid during the remaining interval.",
+        "gamma": "The authentication state must be retired at its source.",
+        "delta": "The redirect does not change the server record."
+      },
+      "reason": "Verify that the old authentication cannot be restored from a new request.",
+      "rubric": [],
+      "topics": [
+        "study-session-logout",
+        "study-session-invalidation"
+      ]
+    },
+    "after-provider-return": {
+      "anchor": "study-cookie-samesite",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "This excludes the stated cross-site navigation.",
+        "beta": "This permits the safe top-level navigation while excluding ordinary cross-site subresources.",
+        "gamma": "That admits cross-site delivery more broadly than the stated policy.",
+        "delta": "Secure does not constrain same-site versus cross-site delivery. Omission fails the explicit requirement."
+      },
+      "reason": "Select the narrow policy that supports the actual navigation flow.",
+      "rubric": [],
+      "topics": [
+        "study-cookie-samesite",
+        "study-cookie-secure",
+        "study-cookie-attributes"
+      ]
+    },
+    "different-node-after-rollout": {
+      "anchor": "study-shared-session-storage",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "A matching lookup key still resolves in different stores.",
+        "beta": "A longer lifetime on A cannot expose its record to B.",
+        "gamma": "That is affinity and violates the requirement.",
+        "delta": "Sharing the state makes the identifier meaningful to either node."
+      },
+      "reason": "The browser carries the same handle. State availability and invalidation are repository responsibilities.",
+      "rubric": [],
+      "topics": [
+        "study-shared-session-storage",
+        "study-session-lookup",
+        "study-session-invalidation"
+      ]
+    },
+    "identity-boundary-ledger": {
+      "anchor": "study-session-fixation",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "This prevents pre-authentication identifiers from gaining the authenticated association.",
+        "beta": "It remains the same key at the identity transition.",
+        "gamma": "Stored account attributes do not retire the earlier key.",
+        "delta": "Path controls browser delivery. It does not rotate server state."
+      },
+      "reason": "Verify the transition from anonymous to authenticated state with session fixation protection.",
+      "rubric": [],
+      "topics": [
+        "study-session-fixation",
+        "study-session-identifiers",
+        "study-session-creation"
+      ]
+    },
+    "respond-to-session-exposure": {
+      "anchor": "study-session-theft",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "The current identifier is already exposed.",
+        "beta": "This removes the server association that made the exposed identifier usable.",
+        "gamma": "Removing the copy stops some future exposure but cannot invalidate the credential.",
+        "delta": "It addresses future sign-in transitions, leaving the current session live."
+      },
+      "reason": "Treat a live session identifier as a credential. Revoke its state, then remediate the source of exposure.",
+      "rubric": [],
+      "topics": [
+        "study-session-theft",
+        "study-session-invalidation",
+        "study-session-fixation"
+      ]
+    },
+    "unavailable-is-not-a-miss": {
+      "anchor": "study-shared-session-storage",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "Stale state cannot establish current authentication under this policy.",
+        "beta": "Delivery supplies a lookup key, not the missing repository result.",
+        "gamma": "This avoids accepting unverified session state while preserving an operational distinction.",
+        "delta": "The warning does not protect the data already returned."
+      },
+      "reason": "Fail without serving protected data. Diagnose repository availability separately from session validity.",
+      "rubric": [],
+      "topics": [
+        "study-shared-session-storage",
+        "study-session-lookup"
+      ]
+    },
+    "review-the-roster-session": {
+      "anchor": "study-session-logout",
+      "correct": [],
+      "feedback": {},
+      "reason": "Trace cookie issuance and delivery without recording its value, then distinguish repository lookup from authentication restoration and authorization. Confirm the nodes use the same compatible repository and verify positive cross-node lookup, expiry visibility and outage behavior. Use the configured logout flow to invalidate the record and clear security state, and verify the old session no longer authenticates on either node. Test idle and absolute lifetime separately, including recent activity just before the absolute limit. Test a changed identifier at sign-in and matching cookie scope and flags at the browser boundary. Record a correlation ID, node, cookie presence, lifecycle outcome and bounded state-store or policy reason. Exclude raw cookie values and passwords.",
+      "rubric": [
+        "Separate cookie delivery, session lookup, context restoration and authorization.",
+        "Explain what must be shared across nodes and verify healthy and unavailable cases.",
+        "Make server-side invalidation observable on both nodes after logout.",
+        "Test both timeout rules and the authentication identifier transition.",
+        "Choose safe diagnostics and name the browser cookie controls you would verify."
+      ],
+      "topics": [
+        "study-session-logout",
+        "study-shared-session-storage",
+        "study-session-expiration",
+        "study-session-invalidation",
+        "study-session-fixation",
+        "study-cookie-samesite",
+        "study-session-cookies"
+      ]
+    }
+  }
+}

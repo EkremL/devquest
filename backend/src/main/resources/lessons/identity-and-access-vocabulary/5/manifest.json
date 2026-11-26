@@ -1,0 +1,228 @@
+{
+  "key": "identity-and-access-vocabulary",
+  "release": 5,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 1 — Authentication Foundations",
+    "sessionTitle": "Session 1.1 — Identity and Access Vocabulary"
+  },
+  "objectives": {
+    "trace-authentication": "Trace a claimed identity through credential verification to an authenticated actor.",
+    "evaluate-access": "Evaluate an access decision for an actor, action and resource using authoritative policy inputs.",
+    "distinguish-actors": "Distinguish the represented actor, the request sender and the principal used by Spring Security.",
+    "assign-responsibility": "Explain who verifies proof, who asserts identity and who guards the protected resource.",
+    "compare-request-paths": "Compare human and workload requests and diagnose a denial without expanding permissions."
+  },
+  "sections": [
+    {
+      "anchor": "read-the-access-decision",
+      "title": "Verify the evidence",
+      "objectives": [
+        "trace-authentication"
+      ]
+    },
+    {
+      "anchor": "name-the-actor",
+      "title": "Inspect the caller",
+      "objectives": [
+        "distinguish-actors"
+      ]
+    },
+    {
+      "anchor": "separate-policy-from-proof",
+      "title": "Decide access",
+      "objectives": [
+        "evaluate-access"
+      ]
+    },
+    {
+      "anchor": "locate-the-trust-boundaries",
+      "title": "Trace the trust boundary",
+      "objectives": [
+        "assign-responsibility"
+      ]
+    },
+    {
+      "anchor": "follow-human-and-service-requests",
+      "title": "Investigate the audit trail",
+      "objectives": [
+        "compare-request-paths"
+      ]
+    },
+    {
+      "anchor": "review-the-request",
+      "title": "Review the request",
+      "objectives": [
+        "trace-authentication",
+        "evaluate-access",
+        "compare-request-paths"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 49,
+      "sourceLabel": "Identity",
+      "objectives": [
+        "trace-authentication"
+      ],
+      "passages": [
+        "study-identity"
+      ]
+    },
+    {
+      "sourceLine": 50,
+      "sourceLabel": "Credential",
+      "objectives": [
+        "trace-authentication"
+      ],
+      "passages": [
+        "study-credential"
+      ]
+    },
+    {
+      "sourceLine": 51,
+      "sourceLabel": "Authentication",
+      "objectives": [
+        "trace-authentication"
+      ],
+      "passages": [
+        "study-authentication",
+        "study-human-to-service",
+        "study-service-to-service"
+      ]
+    },
+    {
+      "sourceLine": 52,
+      "sourceLabel": "Authorization",
+      "objectives": [
+        "evaluate-access"
+      ],
+      "passages": [
+        "study-authorization",
+        "study-access-control"
+      ]
+    },
+    {
+      "sourceLine": 53,
+      "sourceLabel": "Access control",
+      "objectives": [
+        "evaluate-access"
+      ],
+      "passages": [
+        "study-access-control"
+      ]
+    },
+    {
+      "sourceLine": 54,
+      "sourceLabel": "Principal",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "passages": [
+        "study-principal"
+      ]
+    },
+    {
+      "sourceLine": 55,
+      "sourceLabel": "Subject",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "passages": [
+        "study-subject"
+      ]
+    },
+    {
+      "sourceLine": 56,
+      "sourceLabel": "User",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "passages": [
+        "study-user"
+      ]
+    },
+    {
+      "sourceLine": 57,
+      "sourceLabel": "Client",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "passages": [
+        "study-client"
+      ]
+    },
+    {
+      "sourceLine": 58,
+      "sourceLabel": "Service",
+      "objectives": [
+        "distinguish-actors"
+      ],
+      "passages": [
+        "study-service"
+      ]
+    },
+    {
+      "sourceLine": 59,
+      "sourceLabel": "Resource",
+      "objectives": [
+        "evaluate-access"
+      ],
+      "passages": [
+        "study-resource"
+      ]
+    },
+    {
+      "sourceLine": 60,
+      "sourceLabel": "Resource server",
+      "objectives": [
+        "assign-responsibility"
+      ],
+      "passages": [
+        "study-resource-server"
+      ]
+    },
+    {
+      "sourceLine": 61,
+      "sourceLabel": "Authentication server",
+      "objectives": [
+        "assign-responsibility"
+      ],
+      "passages": [
+        "study-authentication-server"
+      ]
+    },
+    {
+      "sourceLine": 62,
+      "sourceLabel": "Identity provider",
+      "objectives": [
+        "assign-responsibility"
+      ],
+      "passages": [
+        "study-identity-provider"
+      ]
+    },
+    {
+      "sourceLine": 63,
+      "sourceLabel": "Human-to-service authentication",
+      "objectives": [
+        "compare-request-paths"
+      ],
+      "passages": [
+        "study-human-to-service"
+      ]
+    },
+    {
+      "sourceLine": 64,
+      "sourceLabel": "Service-to-service authentication",
+      "objectives": [
+        "compare-request-paths"
+      ],
+      "passages": [
+        "study-service-to-service"
+      ]
+    }
+  ]
+}

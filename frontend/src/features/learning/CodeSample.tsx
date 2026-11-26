@@ -19,7 +19,9 @@ function highlighted(line: string, language: Language) {
   })
 }
 
-export function CodeSample({ language, text, wrap = false }: { language: Language; text: string; wrap?: boolean }) {
+export function CodeSample({ language, text, wrap = false, activeLine }: {
+  language: Language; text: string; wrap?: boolean; activeLine?: number
+}) {
   const http = language === 'http'
   const kind = http ? (text.startsWith('HTTP/') ? 'Response' : 'Request') :
     language === 'java' ? (wrap ? 'Java example' : 'Configuration') : language === 'text' ? 'Decision flow' : 'Body'
@@ -28,7 +30,8 @@ export function CodeSample({ language, text, wrap = false }: { language: Languag
   const Icon = http ? Terminal : language === 'json' ? Braces : CodeXml
   return <figure className={wrap ? 'rd-sample rd-sample-wrap' : 'rd-sample'}>
     <figcaption><span><Icon size={15} />{kind}</span><span>{language.toUpperCase()}</span></figcaption>
-    <pre tabIndex={0} aria-label={label}><code>{text.split('\n').map((line, i, all) => <span key={i}>
+    <pre tabIndex={0} aria-label={label}><code>{text.split('\n').map((line, i, all) => <span key={i}
+      className={activeLine === i ? 'rd-active-line' : undefined}>
       {language === 'text' ? line : highlighted(line, language)}{i < all.length - 1 ? '\n' : ''}
     </span>)}</code></pre>
   </figure>

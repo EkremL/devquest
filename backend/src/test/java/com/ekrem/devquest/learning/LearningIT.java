@@ -2,6 +2,8 @@ package com.ekrem.devquest.learning;
 
 import com.ekrem.devquest.curriculum.application.CurriculumReader;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -12,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.net.http.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -266,7 +270,10 @@ class LearningIT {
         UUID id = pilotSession();
         UUID vocabulary = session("Session 1.1 — Identity and Access Vocabulary");
         String before = progressSnapshot();
-        assertThat(get("/catalog").body()).isEqualTo("[\"" + vocabulary + "\",\"" + philosophySession() + "\",\"" + id + "\"]");
+        var catalog = get("/catalog");
+        assertThat(catalog.statusCode()).isEqualTo(200);
+        assertThat(catalog.body()).isEqualTo(new tools.jackson.databind.ObjectMapper().writeValueAsString(
+                List.of(vocabulary, philosophySession(), httpAuthenticationSession(), statefulSession(), id)));
         var lesson = get("/sessions/" + id + "/lesson");
         assertThat(lesson.statusCode()).isEqualTo(200);
         assertThat(lesson.body()).contains("http-401-and-403", "predict-the-response", "401 Unauthorized",
@@ -291,7 +298,10 @@ class LearningIT {
         var before = progressSnapshot();
         var lesson = get("/sessions/" + id + "/lesson");
         assertThat(lesson.statusCode()).isEqualTo(200);
-        assertThat(lesson.body()).contains("\"key\":\"identity-and-access-vocabulary\"", "\"release\":4", "TaskReadPolicy", "security-decision");
+        assertThat(lesson.body()).contains("\"key\":\"identity-and-access-vocabulary\"", "\"release\":5", "TaskReadPolicy", "decide-access");
+        var fourth = get("/sessions/" + id + "/lesson?release=4");
+        assertThat(fourth.statusCode()).isEqualTo(200);
+        assertThat(fourth.body()).contains("\"release\":4", "security-decision").doesNotContain("verify-evidence");
         var archived = get("/sessions/" + id + "/lesson?release=1");
         assertThat(archived.statusCode()).isEqualTo(200);
         assertThat(archived.body()).contains("\"release\":1", "study-principal").doesNotContain("Walk through the Java policy");
@@ -313,7 +323,8 @@ class LearningIT {
                 "study-resource-server", "study-authentication-server", "study-identity-provider", "study-human-to-service", "study-service-to-service");
         assertThat(links).hasSize(16);
         assertThat(get("/sessions/" + id + "/topics").statusCode()).isEqualTo(200);
-        assertThat(learning.assessmentCatalog()).containsExactly(id, philosophySession(), pilotSession());
+        assertThat(learning.assessmentCatalog()).containsExactly(id, philosophySession(), httpAuthenticationSession(),
+                statefulSession(), pilotSession());
         var paper = get("/sessions/" + id + "/assessment");
         assertThat(paper.statusCode()).isEqualTo(200);
         assertThat(paper.body()).contains("identity-and-access-vocabulary", "\"release\":1", "\"readingRelease\":4")
@@ -425,7 +436,7 @@ class LearningIT {
 
     @Test @Transactional void identicalLabelInAnotherSessionDoesNotAcquireLink() {
         UUID id = pilotSession();
-        UUID other = session("Session 1.3 — HTTP Authentication Basics");
+        UUID other = session("Session 1.5 — Stateless and Token-Based Authentication");
         jdbc.update("""
                 UPDATE devquest.source_item_mapping m SET label='Meaning of 401 Unauthorized', source_line=257
                 FROM devquest.curriculum_node n WHERE n.id=m.node_id AND n.stable_id=? AND m.position=0
@@ -447,13 +458,79 @@ class LearningIT {
         return session("Session 1.2 — Security Philosophy");
     }
 
+    private UUID httpAuthenticationSession() {
+        return session("Session 1.3 — HTTP Authentication Basics");
+    }
+
+    private UUID statefulSession() {
+        return session("Session 1.4 — Stateful Authentication");
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "Session 1.3 — HTTP Authentication Basics, http-authentication-basics, 2, Session 1.4 — Stateful Authentication, "
+                    + "pair-the-exchange, beta, request-and-response;authentication-headers;authorization-header;www-authenticate;"
+                    + "basic-auth;bearer-auth;cookie-credentials;login-body;https-boundary;http-statuses;challenge-or-denial",
+            "Session 1.4 — Stateful Authentication, stateful-authentication, 1, Session 1.3 — HTTP Authentication Basics, "
+                    + "where-authentication-lives, gamma, server-side-state;session-identifiers;session-cookies;session-creation;"
+                    + "session-lookup;session-expiration;session-invalidation;session-logout;shared-session-storage;session-fixation;"
+                    + "session-theft;cookie-attributes;cookie-httponly;cookie-secure;cookie-samesite"
+    })
+    void servesBatchTopicsAndKeepsDraftsAndAttemptsSessionScoped(String title, String key, int readingRelease, String otherTitle,
+            String question, String option, String anchors) throws Exception {
+        UUID id = session(title);
+        UUID other = session(otherTitle);
+        String before = progressSnapshot();
+        var reading = get("/sessions/" + id + "/lesson");
+        assertThat(reading.statusCode()).isEqualTo(200);
+        assertThat(reading.body()).contains("\"key\":\"" + key + "\"", "\"release\":" + readingRelease);
+        var orderedItems = jdbc.queryForList("""
+                SELECT m.item_id FROM devquest.source_item_mapping m JOIN devquest.curriculum_node n ON n.id=m.node_id
+                JOIN devquest.curriculum c ON c.current_revision_id=m.revision_id WHERE n.stable_id=? ORDER BY m.position
+                """, UUID.class, id);
+        var links = learning.topicLinks(id);
+        assertThat(orderedItems.stream().map(links::get)).containsExactly(
+                Arrays.stream(anchors.split(";")).map(anchor -> "study-" + anchor).toArray(String[]::new));
+        var paper = get("/sessions/" + id + "/assessment");
+        assertThat(paper.statusCode()).isEqualTo(200);
+        assertThat(paper.body()).contains("\"readingRelease\":1")
+                .doesNotContain("\"correct\"", "\"reason\"", "\"rubric\"", "\"feedback\"");
+
+        var mapper = new tools.jackson.databind.ObjectMapper();
+        var otherDraftBefore = get("/sessions/" + other + "/assessment/draft");
+        var draft = mapper.readTree(post(id, "draft", "{}").body());
+        String attempt = draft.get("id").asString();
+        assertThat(draft.get("paper").get("key").asString()).isEqualTo(key);
+        String edit = """
+                {"id":"%s","version":%d,"position":"@review","answers":[{"question":"%s","choices":["%s"]}]}
+                """.formatted(attempt, draft.get("version").asLong(), question, option);
+        var foreign = post(other, "draft/check/" + question, edit);
+        assertThat(foreign.statusCode()).isBetween(400, 499);
+        var check = post(id, "draft/check/" + question, edit);
+        assertThat(check.statusCode()).isEqualTo(200);
+        var saved = mapper.readTree(check.body());
+        assertThat(check.body()).contains("\"outcome\":\"Correct\"");
+        assertThat(mapper.readTree(get("/sessions/" + id + "/assessment/draft").body()).get("draft")).isEqualTo(saved);
+        var submitted = post(id, "draft/submit", "{\"id\":\"" + attempt + "\",\"version\":" + saved.get("version").asLong() + "}");
+        assertThat(submitted.statusCode()).isEqualTo(200);
+        assertThat(mapper.readTree(submitted.body()).get("summary").get("guided").asInt()).isOne();
+        assertThat(get("/sessions/" + id + "/assessment/attempts").body()).contains(attempt);
+        assertThat(get("/sessions/" + id + "/assessment/attempts/" + attempt).body()).isEqualTo(submitted.body());
+        assertThat(get("/sessions/" + other + "/assessment/attempts/" + attempt).statusCode()).isEqualTo(404);
+        assertThat(get("/sessions/" + other + "/assessment/draft").body()).isEqualTo(otherDraftBefore.body());
+        assertThat(progressSnapshot()).isEqualTo(before);
+    }
+
     @Test void servesPhilosophyLinksAndIsolatesItsAssessmentHistory() throws Exception {
         UUID id = philosophySession();
         UUID other = session("Session 1.1 — Identity and Access Vocabulary");
         String before = progressSnapshot();
         var reading = get("/sessions/" + id + "/lesson");
         assertThat(reading.statusCode()).isEqualTo(200);
-        assertThat(reading.body()).contains("\"key\":\"security-philosophy\"", "\"release\":1", "ExportReadPolicy");
+        assertThat(reading.body()).contains("\"key\":\"security-philosophy\"", "\"release\":2", "ExportReadPolicy", "trace-export-enforcement");
+        var archive = get("/sessions/" + id + "/lesson?release=1");
+        assertThat(archive.statusCode()).isEqualTo(200);
+        assertThat(archive.body()).contains("\"release\":1", "study-policy-enforcement").doesNotContain("trace-export-enforcement");
         var links = learning.topicLinks(id);
         var ordered = jdbc.queryForList("""
                 SELECT m.item_id FROM devquest.source_item_mapping m JOIN devquest.curriculum_node n ON n.id=m.node_id
