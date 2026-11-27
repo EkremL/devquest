@@ -1,0 +1,186 @@
+{
+  "key": "common-authentication-threats",
+  "release": 1,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 1 — Authentication Foundations",
+    "sessionTitle": "Session 1.8 — Common Authentication Threats"
+  },
+  "objectives": {
+    "read-auth-signals": "Distinguish focused guessing, suspected reuse and confirmed credential exposure.",
+    "trace-session-transition": "Verify that sign-in establishes a fresh session identity and logout invalidates it.",
+    "audit-observation": "Preserve diagnostic value without exposing account existence or credential material.",
+    "test-containment": "Separate age, withdrawal and proof requirements in the serving decision.",
+    "verify-auth-contract": "Verify a complete authentication boundary before reopening a protected route."
+  },
+  "sections": [
+    {
+      "anchor": "read-auth-signals",
+      "title": "Read the incident signals",
+      "objectives": [
+        "read-auth-signals"
+      ]
+    },
+    {
+      "anchor": "trace-session-transition",
+      "title": "Trace the session transition",
+      "objectives": [
+        "trace-session-transition"
+      ]
+    },
+    {
+      "anchor": "audit-observation",
+      "title": "Audit public and private output",
+      "objectives": [
+        "audit-observation"
+      ]
+    },
+    {
+      "anchor": "test-containment",
+      "title": "Test the containment window",
+      "objectives": [
+        "test-containment"
+      ]
+    },
+    {
+      "anchor": "verify-auth-contract",
+      "title": "Verify the corrected login contract",
+      "objectives": [
+        "verify-auth-contract"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 168,
+      "sourceLabel": "Credential theft",
+      "objectives": [
+        "read-auth-signals"
+      ],
+      "passages": [
+        "study-credential-theft"
+      ]
+    },
+    {
+      "sourceLine": 169,
+      "sourceLabel": "Password reuse",
+      "objectives": [
+        "read-auth-signals"
+      ],
+      "passages": [
+        "study-password-reuse"
+      ]
+    },
+    {
+      "sourceLine": 170,
+      "sourceLabel": "Brute-force attacks",
+      "objectives": [
+        "read-auth-signals"
+      ],
+      "passages": [
+        "study-brute-force"
+      ]
+    },
+    {
+      "sourceLine": 171,
+      "sourceLabel": "Credential stuffing",
+      "objectives": [
+        "read-auth-signals"
+      ],
+      "passages": [
+        "study-stuffing"
+      ]
+    },
+    {
+      "sourceLine": 174,
+      "sourceLabel": "Session fixation",
+      "objectives": [
+        "trace-session-transition"
+      ],
+      "passages": [
+        "study-fixation"
+      ]
+    },
+    {
+      "sourceLine": 175,
+      "sourceLabel": "Session hijacking",
+      "objectives": [
+        "trace-session-transition"
+      ],
+      "passages": [
+        "study-hijacking"
+      ]
+    },
+    {
+      "sourceLine": 176,
+      "sourceLabel": "User enumeration",
+      "objectives": [
+        "audit-observation"
+      ],
+      "passages": [
+        "study-enumeration"
+      ]
+    },
+    {
+      "sourceLine": 177,
+      "sourceLabel": "Insecure credential logging",
+      "objectives": [
+        "audit-observation"
+      ],
+      "passages": [
+        "study-logging"
+      ]
+    },
+    {
+      "sourceLine": 172,
+      "sourceLabel": "Token leakage",
+      "objectives": [
+        "audit-observation"
+      ],
+      "passages": [
+        "study-token-leakage"
+      ]
+    },
+    {
+      "sourceLine": 173,
+      "sourceLabel": "Replay attacks",
+      "objectives": [
+        "test-containment"
+      ],
+      "passages": [
+        "study-replay"
+      ]
+    },
+    {
+      "sourceLine": 178,
+      "sourceLabel": "Weak expiration policies",
+      "objectives": [
+        "test-containment"
+      ],
+      "passages": [
+        "study-expiration"
+      ]
+    },
+    {
+      "sourceLine": 179,
+      "sourceLabel": "Missing revocation strategy",
+      "objectives": [
+        "test-containment"
+      ],
+      "passages": [
+        "study-missing-revocation"
+      ]
+    },
+    {
+      "sourceLine": 180,
+      "sourceLabel": "Broken authentication flows",
+      "objectives": [
+        "verify-auth-contract"
+      ],
+      "passages": [
+        "study-broken-flow"
+      ]
+    }
+  ]
+}

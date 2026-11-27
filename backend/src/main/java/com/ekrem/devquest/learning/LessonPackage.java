@@ -32,7 +32,9 @@ class LessonPackage {
             "triage-security-request", "trace-security-filters", "route-security-handler", "repair-security-response",
             "match-security-rule", "debug-lab-challenge", "investigate-security-incident",
             "dispatch-token-pair", "validate-token-window", "compare-token-revocation", "rotate-refresh-family", "resolve-token-contract",
-            "inspect-jwt-envelope", "evaluate-jwt-claims", "compare-jwt-keys", "verify-jwt-policy", "review-jwt-architecture");
+            "inspect-jwt-envelope", "evaluate-jwt-claims", "compare-jwt-keys", "verify-jwt-policy", "review-jwt-architecture",
+            "route-mechanism", "probe-withdrawal", "trace-mechanism-state", "audit-mechanism-storage", "review-mechanism-choice",
+            "triage-auth-signals", "verify-session-boundary", "review-auth-observability", "probe-auth-containment", "confirm-auth-incident");
     private final Optional<Content> pilot;
     private final List<Content> published;
     private final List<Content> archived;
@@ -42,7 +44,8 @@ class LessonPackage {
         published = java.util.stream.Stream.of(load(json, "identity-and-access-vocabulary", 5),
                 load(json, "security-philosophy", 2), load(json, "http-authentication-basics", 2),
                 load(json, "stateful-authentication", 2), load(json, "stateless-and-token-based-authentication", 1),
-                load(json, "jwt-foundations", 1),
+                load(json, "jwt-foundations", 1), load(json, "authentication-mechanism-comparison", 1),
+                load(json, "common-authentication-threats", 1),
                 pilot).flatMap(Optional::stream).toList();
         archived = java.util.stream.Stream.concat(
                 java.util.stream.Stream.of("identity-and-access-vocabulary", "http-401-and-403")

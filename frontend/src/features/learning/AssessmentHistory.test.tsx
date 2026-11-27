@@ -6,6 +6,7 @@ import { AssessmentHistory } from './AssessmentHistory'
 import { DraftWorkspace } from './DraftWorkspace'
 import pack from '../../../../backend/src/main/resources/assessments/http-401-and-403/3/assessment.json'
 import vocabulary from '../../../../backend/src/main/resources/assessments/identity-and-access-vocabulary/1/assessment.json'
+import threats from '../../../../backend/src/main/resources/assessments/common-authentication-threats/1/assessment.json'
 
 const base='/learn/pilot/assessment'
 const summary={id:'first',release:3,key:pack.paper.key,submittedAt:'2026-11-25T10:00:00Z',startedAt:'2026-11-25T09:00:00Z',
@@ -45,6 +46,28 @@ it('renders the vocabulary release from its saved result and retains the pinned 
   expect(links[0]).toHaveAttribute('href','/learn/vocabulary/read?release=4#study-credential')
   expect(links).toHaveLength(12)
   expect(screen.getByRole('heading',{name:paper.questions[0].prompt})).toBeVisible()
+})
+
+it('renders a historical result when an objective is assessed only through written self-review', async()=>{
+  const paper = threats.paper
+  const response = 'Reject pending authentication and verify server-side invalidation.'
+  const attempt = {
+    format:1,paper,revealed:[],answers:[{question:'reopen-contract',choices:[],text:response}],
+    results:paper.questions.map(({id,type})=>({
+      question:id,outcome:type==='written'?'Self-review':'Unanswered',guide:threats.keys[id as keyof typeof threats.keys],
+    })),
+  }
+  const fetcher=vi.spyOn(globalThis,'fetch').mockImplementation(async()=>Response.json({
+    summary:{...summary,key:paper.key,release:paper.release},snapshot:attempt,
+  }))
+  try {
+    mount('/learn/threats/assessment/history/first')
+    expect(await screen.findByText(response)).toBeVisible()
+    const objective=screen.getByRole('heading',{name:paper.objectives['verify-auth-contract']}).closest('section')!
+    expect(within(objective).getByText('Written self-review · No automated score')).toBeVisible()
+    expect(within(objective).getByRole('link',{name:'Revisit this objective'}))
+      .toHaveAttribute('href','/learn/threats/read?release=1#study-broken-flow')
+  } finally {fetcher.mockRestore()}
 })
 
 it('opens historical evidence read-only and returns to the independent draft',async()=>{

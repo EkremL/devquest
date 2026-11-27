@@ -273,7 +273,8 @@ class LearningIT {
         var catalog = get("/catalog");
         assertThat(catalog.statusCode()).isEqualTo(200);
         assertThat(catalog.body()).isEqualTo(new tools.jackson.databind.ObjectMapper().writeValueAsString(
-                List.of(vocabulary, philosophySession(), httpAuthenticationSession(), statefulSession(), tokenSession(), jwtSession(), id)));
+                List.of(vocabulary, philosophySession(), httpAuthenticationSession(), statefulSession(), tokenSession(),
+                        jwtSession(), mechanismSession(), threatSession(), id)));
         var lesson = get("/sessions/" + id + "/lesson");
         assertThat(lesson.statusCode()).isEqualTo(200);
         assertThat(lesson.body()).contains("http-401-and-403", "predict-the-response",
@@ -327,7 +328,7 @@ class LearningIT {
         assertThat(links).hasSize(16);
         assertThat(get("/sessions/" + id + "/topics").statusCode()).isEqualTo(200);
         assertThat(learning.assessmentCatalog()).containsExactly(id, philosophySession(), httpAuthenticationSession(),
-                statefulSession(), tokenSession(), jwtSession(), pilotSession());
+                statefulSession(), tokenSession(), jwtSession(), mechanismSession(), threatSession(), pilotSession());
         var paper = get("/sessions/" + id + "/assessment");
         assertThat(paper.statusCode()).isEqualTo(200);
         assertThat(paper.body()).contains("identity-and-access-vocabulary", "\"release\":1", "\"readingRelease\":4")
@@ -439,7 +440,7 @@ class LearningIT {
 
     @Test @Transactional void identicalLabelInAnotherSessionDoesNotAcquireLink() {
         UUID id = pilotSession();
-        UUID other = session("Session 1.7 — Authentication Mechanism Comparison");
+        UUID other = session("Session 2.1 — What Spring Security Does");
         jdbc.update("""
                 UPDATE devquest.source_item_mapping m SET label='Meaning of 401 Unauthorized', source_line=257
                 FROM devquest.curriculum_node n WHERE n.id=m.node_id AND n.stable_id=? AND m.position=0
@@ -473,6 +474,14 @@ class LearningIT {
         return session("Session 1.5 — Stateless and Token-Based Authentication");
     }
 
+    private UUID mechanismSession() {
+        return session("Session 1.7 — Authentication Mechanism Comparison");
+    }
+
+    private UUID threatSession() {
+        return session("Session 1.8 — Common Authentication Threats");
+    }
+
     private UUID jwtSession() {
         return session("Session 1.6 — JWT Foundations");
     }
@@ -492,7 +501,12 @@ class LearningIT {
             "Session 1.6 — JWT Foundations, jwt-foundations, 1, Session 1.5 — Stateless and Token-Based Authentication, "
                     + "envelope-inspection, delta, jwt-header;jwt-payload;jwt-signature;claims;registered-claims;subject;issued-at;expires;"
                     + "not-before;issuer;audience;signing-and-encryption;payload-readability;symmetric;asymmetric;algorithm;invalid-signature;"
-                    + "expired;algorithm-confusion;jwt-or-session"
+                    + "expired;algorithm-confusion;jwt-or-session",
+            "Session 1.7 — Authentication Mechanism Comparison, authentication-mechanism-comparison, 1, Session 1.8 — Common Authentication Threats, "
+                    + "session-reference, beta, server-sessions;opaque-access;jwt-access;api-keys;mutual-tls;identity-providers;revoke;scaling;storage;client-context;choose-mechanism",
+            "Session 1.8 — Common Authentication Threats, common-authentication-threats, 1, Session 1.7 — Authentication Mechanism Comparison, "
+                    + "exposure-triage, beta, credential-theft;password-reuse;brute-force;stuffing;token-leakage;replay;fixation;hijacking;"
+                    + "enumeration;logging;expiration;missing-revocation;broken-flow"
     })
     void servesBatchTopicsAndKeepsDraftsAndAttemptsSessionScoped(String title, String key, int readingRelease, String otherTitle,
             String question, String option, String anchors) throws Exception {

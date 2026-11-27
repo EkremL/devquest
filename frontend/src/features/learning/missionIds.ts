@@ -8,6 +8,8 @@ export const missionIds = [
   'match-security-rule', 'debug-lab-challenge', 'investigate-security-incident',
   'dispatch-token-pair', 'validate-token-window', 'compare-token-revocation', 'rotate-refresh-family', 'resolve-token-contract',
   'inspect-jwt-envelope', 'evaluate-jwt-claims', 'compare-jwt-keys', 'verify-jwt-policy', 'review-jwt-architecture',
+  'route-mechanism', 'probe-withdrawal', 'trace-mechanism-state', 'audit-mechanism-storage', 'review-mechanism-choice',
+  'triage-auth-signals', 'verify-session-boundary', 'review-auth-observability', 'probe-auth-containment', 'confirm-auth-incident',
 ] as const
 
 export type MissionId = typeof missionIds[number]

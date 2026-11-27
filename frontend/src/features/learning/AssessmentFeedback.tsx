@@ -83,6 +83,13 @@ export function PracticeResults({paper,results,answers,guided,session,historical
       <p>Written self-review · {written.feedback.outcome==='Unanswered'?'Not answered':'Response provided'} · No automated score</p></section>
     <section className="as-panel"><h3>Objective review</h3>{Object.entries(paper.objectives).map(([id,title])=>{
       const group=deterministic.filter(({question})=>question.objective===id)
+      if (group.length === 0 && written.question.objective === id) {
+        const guide = written.feedback.guide
+        return <section key={id} className="as-objective"><h4>{title}</h4>
+          <AssessmentBadge tone="neutral">Written self-review · No automated score</AssessmentBadge>
+          <Link className="as-action" to={assessmentReadingUrl(session,paper,guide.anchor)}><BookOpen size={16} aria-hidden="true"/>Revisit this objective</Link>
+        </section>
+      }
       const c=counts(group)
       const revisit=group.find(({question,feedback})=>!guided[question.id] && feedback.outcome==='Incorrect') ??
         group.find(({feedback})=>feedback.outcome==='Unanswered') ?? group[0]

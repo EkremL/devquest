@@ -1,0 +1,166 @@
+{
+  "key": "authentication-mechanism-comparison",
+  "release": 1,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 1 — Authentication Foundations",
+    "sessionTitle": "Session 1.7 — Authentication Mechanism Comparison"
+  },
+  "objectives": {
+    "choose-evidence": "Choose evidence that matches the caller and trust boundary.",
+    "plan-withdrawal": "Compare request-time cancellation and availability guarantees.",
+    "place-state": "Distinguish issuance dependencies from the serving path.",
+    "protect-evidence": "Place each secret and trust artifact at the appropriate boundary.",
+    "make-decision": "Choose an authentication design from operational requirements."
+  },
+  "sections": [
+    {
+      "anchor": "choose-evidence",
+      "title": "Route client evidence",
+      "objectives": [
+        "choose-evidence"
+      ]
+    },
+    {
+      "anchor": "plan-withdrawal",
+      "title": "Test the withdrawal promise",
+      "objectives": [
+        "plan-withdrawal"
+      ]
+    },
+    {
+      "anchor": "place-state",
+      "title": "Place the dependency",
+      "objectives": [
+        "place-state"
+      ]
+    },
+    {
+      "anchor": "protect-evidence",
+      "title": "Audit storage",
+      "objectives": [
+        "protect-evidence"
+      ]
+    },
+    {
+      "anchor": "make-decision",
+      "title": "Approve a migration",
+      "objectives": [
+        "make-decision"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 154,
+      "sourceLabel": "Server-side sessions",
+      "objectives": [
+        "choose-evidence"
+      ],
+      "passages": [
+        "study-server-sessions"
+      ]
+    },
+    {
+      "sourceLine": 157,
+      "sourceLabel": "API keys",
+      "objectives": [
+        "choose-evidence"
+      ],
+      "passages": [
+        "study-api-keys"
+      ]
+    },
+    {
+      "sourceLine": 158,
+      "sourceLabel": "Mutual TLS",
+      "objectives": [
+        "choose-evidence"
+      ],
+      "passages": [
+        "study-mutual-tls"
+      ]
+    },
+    {
+      "sourceLine": 163,
+      "sourceLabel": "Browser versus machine-client requirements",
+      "objectives": [
+        "choose-evidence"
+      ],
+      "passages": [
+        "study-client-context"
+      ]
+    },
+    {
+      "sourceLine": 155,
+      "sourceLabel": "Opaque access tokens",
+      "objectives": [
+        "plan-withdrawal"
+      ],
+      "passages": [
+        "study-opaque-access"
+      ]
+    },
+    {
+      "sourceLine": 156,
+      "sourceLabel": "JWT access tokens",
+      "objectives": [
+        "plan-withdrawal"
+      ],
+      "passages": [
+        "study-jwt-access"
+      ]
+    },
+    {
+      "sourceLine": 160,
+      "sourceLabel": "Revocation trade-offs",
+      "objectives": [
+        "plan-withdrawal"
+      ],
+      "passages": [
+        "study-revoke"
+      ]
+    },
+    {
+      "sourceLine": 159,
+      "sourceLabel": "Centralized identity providers",
+      "objectives": [
+        "place-state"
+      ],
+      "passages": [
+        "study-identity-providers"
+      ]
+    },
+    {
+      "sourceLine": 161,
+      "sourceLabel": "Scalability trade-offs",
+      "objectives": [
+        "place-state"
+      ],
+      "passages": [
+        "study-scaling"
+      ]
+    },
+    {
+      "sourceLine": 162,
+      "sourceLabel": "Credential-storage trade-offs",
+      "objectives": [
+        "protect-evidence"
+      ],
+      "passages": [
+        "study-storage"
+      ]
+    },
+    {
+      "sourceLine": 164,
+      "sourceLabel": "Selecting a mechanism based on context",
+      "objectives": [
+        "make-decision"
+      ],
+      "passages": [
+        "study-choose-mechanism"
+      ]
+    }
+  ]
+}

@@ -10,6 +10,8 @@ import { CarrierInspector, EncodingExplorer, HttpInvestigation, RequestBuilder, 
 import { CookieWorkbench, DistributedSessionLab, LogoutLab, RotationExplorer, SessionIncident, SessionTimeMachine, SignInSequence } from './SessionControlLab'
 import { FilterPathDebugger, HandlerRouting, MatcherExplorer, MissingChallengeLab, RequestTriage,
   ResponseContractLab, SecurityIncident } from './SecurityResponseLab'
+import { MechanismReview, MechanismRoute, StatePlacement, StorageAudit, WithdrawalBench } from './MechanismLab'
+import { AuthIncident, ContainmentProbe, ObservabilityAudit, SessionBoundary, SignalTriage } from './ThreatLab'
 import type { MissionId, ReportActivity } from './missionIds'
 import './missions.css'
 
@@ -338,6 +340,16 @@ const activities = {
   'compare-jwt-keys': KeyBoundary,
   'verify-jwt-policy': VerificationGate,
   'review-jwt-architecture': JwtDesignReview,
+  'route-mechanism': MechanismRoute,
+  'probe-withdrawal': WithdrawalBench,
+  'trace-mechanism-state': StatePlacement,
+  'audit-mechanism-storage': StorageAudit,
+  'review-mechanism-choice': MechanismReview,
+  'triage-auth-signals': SignalTriage,
+  'verify-session-boundary': SessionBoundary,
+  'review-auth-observability': ObservabilityAudit,
+  'probe-auth-containment': ContainmentProbe,
+  'confirm-auth-incident': AuthIncident,
 } satisfies Record<MissionId, ComponentType<{ report: ReportActivity }>>
 
 export function MissionActivity({ id, report }: { id: MissionId; report: ReportActivity }) {

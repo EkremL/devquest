@@ -109,13 +109,13 @@ function ReadingContent({ lesson, checklist, visibleAnchor, missingAnchor, hasAs
   const completed = missionMode && states.every(state => state === 'Activity completed')
   const labStyle = missions[0] === 'build-export-grants' ? 'policy' : missions[0] === 'build-http-request' ? 'http' :
     missions[0] === 'follow-session-signin' ? 'sessions' : missions[0] === 'triage-security-request' ? 'spring-trace' :
-      missions[0] === 'dispatch-token-pair' ? 'token-lifecycle' : missions[0] === 'inspect-jwt-envelope' ? 'jwt' : undefined
+      missions[0] === 'dispatch-token-pair' ? 'token-lifecycle' : missions[0] === 'inspect-jwt-envelope' ? 'jwt' : missions[0] === 'route-mechanism' ? 'mechanisms' : missions[0] === 'triage-auth-signals' ? 'threats' : undefined
   const missionIntro = labStyle === 'policy' ? 'Build, break and repair a workspace export policy' :
     labStyle === 'http' ? 'Construct requests, trace transport and diagnose responses' :
       labStyle === 'sessions' ? 'Operate a session from sign-in through expiration and logout' :
         labStyle === 'spring-trace' ? 'Trace Spring Security calls, repair responses and prepare for the Coding Lab' :
           labStyle === 'token-lifecycle' ? 'Trace token issuance, expiration and withdrawal' :
-            labStyle === 'jwt' ? 'Inspect a JWT and defend the verifier’s trust decisions' : 'Trace evidence, inspect a caller and decide access'
+            labStyle === 'jwt' ? 'Inspect a JWT and defend the verifier’s trust decisions' : labStyle === 'mechanisms' ? 'Compare authentication designs against real operating requirements' : labStyle === 'threats' ? 'Classify incident evidence and verify authentication defenses' : 'Trace evidence, inspect a caller and decide access'
 
   function report(id: MissionId, done = false) {
     setActivity(previous => {

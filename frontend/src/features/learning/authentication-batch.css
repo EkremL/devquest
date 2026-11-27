@@ -1,0 +1,23 @@
+.mx-reader[data-lab="mechanisms"] .rd-hero { background:radial-gradient(ellipse at 90% 0%,#254d65,transparent 64%),#172338;border-color:#567d9b; }
+.mx-canvas.auth-work { --mx-accent:#a7e2fa;background:linear-gradient(145deg,#182d44,#131c2d 70%);border-color:#6185a4;border-top:2px solid #a7d4f4; }
+.auth-work[data-work="mechanism-withdrawal"] { --mx-accent:#ffd79d;background:#202537;border-top-color:#edb477; }
+.auth-work[data-work="mechanism-storage"] { --mx-accent:#d7bdff;background:#231f35;border-top-color:#bfa1e9; }
+.auth-time { display:flex;justify-content:space-between;gap:.8rem;margin-top:1rem;padding:.55rem .75rem;border-block:1px solid #62586b;color:#ffdcac;font:.82rem var(--rd-mono); }
+.auth-lanes,.auth-audit { display:grid;gap:.6rem;margin:1rem 0; }
+.auth-lanes div { display:grid;grid-template-columns:auto minmax(0,1fr);gap:.2rem .75rem;align-items:center;background:#132237;border:1px solid #506b86;border-left:3px solid #8cc9fa;border-radius:7px;padding:.75rem;color:#d4eaff; }
+.auth-lanes span { grid-column:2;color:var(--mx-muted); }
+.auth-audit { grid-template-columns:repeat(auto-fit,minmax(min(100%,166px),1fr)); }
+.auth-audit > div { min-width:0;background:#191e31;border:1px solid #635578;border-radius:7px;padding:.65rem; }
+.auth-audit p { margin:.45rem 0 0;color:var(--mx-muted);font-size:.81rem; }
+@media(min-width:601px) { .auth-work[data-work="mechanism-route"] .mx-path { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+
+.mx-reader[data-lab="threats"] .rd-hero { background:radial-gradient(ellipse at 94% 0%,#56364b,transparent 64%),#1f2338;border-color:#88627d; }
+.auth-work[data-work^="threat-"] { --mx-accent:#f2c1d9;background:#222137;border-top-color:#d2a4c2; }
+.auth-work[data-work="threat-session"],.auth-work[data-work="threat-final"] { --mx-accent:#b5e8e5;background:#172d39;border-top-color:#82c8c0; }
+.threat-desk { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:.8rem;margin-top:1rem; }
+.threat-tabs { display:grid;gap:.4rem; }
+.threat-tabs button { display:flex;align-items:center;gap:.45rem;min-height:44px;text-align:left;padding:.4rem .65rem;border:1px solid #655874;border-radius:7px;background:#191d31;color:#e1d3e8; }
+.threat-tabs button[aria-pressed="true"] { background:#3c2d47;border-color:#e5b5d2;color:#ffe1f1; }
+.threat-tape { display:grid;align-content:center;gap:.65rem;margin:0;padding:.85rem .8rem .85rem 1.8rem;border-left:2px solid #dfb2ce;background:#131d30;color:#e5cae2;font:.83rem/1.45 var(--rd-mono); }
+@media(min-width:601px) { .auth-work:is([data-work="threat-session"],[data-work="threat-final"]) .mx-path { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media(max-width:600px) { .threat-desk { grid-template-columns:minmax(0,1fr); } }

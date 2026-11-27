@@ -1,0 +1,398 @@
+{
+  "paper": {
+    "key": "authentication-mechanism-comparison",
+    "release": 1,
+    "readingRelease": 1,
+    "title": "Authentication Mechanism Comparison",
+    "context": "Compare implementation choices against the stated contracts. Assume current server-side data is authoritative unless the scenario says otherwise.",
+    "objectives": {
+      "choose-evidence": "Choose evidence that matches the caller and trust boundary.",
+      "plan-withdrawal": "Compare request-time cancellation and availability guarantees.",
+      "place-state": "Distinguish issuance dependencies from the serving path.",
+      "protect-evidence": "Place each secret and trust artifact at the appropriate boundary.",
+      "make-decision": "Choose an authentication design from operational requirements."
+    },
+    "questions": [
+      {
+        "id": "session-reference",
+        "objective": "choose-evidence",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A browser sends a valid-looking session reference after the server removes its record. What should the application restore?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The browser’s last displayed identity",
+          "beta": "No authenticated identity from that reference",
+          "gamma": "The identity in the cookie name",
+          "delta": "A read-only version of the old principal"
+        }
+      },
+      {
+        "id": "key-attribution",
+        "objective": "choose-evidence",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A partner uses one API key across all of its jobs. What can successful key verification establish?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Which employee initiated the job",
+          "beta": "That it has permission for every endpoint",
+          "gamma": "The registered integration identity",
+          "delta": "That the network source is the partner’s private subnet"
+        }
+      },
+      {
+        "id": "opaque-record",
+        "objective": "plan-withdrawal",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A resource server uses uncached introspection. Its authority returns a valid response with active=false. What is justified?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Treat the credential as inactive",
+          "beta": "Retry with local JWT parsing",
+          "gamma": "Allow if TLS succeeded",
+          "delta": "Allow from the caller’s claimed scope"
+        }
+      },
+      {
+        "id": "strict-local",
+        "objective": "plan-withdrawal",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A payments API locally verifies a JWT signed by its configured issuer. The token names inventory as its only audience. What should happen?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Accept since both APIs trust the issuer",
+          "beta": "Check the subject name and accept if it exists",
+          "gamma": "Rewrite the audience from the request host",
+          "delta": "Reject the token for this API"
+        }
+      },
+      {
+        "id": "gateway-proof",
+        "objective": "choose-evidence",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "The gateway terminates mTLS. Application ingress can also be reached independently of the gateway. What closes the identity handoff gap?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Let the application trust the identity header on any HTTPS connection",
+          "beta": "Authenticate and constrain the gateway-to-app channel and prevent bypass",
+          "gamma": "Treat the certificate subject as a universal permission",
+          "delta": "Share the gateway’s private key with the app"
+        }
+      },
+      {
+        "id": "issuer-outage",
+        "objective": "place-state",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "New OAuth issuance is unavailable, but an API has an unexpired JWT and cached trusted keys. What follows in the stated profile?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "An existing request can still be evaluated locally",
+          "beta": "Every existing credential immediately becomes invalid",
+          "gamma": "Existing credentials gain more lifetime automatically",
+          "delta": "The API should bootstrap a new trust key from the header"
+        }
+      },
+      {
+        "id": "cached-cancellation",
+        "objective": "plan-withdrawal",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "An API caches active introspection results for 60 seconds. Product promises no use more than 10 seconds after withdrawal. Which design addresses the conflict?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Shorten the cache to 30 seconds",
+          "beta": "Use TLS for introspection",
+          "gamma": "Bound stale acceptance within 10 seconds including propagation, and fail closed beyond it",
+          "delta": "Only shorten refresh token lifetime"
+        }
+      },
+      {
+        "id": "fanout-load",
+        "objective": "place-state",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A report request fans out to four downstream APIs. Each does one remote introspection without caching. What does replacing those checks with local JWT verification change?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "It removes downstream authorization checks",
+          "beta": "It makes issuance independent of the identity platform",
+          "gamma": "It eliminates verifier CPU cost",
+          "delta": "It removes four remote verdict reads per fan-out under the stated model"
+        }
+      },
+      {
+        "id": "storage-boundary",
+        "objective": "protect-evidence",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "An integration key was added to a compiled browser application. What is the right incident response?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Withdraw and replace it, then move use behind a server or managed workload",
+          "beta": "Move it from JavaScript to a frontend environment variable",
+          "gamma": "Change the HTTP header name",
+          "delta": "Encrypt it with another key embedded in the same bundle"
+        }
+      },
+      {
+        "id": "caller-split",
+        "objective": "choose-evidence",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A workforce browser needs user presence. A scheduler runs unattended and must be independently revocable. How should credentials be assigned?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Give the scheduler a copy of an employee’s browser cookie",
+          "beta": "Use separate human and workload principals with separate lifecycles",
+          "gamma": "Give both a shared global partner secret",
+          "delta": "Require an employee’s login for each scheduled retry"
+        }
+      },
+      {
+        "id": "offline-policy",
+        "objective": "make-decision",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "Read the fixture. With a withdrawn grant and unreachable authority, which outcome follows for allows(false, false, true, 8, 9)?",
+        "sample": "boolean allows(boolean live, boolean reachable, boolean withdrawn, int now, int expiry) {\n    return now < expiry && (!live || (reachable && !withdrawn));\n}",
+        "language": "java",
+        "choices": {
+          "alpha": "Denied because the grant is withdrawn",
+          "beta": "Denied because the authority is offline",
+          "gamma": "Allowed by this fixture before expiry, with withdrawal undetected",
+          "delta": "Allowed even at minute 9"
+        }
+      },
+      {
+        "id": "migration-record",
+        "objective": "make-decision",
+        "type": "written",
+        "difficulty": "Advanced",
+        "prompt": "Design authentication for a same-origin staff console, a managed billing worker and read APIs that must withhold data within ten seconds of withdrawal. Explain the caller boundaries, credential placement, outage behavior and what you would test before release.",
+        "sample": "",
+        "language": "text",
+        "choices": {}
+      }
+    ]
+  },
+  "keys": {
+    "session-reference": {
+      "anchor": "study-server-sessions",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Display state does not prove a current login.",
+        "beta": "The reference needs a matching current record.",
+        "gamma": "The name chooses the cookie field, not an account.",
+        "delta": "Invalidation removes the basis for restoring that principal."
+      },
+      "reason": "Check the session record before constructing the principal.",
+      "rubric": [],
+      "topics": [
+        "study-server-sessions"
+      ]
+    },
+    "key-attribution": {
+      "anchor": "study-api-keys",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "The credential is shared across jobs and carries no verified human evidence.",
+        "beta": "Authorization still depends on the key’s registered permissions.",
+        "gamma": "Verification binds the request to the registered key identity.",
+        "delta": "The key does not prove network location."
+      },
+      "reason": "Record a key identifier for attribution and separately verify the action scope.",
+      "rubric": [],
+      "topics": [
+        "study-api-keys"
+      ]
+    },
+    "opaque-record": {
+      "anchor": "study-opaque-access",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "The trusted authority says the presented token is inactive.",
+        "beta": "The contract does not support local verification of this opaque handle.",
+        "gamma": "TLS authenticates the connection peer under its configuration and says nothing about token activity.",
+        "delta": "Authorization cannot rest on a claimed scope."
+      },
+      "reason": "Distinguish an inactive response from an unavailable authority in internal diagnostics.",
+      "rubric": [],
+      "topics": [
+        "study-opaque-access"
+      ]
+    },
+    "strict-local": {
+      "anchor": "study-jwt-access",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "Shared issuer trust does not imply shared audiences.",
+        "beta": "An existing subject does not repair the profile mismatch.",
+        "gamma": "The request host cannot alter verified token claims.",
+        "delta": "A verified token still needs the intended audience."
+      },
+      "reason": "Unit-test a valid signature with a wrong audience.",
+      "rubric": [],
+      "topics": [
+        "study-jwt-access"
+      ]
+    },
+    "gateway-proof": {
+      "anchor": "study-mutual-tls",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "TLS alone does not identify the trusted gateway as sender.",
+        "beta": "The app receives mapped identity only from the verified boundary.",
+        "gamma": "Certificate identity is distinct from application authorization.",
+        "delta": "Sharing a private key does not establish a trusted assertion channel."
+      },
+      "reason": "Enforce and test the trust boundary where certificate verification terminates.",
+      "rubric": [],
+      "topics": [
+        "study-mutual-tls"
+      ]
+    },
+    "issuer-outage": {
+      "anchor": "study-identity-providers",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "Issuance is separate from the local serving decision.",
+        "beta": "No revocation or expiry signal is implied by an outage.",
+        "gamma": "The profile’s time bounds still hold.",
+        "delta": "Untrusted metadata cannot define trust."
+      },
+      "reason": "Measure issuance and serving availability separately.",
+      "rubric": [],
+      "topics": [
+        "study-identity-providers"
+      ]
+    },
+    "cached-cancellation": {
+      "anchor": "study-revoke",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "That still exceeds the stated maximum.",
+        "beta": "A secure connection does not reduce verdict age.",
+        "gamma": "The guarantee concerns the total time an old active decision can be used.",
+        "delta": "The API is accepting a cached active access-token verdict."
+      },
+      "reason": "Include propagation and failure behavior in the cancellation budget.",
+      "rubric": [],
+      "topics": [
+        "study-revoke"
+      ]
+    },
+    "fanout-load": {
+      "anchor": "study-scaling",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "Each API must still authorize its own action.",
+        "beta": "Issuance is unchanged.",
+        "gamma": "Signature and claim checks still require work.",
+        "delta": "Existing checks become local if trusted keys are available."
+      },
+      "reason": "Measure both request-path latency and key distribution and rotation costs.",
+      "rubric": [],
+      "topics": [
+        "study-scaling"
+      ]
+    },
+    "storage-boundary": {
+      "anchor": "study-storage",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "The distributed key cannot remain confidential.",
+        "beta": "Values shipped to the browser remain accessible.",
+        "gamma": "The fact that the secret was distributed is unchanged.",
+        "delta": "The client has both the ciphertext and the means to recover it."
+      },
+      "reason": "Rotate exposed credentials and stop shipping private evidence in public assets.",
+      "rubric": [],
+      "topics": [
+        "study-storage"
+      ]
+    },
+    "caller-split": {
+      "anchor": "study-client-context",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "This conflates identities and lifecycle.",
+        "beta": "The contracts differ in who acts and how access is cancelled.",
+        "gamma": "A shared secret erases per-actor accountability and cancellation.",
+        "delta": "It fails the unattended execution contract."
+      },
+      "reason": "Separate audit and permissions according to the acting principal.",
+      "rubric": [],
+      "topics": [
+        "study-client-context"
+      ]
+    },
+    "offline-policy": {
+      "anchor": "study-choose-mechanism",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "This decision can consult revocation only on a required live path.",
+        "beta": "The live lookup branch is disabled.",
+        "gamma": "The time check passes and local-only policy skips the authority.",
+        "delta": "The comparison is strict."
+      },
+      "reason": "Use a live or otherwise current check when withdrawal must take effect before token expiry.",
+      "rubric": [],
+      "topics": [
+        "study-choose-mechanism"
+      ]
+    },
+    "migration-record": {
+      "anchor": "study-choose-mechanism",
+      "correct": [],
+      "feedback": {},
+      "reason": "Use server-side sessions for the staff UI with scoped cookies and CSRF protection where appropriate. Give the worker a separate scoped identity, with mTLS if the gateway must verify private-key possession, and protect the key in its managed environment. For a read API use online authoritative verification or another current-state design whose end-to-end staleness can be bounded to ten seconds, including propagation and failure. Withhold protected data once that bound cannot be established. Test same-origin handling, worker identity binding, the exact cancellation boundary and upstream outage.",
+      "rubric": [
+        "Distinguish the human and workload identities.",
+        "Justify evidence and storage for each caller.",
+        "Explain certificate verification and trusted handoff if selecting mTLS.",
+        "Account for propagation, caching and outages in the cancellation budget.",
+        "Specify before-boundary, at-boundary and outage checks."
+      ],
+      "topics": [
+        "study-choose-mechanism"
+      ]
+    }
+  }
+}

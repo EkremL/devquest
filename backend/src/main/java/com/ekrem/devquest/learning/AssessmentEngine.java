@@ -47,7 +47,8 @@ class AssessmentEngine {
     private static final String PILOT = "http-401-and-403";
     private static final Map<String, Integer> ACTIVE_RELEASES = Map.of(
             PILOT, 3, "identity-and-access-vocabulary", 1, "security-philosophy", 1,
-            "http-authentication-basics", 1, "stateful-authentication", 1, "stateless-and-token-based-authentication", 1, "jwt-foundations", 1);
+            "http-authentication-basics", 1, "stateful-authentication", 1, "stateless-and-token-based-authentication", 1,
+            "jwt-foundations", 1, "authentication-mechanism-comparison", 1, "common-authentication-threats", 1);
     private final Map<String, Map<Integer, Package>> releases = new HashMap<>();
 
     AssessmentEngine(ObjectMapper mapper, LessonPackage lessons) {

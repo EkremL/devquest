@@ -1,0 +1,399 @@
+{
+  "paper": {
+    "key": "common-authentication-threats",
+    "release": 1,
+    "readingRelease": 1,
+    "title": "Common Authentication Threats",
+    "context": "Review redacted evidence from fictional systems. Keep observed facts, hypotheses, containment and verification distinct.",
+    "objectives": {
+      "read-auth-signals": "Distinguish focused guessing, suspected reuse and confirmed credential exposure.",
+      "trace-session-transition": "Verify that sign-in establishes a fresh session identity and logout invalidates it.",
+      "audit-observation": "Preserve diagnostic value without exposing account existence or credential material.",
+      "test-containment": "Separate age, withdrawal and proof requirements in the serving decision.",
+      "verify-auth-contract": "Verify a complete authentication boundary before reopening a protected route."
+    },
+    "questions": [
+      {
+        "id": "exposure-triage",
+        "objective": "read-auth-signals",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "An incident owner confirms a workload credential was included in an exported support artifact. What should the service owner do first?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Wait for evidence of unauthorized access",
+          "beta": "Restrict the artifact and withdraw the exposed credential",
+          "gamma": "Search all logs for the raw credential and send its matches to chat",
+          "delta": "Require a password change for every employee"
+        }
+      },
+      {
+        "id": "unique-passwords",
+        "objective": "read-auth-signals",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A team wants to reduce the effect of a password breach at an unrelated service. Which change addresses password reuse directly?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Lengthen the session idle timeout",
+          "beta": "Raise the maximum password length only",
+          "gamma": "Support a password manager and unique passwords, with breached-password screening",
+          "delta": "Rotate the application’s JWT key"
+        }
+      },
+      {
+        "id": "focused-pattern",
+        "objective": "read-auth-signals",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "One account shows a rapidly rising count of failed sign-ins and no success. What is the best immediate interpretation?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Focused guessing is plausible and merits checking account-aware throttling",
+          "beta": "The displayed name is necessarily a real account",
+          "gamma": "A bearer token was replayed",
+          "delta": "Credential reuse was confirmed"
+        }
+      },
+      {
+        "id": "distributed-review",
+        "objective": "read-auth-signals",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A service sees MFA challenges after unusual password successes across unrelated accounts. What is the sound next step?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Treat each password success as proof of full authentication",
+          "beta": "Infer a specific source breach from the aggregate alone",
+          "gamma": "Disable MFA to see whether the successes continue",
+          "delta": "Investigate possible credential reuse with redacted evidence and preserve the MFA gate"
+        }
+      },
+      {
+        "id": "leak-scope",
+        "objective": "audit-observation",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A token was copied into monitoring data. The gateway stopped recording the field. What additional concern remains?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The change rewrites historical telemetry automatically",
+          "beta": "Older copies may remain and the presented bearer evidence may still be accepted",
+          "gamma": "TLS makes copies in storage unreadable",
+          "delta": "A readable token proves its signing key is compromised"
+        }
+      },
+      {
+        "id": "bound-proof",
+        "objective": "test-containment",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "An API requires proof tied to the client’s certificate. A valid bearer-style credential alone reaches the API under the stated design. What should happen?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Withhold protected data until the required bound proof is verified",
+          "beta": "Grant access because the credential was recently issued",
+          "gamma": "Grant access if the token’s text matches a known format",
+          "delta": "Accept any unrelated client certificate"
+        }
+      },
+      {
+        "id": "transition-check",
+        "objective": "trace-session-transition",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A regression suite tests the protection at successful sign-in. Which assertion directly checks the session-identity transition?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The browser has an HttpOnly cookie before sign-in",
+          "beta": "The response body contains a welcome message",
+          "gamma": "The authenticated reference differs and the old reference cannot restore the authenticated state",
+          "delta": "The server logs the old reference"
+        }
+      },
+      {
+        "id": "contain-session",
+        "objective": "trace-session-transition",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "The service owner confirms an already authenticated browser reference was exposed. What specifically cuts off that reference at the server?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Set HttpOnly on newly issued cookies",
+          "beta": "Delete the cookie from one browser",
+          "gamma": "Change the public login error message",
+          "delta": "Invalidate the affected server session and verify the reference no longer restores identity"
+        }
+      },
+      {
+        "id": "observable-negative",
+        "objective": "audit-observation",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "Two login failures have identical JSON and status, but unknown accounts return much faster than wrong evidence. What is the review finding?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Enumeration risk can remain because timing is observable",
+          "beta": "The public contract is secure because the text matches",
+          "gamma": "The app should document the account status in a public header",
+          "delta": "Neither timing nor body matters under HTTPS"
+        }
+      },
+      {
+        "id": "telemetry-shape",
+        "objective": "audit-observation",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A team needs to investigate sign-in failures across a gateway and API. Which event shape best balances diagnosis and confidentiality?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Full headers and an encrypted file attachment",
+          "beta": "Correlation ID, timestamp, failure category and controlled access",
+          "gamma": "The session cookie with a visible account name",
+          "delta": "A screenshot of each failed form submission"
+        }
+      },
+      {
+        "id": "deadline-and-state",
+        "objective": "test-containment",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "Read the Java fixture. The current state is available and unrevoked, but now.equals(expiry) is true. What follows?",
+        "sample": "return now.isBefore(expiry) && stateAvailable && !revoked;",
+        "language": "java",
+        "choices": {
+          "alpha": "Accept because the state is current",
+          "beta": "Accept if the second factor was verified",
+          "gamma": "Refuse because equal instants do not satisfy isBefore",
+          "delta": "Refuse only because one nanosecond must be added to now"
+        }
+      },
+      {
+        "id": "reopen-contract",
+        "objective": "verify-auth-contract",
+        "type": "written",
+        "difficulty": "Advanced",
+        "prompt": "Write a reopening checklist after an internal review finds that a protected export can see a principal before a required factor completes and that revoked sessions sometimes keep working. Include public responses, internal evidence, and positive and negative tests.",
+        "sample": "",
+        "language": "text",
+        "choices": {}
+      }
+    ]
+  },
+  "keys": {
+    "exposure-triage": {
+      "anchor": "study-credential-theft",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Confirmed exposure is enough to start containment.",
+        "beta": "Removing access to the artifact limits further spread, and withdrawal removes the credential’s accepted status on supporting paths.",
+        "gamma": "That spreads secret material into additional systems.",
+        "delta": "The affected evidence identifies a workload."
+      },
+      "reason": "Contain the exposure using the affected identifier and sanitized evidence.",
+      "rubric": [],
+      "topics": [
+        "study-credential-theft"
+      ]
+    },
+    "unique-passwords": {
+      "anchor": "study-password-reuse",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "This changes session lifetime.",
+        "beta": "Allowing longer choices does not prevent repeated choices.",
+        "gamma": "Unique choices separate the services, and screening reduces acceptance of compromised choices.",
+        "delta": "The affected control is the user’s password."
+      },
+      "reason": "Reduce reuse and complement it with phishing-resistant authentication.",
+      "rubric": [],
+      "topics": [
+        "study-password-reuse"
+      ]
+    },
+    "focused-pattern": {
+      "anchor": "study-brute-force",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "The concentration supports this hypothesis without proving credential theft.",
+        "beta": "A submitted identifier is not verified existence.",
+        "gamma": "No token evidence was described.",
+        "delta": "The origin of the evidence is unknown."
+      },
+      "reason": "Compare failure concentration with baseline and apply bounded defensive controls.",
+      "rubric": [],
+      "topics": [
+        "study-brute-force"
+      ]
+    },
+    "distributed-review": {
+      "anchor": "study-stuffing",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "A later factor still gates full authentication.",
+        "beta": "The aggregate does not identify the source.",
+        "gamma": "That removes a defensive gate during investigation.",
+        "delta": "Distributed anomalies justify investigation, while MFA still protects the serving boundary."
+      },
+      "reason": "Compare events across accounts without collecting raw credentials.",
+      "rubric": [],
+      "topics": [
+        "study-stuffing"
+      ]
+    },
+    "leak-scope": {
+      "anchor": "study-token-leakage",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Stored data and downstream copies have separate retention.",
+        "beta": "Contain archives and withdraw the credential where verification can observe it.",
+        "gamma": "Transport protection ends at the connection boundary.",
+        "delta": "Disclosure of a token does not prove loss of the private key."
+      },
+      "reason": "Verify redaction at collection, storage and export boundaries.",
+      "rubric": [],
+      "topics": [
+        "study-token-leakage"
+      ]
+    },
+    "bound-proof": {
+      "anchor": "study-replay",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "An accepted token does not substitute for the associated possession proof.",
+        "beta": "Freshness alone does not establish possession proof.",
+        "gamma": "Representation does not prove identity.",
+        "delta": "The verifier must check the relationship specified by the credential profile."
+      },
+      "reason": "Test that required proof is both valid and tied to the expected evidence.",
+      "rubric": [],
+      "topics": [
+        "study-replay"
+      ]
+    },
+    "transition-check": {
+      "anchor": "study-fixation",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "Cookie accessibility does not confirm rotation.",
+        "beta": "UI output does not prove session behavior.",
+        "gamma": "The privilege transition must break the old reference’s association.",
+        "delta": "Logging secrets worsens exposure and does not validate rotation."
+      },
+      "reason": "Check accepted state through the server, including the prior reference boundary.",
+      "rubric": [],
+      "topics": [
+        "study-fixation"
+      ]
+    },
+    "contain-session": {
+      "anchor": "study-hijacking",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "That limits script access, but does not withdraw a current server-side record.",
+        "beta": "Other holders can still present the reference until the server rejects it.",
+        "gamma": "That addresses public information leakage.",
+        "delta": "The server rejects subsequent use once its authoritative state reflects invalidation."
+      },
+      "reason": "Test server-side invalidation independently from browser cleanup.",
+      "rubric": [],
+      "topics": [
+        "study-hijacking"
+      ]
+    },
+    "observable-negative": {
+      "anchor": "study-enumeration",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "Observable timing differences can disclose state.",
+        "beta": "Text is only one public signal.",
+        "gamma": "That would disclose the information directly.",
+        "delta": "The requesting client still sees the response and timing."
+      },
+      "reason": "Compare the full externally visible behavior across negative paths.",
+      "rubric": [],
+      "topics": [
+        "study-enumeration"
+      ]
+    },
+    "telemetry-shape": {
+      "anchor": "study-logging",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Storing complete credentials is unnecessary for this investigation.",
+        "beta": "These fields correlate incidents without retaining evidence content.",
+        "gamma": "The session reference is itself sensitive evidence.",
+        "delta": "Form data can include passwords and unnecessary personal information."
+      },
+      "reason": "Use a stable correlation identifier and an allowlisted schema.",
+      "rubric": [],
+      "topics": [
+        "study-logging"
+      ]
+    },
+    "deadline-and-state": {
+      "anchor": "study-expiration",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "Current state is only one required condition.",
+        "beta": "An earlier verification does not extend the declared boundary.",
+        "gamma": "The deadline is exclusive even when authority state is current.",
+        "delta": "No adjustment is needed to evaluate equality."
+      },
+      "reason": "Test one instant before, exactly at, and just after the cutoff.",
+      "rubric": [],
+      "topics": [
+        "study-expiration"
+      ]
+    },
+    "reopen-contract": {
+      "anchor": "study-broken-flow",
+      "correct": [],
+      "feedback": {},
+      "reason": "Keep the principal unauthenticated while a required factor is pending or rejected. Verify full completion, rotate the reference on the transition and require current valid session state. Make the serving path observe invalidation and withhold protected data when required state is unavailable. Authorize the verified principal for exports separately. Preserve generic public failures and allowlisted internal events. Exercise pending, rejected, verified, invalidated, unavailable and exact-expiry cases with redacted evidence.",
+      "rubric": [
+        "Gate principal establishment on all required factors.",
+        "Explain server-side invalidation and unavailable-state behavior.",
+        "Keep authentication, authorization and expiry checks distinct.",
+        "Specify consistent public feedback and redacted internal correlation.",
+        "Include positive, negative and exact-boundary checks."
+      ],
+      "topics": [
+        "study-missing-revocation",
+        "study-broken-flow"
+      ]
+    }
+  }
+}
