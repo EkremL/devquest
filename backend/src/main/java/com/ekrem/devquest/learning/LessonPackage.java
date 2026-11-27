@@ -30,7 +30,9 @@ class LessonPackage {
             "follow-session-signin", "inspect-session-cookie", "advance-session-clock", "trace-shared-session",
             "rotate-session-id", "verify-session-logout", "investigate-session-incident",
             "triage-security-request", "trace-security-filters", "route-security-handler", "repair-security-response",
-            "match-security-rule", "debug-lab-challenge", "investigate-security-incident");
+            "match-security-rule", "debug-lab-challenge", "investigate-security-incident",
+            "dispatch-token-pair", "validate-token-window", "compare-token-revocation", "rotate-refresh-family", "resolve-token-contract",
+            "inspect-jwt-envelope", "evaluate-jwt-claims", "compare-jwt-keys", "verify-jwt-policy", "review-jwt-architecture");
     private final Optional<Content> pilot;
     private final List<Content> published;
     private final List<Content> archived;
@@ -39,7 +41,8 @@ class LessonPackage {
         pilot = load(json, "http-401-and-403", 5);
         published = java.util.stream.Stream.of(load(json, "identity-and-access-vocabulary", 5),
                 load(json, "security-philosophy", 2), load(json, "http-authentication-basics", 2),
-                load(json, "stateful-authentication", 2),
+                load(json, "stateful-authentication", 2), load(json, "stateless-and-token-based-authentication", 1),
+                load(json, "jwt-foundations", 1),
                 pilot).flatMap(Optional::stream).toList();
         archived = java.util.stream.Stream.concat(
                 java.util.stream.Stream.of("identity-and-access-vocabulary", "http-401-and-403")

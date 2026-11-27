@@ -6,6 +6,8 @@ export const missionIds = [
   'verify-session-logout', 'investigate-session-incident',
   'triage-security-request', 'trace-security-filters', 'route-security-handler', 'repair-security-response',
   'match-security-rule', 'debug-lab-challenge', 'investigate-security-incident',
+  'dispatch-token-pair', 'validate-token-window', 'compare-token-revocation', 'rotate-refresh-family', 'resolve-token-contract',
+  'inspect-jwt-envelope', 'evaluate-jwt-claims', 'compare-jwt-keys', 'verify-jwt-policy', 'review-jwt-architecture',
 ] as const
 
 export type MissionId = typeof missionIds[number]

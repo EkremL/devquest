@@ -273,7 +273,7 @@ class LearningIT {
         var catalog = get("/catalog");
         assertThat(catalog.statusCode()).isEqualTo(200);
         assertThat(catalog.body()).isEqualTo(new tools.jackson.databind.ObjectMapper().writeValueAsString(
-                List.of(vocabulary, philosophySession(), httpAuthenticationSession(), statefulSession(), id)));
+                List.of(vocabulary, philosophySession(), httpAuthenticationSession(), statefulSession(), tokenSession(), jwtSession(), id)));
         var lesson = get("/sessions/" + id + "/lesson");
         assertThat(lesson.statusCode()).isEqualTo(200);
         assertThat(lesson.body()).contains("http-401-and-403", "predict-the-response",
@@ -327,7 +327,7 @@ class LearningIT {
         assertThat(links).hasSize(16);
         assertThat(get("/sessions/" + id + "/topics").statusCode()).isEqualTo(200);
         assertThat(learning.assessmentCatalog()).containsExactly(id, philosophySession(), httpAuthenticationSession(),
-                statefulSession(), pilotSession());
+                statefulSession(), tokenSession(), jwtSession(), pilotSession());
         var paper = get("/sessions/" + id + "/assessment");
         assertThat(paper.statusCode()).isEqualTo(200);
         assertThat(paper.body()).contains("identity-and-access-vocabulary", "\"release\":1", "\"readingRelease\":4")
@@ -439,7 +439,7 @@ class LearningIT {
 
     @Test @Transactional void identicalLabelInAnotherSessionDoesNotAcquireLink() {
         UUID id = pilotSession();
-        UUID other = session("Session 1.5 — Stateless and Token-Based Authentication");
+        UUID other = session("Session 1.7 — Authentication Mechanism Comparison");
         jdbc.update("""
                 UPDATE devquest.source_item_mapping m SET label='Meaning of 401 Unauthorized', source_line=257
                 FROM devquest.curriculum_node n WHERE n.id=m.node_id AND n.stable_id=? AND m.position=0
@@ -469,6 +469,14 @@ class LearningIT {
         return session("Session 1.4 — Stateful Authentication");
     }
 
+    private UUID tokenSession() {
+        return session("Session 1.5 — Stateless and Token-Based Authentication");
+    }
+
+    private UUID jwtSession() {
+        return session("Session 1.6 — JWT Foundations");
+    }
+
     @ParameterizedTest
     @CsvSource({
             "Session 1.3 — HTTP Authentication Basics, http-authentication-basics, 2, Session 1.4 — Stateful Authentication, "
@@ -477,7 +485,14 @@ class LearningIT {
             "Session 1.4 — Stateful Authentication, stateful-authentication, 2, Session 1.3 — HTTP Authentication Basics, "
                     + "where-authentication-lives, gamma, server-side-state;session-identifiers;session-cookies;session-creation;"
                     + "session-lookup;session-expiration;session-invalidation;session-logout;shared-session-storage;session-fixation;"
-                    + "session-theft;cookie-attributes;cookie-httponly;cookie-secure;cookie-samesite"
+                    + "session-theft;cookie-attributes;cookie-httponly;cookie-secure;cookie-samesite",
+            "Session 1.5 — Stateless and Token-Based Authentication, stateless-and-token-based-authentication, 1, "
+                    + "Session 1.6 — JWT Foundations, independent-request, beta, "
+                    + "stateless-request;opaque;self-contained;access;refresh;issuance;validation;expiration;revocation;rotation;replay;introspection;state-boundaries",
+            "Session 1.6 — JWT Foundations, jwt-foundations, 1, Session 1.5 — Stateless and Token-Based Authentication, "
+                    + "envelope-inspection, delta, jwt-header;jwt-payload;jwt-signature;claims;registered-claims;subject;issued-at;expires;"
+                    + "not-before;issuer;audience;signing-and-encryption;payload-readability;symmetric;asymmetric;algorithm;invalid-signature;"
+                    + "expired;algorithm-confusion;jwt-or-session"
     })
     void servesBatchTopicsAndKeepsDraftsAndAttemptsSessionScoped(String title, String key, int readingRelease, String otherTitle,
             String question, String option, String anchors) throws Exception {

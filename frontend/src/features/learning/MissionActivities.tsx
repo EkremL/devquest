@@ -3,6 +3,8 @@ import { BadgeCheck, Braces, Clipboard, Fingerprint, Globe, KeyRound, Network, S
 import { CodeSample } from './CodeSample'
 import { Feedback, LabHeading, Switcher, TechnicalPath, type PathNode } from './MissionPrimitives'
 import { SecurityDecisionPlayground } from './SecurityDecisionPlayground'
+import { AccessClock, RefreshLedger, RevocationRoutes, TokenDispatch, TokenIncident } from './TokenLifecycleLab'
+import { ClaimsBench, EnvelopeInspector, JwtDesignReview, KeyBoundary, VerificationGate } from './JwtFoundationsLab'
 import { DefaultPolicyLab, EnforcementLab, FailureLab, PermissionMatrix, PolicyReleaseReview } from './PolicyLab'
 import { CarrierInspector, EncodingExplorer, HttpInvestigation, RequestBuilder, ResponseConsole, TransportExplorer } from './HttpLab'
 import { CookieWorkbench, DistributedSessionLab, LogoutLab, RotationExplorer, SessionIncident, SessionTimeMachine, SignInSequence } from './SessionControlLab'
@@ -326,6 +328,16 @@ const activities = {
   'match-security-rule': MatcherExplorer,
   'debug-lab-challenge': MissingChallengeLab,
   'investigate-security-incident': SecurityIncident,
+  'dispatch-token-pair': TokenDispatch,
+  'validate-token-window': AccessClock,
+  'compare-token-revocation': RevocationRoutes,
+  'rotate-refresh-family': RefreshLedger,
+  'resolve-token-contract': TokenIncident,
+  'inspect-jwt-envelope': EnvelopeInspector,
+  'evaluate-jwt-claims': ClaimsBench,
+  'compare-jwt-keys': KeyBoundary,
+  'verify-jwt-policy': VerificationGate,
+  'review-jwt-architecture': JwtDesignReview,
 } satisfies Record<MissionId, ComponentType<{ report: ReportActivity }>>
 
 export function MissionActivity({ id, report }: { id: MissionId; report: ReportActivity }) {

@@ -1,0 +1,412 @@
+{
+  "paper": {
+    "key": "stateless-and-token-based-authentication",
+    "release": 1,
+    "readingRelease": 1,
+    "title": "Stateless and Token-Based Authentication",
+    "context": "Use the stated contract for each fictional service. Explain what the verifier can establish and which decision still needs evidence.",
+    "objectives": {
+      "place-credentials": "Trace issuer, access and refresh responsibilities across requests.",
+      "validate-evidence": "Choose trustworthy validation inputs for opaque and self-contained evidence.",
+      "manage-lifecycle": "Reason about expiry, withdrawal, rotation and reuse.",
+      "design-state-boundaries": "Design where authentication and grant state are checked for operational guarantees."
+    },
+    "questions": [
+      {
+        "id": "independent-request",
+        "objective": "place-credentials",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A resource instance handles each request using evidence sent on that request. It still loads a report from a database. Which property describes its request authentication?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "It requires a server-held login session because it accesses a database.",
+          "beta": "It is stateless with respect to per-client login state on that instance.",
+          "gamma": "It no longer needs to authenticate after the first successful request.",
+          "delta": "It guarantees grant revocation immediately on every instance."
+        }
+      },
+      {
+        "id": "reference-validation",
+        "objective": "validate-evidence",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "The API receives a random-looking credential issued as an opaque reference. The configured authorization server exposes an authenticated lookup. Where should the API learn its current active status?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "From the length and alphabet of the reference.",
+          "beta": "From the report ID adjacent to the credential.",
+          "gamma": "From its trusted introspection response.",
+          "delta": "From the lifetime of the API’s TCP connection."
+        }
+      },
+      {
+        "id": "choose-target",
+        "objective": "place-credentials",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A client has an expired access token and a still-valid refresh credential. The documented contract accepts the refresh credential at the issuer only. What should the client do before retrying a protected GET?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Present the refresh credential to the issuer to request replacement access evidence.",
+          "beta": "Present the refresh credential to the protected GET.",
+          "gamma": "Use the expired access credential until the server changes its policy.",
+          "delta": "Send both values to the resource and let it select one."
+        }
+      },
+      {
+        "id": "expiry-edge",
+        "objective": "manage-lifecycle",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A valid local access credential expires at second 300, with no clock leeway. At now=300 the application evaluates the following guard. What must happen?",
+        "sample": "return now.isBefore(expiresAt);",
+        "language": "java",
+        "choices": {
+          "alpha": "It passes until the clock reaches 301.",
+          "beta": "It passes if the credential was issued recently.",
+          "gamma": "It passes if the credential has the expected issuer.",
+          "delta": "It fails at the boundary."
+        }
+      },
+      {
+        "id": "verify-claims",
+        "objective": "validate-evidence",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A protected API receives a signed, correctly shaped token whose audience identifies another service. Signing keys are trusted by both services. Which decision is justified?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Accept it if the signature verifies under the shared issuer.",
+          "beta": "Reject it for this API because its intended audience does not include this resource.",
+          "gamma": "Introspect the API database for an account with the same display name.",
+          "delta": "Change the resource scope to the token’s declared audience."
+        }
+      },
+      {
+        "id": "respect-issuer",
+        "objective": "place-credentials",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "An issuer is asked for a broader access scope than the approved grant permits. Its policy requires explicit approval for new scopes. What should issuance use?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The approved scope and the intended resource, returning only an allowed credential under the contract.",
+          "beta": "The requested scope if the existing client authenticated.",
+          "gamma": "A scope copied from an unrelated prior credential.",
+          "delta": "A scope chosen by whichever resource API receives the token first."
+        }
+      },
+      {
+        "id": "lookup-failure",
+        "objective": "design-state-boundaries",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "An opaque-token API requires current introspection. Its issuer times out and no cache is authorized. Which diagnostic statement and decision fit the evidence?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The issuer declared the token inactive. Return the configured refusal.",
+          "beta": "The token is active because it was accepted yesterday.",
+          "gamma": "Introspection is unavailable. Withhold data and report the configured service failure.",
+          "delta": "Retry with client-supplied claims as the authority source."
+        }
+      },
+      {
+        "id": "rotate-and-confirm",
+        "objective": "manage-lifecycle",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A legitimate client refreshes once and gets a replacement handle. Its first exchange committed, but its response was lost. The issuer models strict one-time rotation with family closure on a retired handle. What can happen if the client reuses that handle?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "It is treated as a new independent grant.",
+          "beta": "It succeeds because the client did not receive the response.",
+          "gamma": "It revokes every user grant in the tenant by specification.",
+          "delta": "It can be rejected as known reuse and close the affected family."
+        }
+      },
+      {
+        "id": "withdrawal-gap",
+        "objective": "manage-lifecycle",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "An issuer cancels a grant. An API independently accepts a valid self-contained access token for another two minutes and has no revocation feed. What change satisfies an immediate withdrawal requirement?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Shorten future credentials to one minute with the same validation design.",
+          "beta": "Require a current authoritative grant check on the protected operation.",
+          "gamma": "Rotate only future refresh handles.",
+          "delta": "Rely on client removal of the token."
+        }
+      },
+      {
+        "id": "ttl-diagnosis",
+        "objective": "design-state-boundaries",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "An API verifies tokens locally using trusted keys. Operations rotate those keys, and a refresh service tracks grants in a database. A reviewer says the architecture has no security state. What is the precise correction?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Only token presentation may avoid per-request online lookup. Key material and grant lifecycle still carry state.",
+          "beta": "Local verification proves the database is unnecessary everywhere.",
+          "gamma": "A signed token requires a local HTTP session.",
+          "delta": "Refreshing the API instance automatically revokes all issued tokens."
+        }
+      },
+      {
+        "id": "contain-exposure",
+        "objective": "manage-lifecycle",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "Audit reports indicate a live bearer access credential was accidentally exposed. This API locally recognizes it until expiry and does not consult the issuer. Which response describes containment honestly?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Revoke only the refresh handle and announce that API access ended immediately.",
+          "beta": "Wait for expiry and leave the exposure source unchanged.",
+          "gamma": "Remove the exposure, stop future issuance, and use an API-side revocation control if immediate cutoff is required.",
+          "delta": "Lengthen expiry to give affected clients more time."
+        }
+      },
+      {
+        "id": "review-dispatch",
+        "objective": "design-state-boundaries",
+        "type": "written",
+        "difficulty": "Advanced",
+        "prompt": "Write a design note for an API that keeps independent instances, requires immediate cancellation of selected grants, and has a separate issuer for refresh. Describe issuance, request validation, timeout handling and two regression checks.",
+        "sample": "",
+        "language": "text",
+        "choices": {}
+      }
+    ]
+  },
+  "keys": {
+    "independent-request": {
+      "anchor": "study-stateless-request",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Application data is separate from login state.",
+        "beta": "The request can establish identity without retrieving a local login session.",
+        "gamma": "Each request needs its own accepted evidence.",
+        "delta": "Revocation visibility depends on the validation architecture."
+      },
+      "reason": "Independence from instance-local login state does not remove access to business records.",
+      "rubric": [],
+      "topics": [
+        "study-stateless-request",
+        "study-state-boundaries"
+      ]
+    },
+    "reference-validation": {
+      "anchor": "study-opaque",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "Presentation format has no active-state semantics.",
+        "beta": "The report ID is application input.",
+        "gamma": "The issuer can resolve the reference to current state.",
+        "delta": "The connection duration does not determine the grant."
+      },
+      "reason": "An opaque reference needs a configured trusted resolution path.",
+      "rubric": [],
+      "topics": [
+        "study-opaque",
+        "study-introspection"
+      ]
+    },
+    "choose-target": {
+      "anchor": "study-refresh",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "The issuer handles refresh. The resource receives only the resulting access credential.",
+        "beta": "The resource does not accept refresh evidence.",
+        "gamma": "Expiration remains effective.",
+        "delta": "This widens exposure and violates the receiver contract."
+      },
+      "reason": "Keep long-lived refresh evidence at its intended receiver.",
+      "rubric": [],
+      "topics": [
+        "study-refresh",
+        "study-access"
+      ]
+    },
+    "expiry-edge": {
+      "anchor": "study-expiration",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "The exact expiry instant is already excluded.",
+        "beta": "Issuance cannot override expiry.",
+        "gamma": "Issuer validation and expiration are separate requirements.",
+        "delta": "isBefore is false when both instants are equal."
+      },
+      "reason": "An exclusive expiry boundary rejects the credential at its deadline.",
+      "rubric": [],
+      "topics": [
+        "study-expiration"
+      ]
+    },
+    "verify-claims": {
+      "anchor": "study-validation",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Integrity does not establish token applicability.",
+        "beta": "The receiving API must validate token purpose as well as integrity.",
+        "gamma": "A local name does not make the token intended for the service.",
+        "delta": "The resource server defines its own expected audience."
+      },
+      "reason": "Bind validation to the target resource. Then evaluate authorization separately.",
+      "rubric": [],
+      "topics": [
+        "study-validation",
+        "study-self-contained"
+      ]
+    },
+    "respect-issuer": {
+      "anchor": "study-issuance",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "Issuance reflects the authorization decision and intended recipient.",
+        "beta": "Client identity does not approve wider access.",
+        "gamma": "An unrelated token is not the current grant.",
+        "delta": "This shifts issuance authority to an unrelated receiver."
+      },
+      "reason": "Issue evidence only for the negotiated or approved grant and audience.",
+      "rubric": [],
+      "topics": [
+        "study-issuance",
+        "study-access"
+      ]
+    },
+    "lookup-failure": {
+      "anchor": "study-introspection",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "No issuer decision was received.",
+        "beta": "Historic acceptance does not satisfy the current lookup rule.",
+        "gamma": "The infrastructure error and a negative policy decision are different.",
+        "delta": "Unverified request claims cannot replace the trusted lookup."
+      },
+      "reason": "Do not confuse an unavailable authority with an inactive result.",
+      "rubric": [],
+      "topics": [
+        "study-introspection",
+        "study-revocation"
+      ]
+    },
+    "rotate-and-confirm": {
+      "anchor": "study-rotation",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "The handle is part of the same family.",
+        "beta": "The issuer already committed the rotation.",
+        "gamma": "The observed policy applies to this family.",
+        "delta": "The issuer’s state changed even though delivery failed."
+      },
+      "reason": "Plan retries and response loss under the issuer’s explicitly defined rotation policy.",
+      "rubric": [],
+      "topics": [
+        "study-rotation",
+        "study-replay"
+      ]
+    },
+    "withdrawal-gap": {
+      "anchor": "study-revocation",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Existing valid credentials can still be accepted. Shorter expiry bounds a window.",
+        "beta": "The resource needs fresh state to learn the withdrawal.",
+        "gamma": "That changes renewal and does not inform local access validation.",
+        "delta": "Server acceptance is independent of the client’s cleanup."
+      },
+      "reason": "Immediate cancellation is a current-state requirement.",
+      "rubric": [],
+      "topics": [
+        "study-revocation",
+        "study-state-boundaries"
+      ]
+    },
+    "ttl-diagnosis": {
+      "anchor": "study-state-boundaries",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "Verification and lifecycle have distinct dependencies.",
+        "beta": "The issuer still needs its grant state.",
+        "gamma": "Signing provides a form of issuer evidence, separate from sessions.",
+        "delta": "Credential acceptance depends on validator configuration."
+      },
+      "reason": "Describe where state lives and which paths consult it.",
+      "rubric": [],
+      "topics": [
+        "study-state-boundaries",
+        "study-self-contained"
+      ]
+    },
+    "contain-exposure": {
+      "anchor": "study-replay",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "The current API acceptance path does not learn of that action.",
+        "beta": "Remove the source and handle incident containment separately.",
+        "gamma": "Contain future renewal and the active access path separately.",
+        "delta": "This extends the window in the stated model."
+      },
+      "reason": "Contain both the active credential and the grant that could issue replacements.",
+      "rubric": [],
+      "topics": [
+        "study-replay",
+        "study-revocation"
+      ]
+    },
+    "review-dispatch": {
+      "anchor": "study-state-boundaries",
+      "correct": [],
+      "feedback": {},
+      "reason": "Keep instance-local login state out of the request path. Have the issuer issue resource-bound access evidence and a separate refresh handle under approved grants. Check current state through trusted introspection or an equivalent authoritative decision. Reject stale, invalid or mismatched evidence and authorize the action after validation. Withhold data when the required verifier is unavailable. Keep refresh rotation and known reuse handling at the issuer. Verify valid access and distinguish cancellation from lookup unavailability without returning protected data.",
+      "rubric": [
+        "Explain the request’s independence from a local login session.",
+        "Assign access and refresh evidence to different receivers.",
+        "Name the authoritative current-state dependency.",
+        "Separate withdrawal from unavailable verification and withhold data.",
+        "Describe positive and negative regression checks."
+      ],
+      "topics": [
+        "study-state-boundaries",
+        "study-validation",
+        "study-introspection",
+        "study-issuance",
+        "study-rotation",
+        "study-revocation"
+      ]
+    }
+  }
+}

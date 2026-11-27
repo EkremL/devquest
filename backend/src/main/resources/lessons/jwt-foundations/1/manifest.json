@@ -1,0 +1,256 @@
+{
+  "key": "jwt-foundations",
+  "release": 1,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 1 — Authentication Foundations",
+    "sessionTitle": "Session 1.6 — JWT Foundations"
+  },
+  "objectives": {
+    "inspect-envelope": "Interpret JWT structure, integrity and confidentiality separately.",
+    "validate-claims": "Validate registered claims against an explicit token profile and clock.",
+    "reason-about-keys": "Reason about key distribution, signing capability and algorithm policy.",
+    "choose-authentication-design": "Choose a state model for authentication and immediate cancellation."
+  },
+  "sections": [
+    {
+      "anchor": "inspect-envelope",
+      "title": "Inspect the envelope",
+      "objectives": [
+        "inspect-envelope"
+      ]
+    },
+    {
+      "anchor": "probe-claims",
+      "title": "Probe the claims",
+      "objectives": [
+        "validate-claims"
+      ]
+    },
+    {
+      "anchor": "compare-key-boundaries",
+      "title": "Compare key boundaries",
+      "objectives": [
+        "reason-about-keys"
+      ]
+    },
+    {
+      "anchor": "run-strict-verifier",
+      "title": "Run the strict verifier",
+      "objectives": [
+        "reason-about-keys",
+        "validate-claims"
+      ]
+    },
+    {
+      "anchor": "review-portal",
+      "title": "Review the portal design",
+      "objectives": [
+        "choose-authentication-design"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 131,
+      "sourceLabel": "JWT header",
+      "objectives": [
+        "inspect-envelope"
+      ],
+      "passages": [
+        "study-jwt-header"
+      ]
+    },
+    {
+      "sourceLine": 132,
+      "sourceLabel": "JWT payload",
+      "objectives": [
+        "inspect-envelope"
+      ],
+      "passages": [
+        "study-jwt-payload"
+      ]
+    },
+    {
+      "sourceLine": 133,
+      "sourceLabel": "JWT signature",
+      "objectives": [
+        "inspect-envelope"
+      ],
+      "passages": [
+        "study-jwt-signature"
+      ]
+    },
+    {
+      "sourceLine": 134,
+      "sourceLabel": "Claims",
+      "objectives": [
+        "validate-claims"
+      ],
+      "passages": [
+        "study-claims"
+      ]
+    },
+    {
+      "sourceLine": 135,
+      "sourceLabel": "Registered claims",
+      "objectives": [
+        "validate-claims"
+      ],
+      "passages": [
+        "study-registered-claims"
+      ]
+    },
+    {
+      "sourceLine": 136,
+      "sourceLabel": "`sub`",
+      "objectives": [
+        "validate-claims"
+      ],
+      "passages": [
+        "study-subject"
+      ]
+    },
+    {
+      "sourceLine": 137,
+      "sourceLabel": "`iat`",
+      "objectives": [
+        "validate-claims"
+      ],
+      "passages": [
+        "study-issued-at"
+      ]
+    },
+    {
+      "sourceLine": 138,
+      "sourceLabel": "`exp`",
+      "objectives": [
+        "validate-claims"
+      ],
+      "passages": [
+        "study-expires"
+      ]
+    },
+    {
+      "sourceLine": 139,
+      "sourceLabel": "`nbf`",
+      "objectives": [
+        "validate-claims"
+      ],
+      "passages": [
+        "study-not-before"
+      ]
+    },
+    {
+      "sourceLine": 140,
+      "sourceLabel": "`iss`",
+      "objectives": [
+        "validate-claims"
+      ],
+      "passages": [
+        "study-issuer"
+      ]
+    },
+    {
+      "sourceLine": 141,
+      "sourceLabel": "`aud`",
+      "objectives": [
+        "validate-claims"
+      ],
+      "passages": [
+        "study-audience"
+      ]
+    },
+    {
+      "sourceLine": 142,
+      "sourceLabel": "Signing versus encryption",
+      "objectives": [
+        "inspect-envelope"
+      ],
+      "passages": [
+        "study-signing-and-encryption"
+      ]
+    },
+    {
+      "sourceLine": 143,
+      "sourceLabel": "Why JWT payloads are readable",
+      "objectives": [
+        "inspect-envelope"
+      ],
+      "passages": [
+        "study-payload-readability"
+      ]
+    },
+    {
+      "sourceLine": 144,
+      "sourceLabel": "Symmetric signing",
+      "objectives": [
+        "reason-about-keys"
+      ],
+      "passages": [
+        "study-symmetric"
+      ]
+    },
+    {
+      "sourceLine": 145,
+      "sourceLabel": "Asymmetric signing",
+      "objectives": [
+        "reason-about-keys"
+      ],
+      "passages": [
+        "study-asymmetric"
+      ]
+    },
+    {
+      "sourceLine": 146,
+      "sourceLabel": "Algorithm selection",
+      "objectives": [
+        "reason-about-keys"
+      ],
+      "passages": [
+        "study-algorithm"
+      ]
+    },
+    {
+      "sourceLine": 147,
+      "sourceLabel": "Invalid signatures",
+      "objectives": [
+        "reason-about-keys"
+      ],
+      "passages": [
+        "study-invalid-signature"
+      ]
+    },
+    {
+      "sourceLine": 148,
+      "sourceLabel": "Expired tokens",
+      "objectives": [
+        "validate-claims"
+      ],
+      "passages": [
+        "study-expired"
+      ]
+    },
+    {
+      "sourceLine": 149,
+      "sourceLabel": "Algorithm-confusion risks",
+      "objectives": [
+        "reason-about-keys"
+      ],
+      "passages": [
+        "study-algorithm-confusion"
+      ]
+    },
+    {
+      "sourceLine": 150,
+      "sourceLabel": "Why JWT is not automatically better than sessions",
+      "objectives": [
+        "choose-authentication-design"
+      ],
+      "passages": [
+        "study-jwt-or-session"
+      ]
+    }
+  ]
+}

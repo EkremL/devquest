@@ -1,0 +1,419 @@
+{
+  "paper": {
+    "key": "jwt-foundations",
+    "release": 1,
+    "readingRelease": 1,
+    "title": "JWT Foundations",
+    "context": "Use the stated contract for each fictional service. Explain what the verifier can establish and which decision still needs evidence.",
+    "objectives": {
+      "inspect-envelope": "Interpret JWT structure, integrity and confidentiality separately.",
+      "validate-claims": "Validate registered claims against an explicit token profile and clock.",
+      "reason-about-keys": "Reason about key distribution, signing capability and algorithm policy.",
+      "choose-authentication-design": "Choose a state model for authentication and immediate cancellation."
+    },
+    "questions": [
+      {
+        "id": "envelope-inspection",
+        "objective": "inspect-envelope",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A colleague sees readable department information after decoding a signed JWT from a test fixture. What does this demonstrate?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The issuer failed to compute a signature.",
+          "beta": "The token is necessarily genuine because its payload is structured.",
+          "gamma": "The signing key was exposed when Base64url decoded.",
+          "delta": "The signed format exposes its encoded payload. Confidential data needs a separate design decision."
+        }
+      },
+      {
+        "id": "scope-of-subject",
+        "objective": "validate-claims",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "Two configured issuers each use sub=42 for a different staff account. Which application identity key avoids conflating those subjects?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The trusted issuer and subject together.",
+          "beta": "The subject alone because all providers allocate global IDs.",
+          "gamma": "The audience alone because it names the receiving system.",
+          "delta": "The issued-at second because it accompanies the subject."
+        }
+      },
+      {
+        "id": "claims-contract",
+        "objective": "validate-claims",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "The API’s token profile requires exp. A correctly signed JWT omits exp. What is justified?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Accept it with an infinite lifetime because the signature passed.",
+          "beta": "Use the payload’s issued-at value as its expiration.",
+          "gamma": "Reject it because the API’s profile requires exp.",
+          "delta": "Treat the issuer’s signing-key validity as the token’s lifetime."
+        }
+      },
+      {
+        "id": "start-boundary",
+        "objective": "validate-claims",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A valid fixture has iat=20, nbf=60 and exp=300. The verifier uses no leeway and now=59. Why must it reject?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The token was issued at second 20, which is below current time.",
+          "beta": "It has not reached the earliest permitted use.",
+          "gamma": "The expiration is not the same as its issued-at time.",
+          "delta": "The issuer becomes untrusted until second 60."
+        }
+      },
+      {
+        "id": "verify-intended-audience",
+        "objective": "validate-claims",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A verifier trusts the token issuer and recognizes the signature, but aud contains only audit-api. The current resource is roster-api. Under a required audience policy, where should processing stop?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "At audience validation before authorization.",
+          "beta": "At the controller only if the user lacks the action grant.",
+          "gamma": "At the JWT header parser because aud is a header field.",
+          "delta": "Proceed because both APIs share an issuer."
+        }
+      },
+      {
+        "id": "share-capability",
+        "objective": "reason-about-keys",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A team gives the HMAC secret to three resource servers. Which consequence must their trust model include?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Each server receives only public verification capability.",
+          "beta": "Each resource can decrypt every token’s claims.",
+          "gamma": "Each holder has signing-equivalent capability with that shared secret.",
+          "delta": "The secret never needs rotation because it stays in the backend."
+        }
+      },
+      {
+        "id": "publish-verifier-data",
+        "objective": "reason-about-keys",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A service only needs to verify tokens signed by an issuer with an asymmetric key pair. What verified configuration is sufficient for signature verification?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The private signing key copied to the resource.",
+          "beta": "The matched public verification key and the configured algorithm.",
+          "gamma": "A symmetric secret sent as a payload claim.",
+          "delta": "Any public key included in a request."
+        }
+      },
+      {
+        "id": "expiry-comparison",
+        "objective": "validate-claims",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "The token meets issuer, audience and signature requirements. Its exp is exactly the current instant under a no-leeway policy. What does the following predicate return?",
+        "sample": "return now.isBefore(expiresAt);",
+        "language": "java",
+        "choices": {
+          "alpha": "true because issued tokens are valid at exactly exp.",
+          "beta": "true because issuer validation succeeded.",
+          "gamma": "false because the predicate checks nbf.",
+          "delta": "false because the current instant is no longer before expiry."
+        }
+      },
+      {
+        "id": "unexpected-algorithm",
+        "objective": "reason-about-keys",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A service is configured exclusively for the approved asymmetric verification profile. An incoming header names a different algorithm. What is the correct defensive handling?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Use any supported algorithm from the header if the key has the same identifier.",
+          "beta": "Reject the mismatch before trying an unrelated algorithm or key type.",
+          "gamma": "Run issuer validation only, since the header is protected in normal cases.",
+          "delta": "Accept if the header has a JWT type value."
+        }
+      },
+      {
+        "id": "rejected-integrity",
+        "objective": "reason-about-keys",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A decoder displays credible claims and the configured algorithm name, but signature verification fails. Which outcome preserves the trust boundary?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Authorize if the audience and time window look right.",
+          "beta": "Trust the subject when a gateway has logged it before.",
+          "gamma": "Use the incoming claims only for role checks.",
+          "delta": "Reject authentication and keep claims out of authorization."
+        }
+      },
+      {
+        "id": "choose-session-state",
+        "objective": "choose-authentication-design",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A same-origin staff portal already has a reliable shared session store. Logout must invalidate the next protected request. An alternate design accepts valid JWTs locally for fifteen minutes with no current revocation input. Which design meets the requirement as stated?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Use the shared session lookup and revoke the session at logout.",
+          "beta": "Delete the JWT from the browser and rely on prior local verification rules.",
+          "gamma": "Shorten JWT lifetime to two minutes and make no other change.",
+          "delta": "Move the JWT from a header to a cookie."
+        }
+      },
+      {
+        "id": "jwt-decision-record",
+        "objective": "choose-authentication-design",
+        "type": "written",
+        "difficulty": "Advanced",
+        "prompt": "Write a decision record for a staff portal and a separate reporting API. The portal needs immediate logout. The reporting API can accept valid tokens until expiry and requires issuer, audience and time checks. Explain what you would choose, how the API should use its keys, and what would make an apparently readable or verified-looking token ineligible.",
+        "sample": "",
+        "language": "text",
+        "choices": {}
+      }
+    ]
+  },
+  "keys": {
+    "envelope-inspection": {
+      "anchor": "study-jwt-payload",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "Decoding does not test integrity.",
+        "beta": "Readable claims remain untrusted.",
+        "gamma": "Decoding uses no signing key.",
+        "delta": "Signatures protect integrity, not confidentiality."
+      },
+      "reason": "Do not include confidential data on the assumption that signing hides it.",
+      "rubric": [],
+      "topics": [
+        "study-jwt-payload",
+        "study-payload-readability",
+        "study-signing-and-encryption"
+      ]
+    },
+    "scope-of-subject": {
+      "anchor": "study-subject",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "The issuer scopes the subject identifier.",
+        "beta": "A subject is unique locally within the issuer’s context, unless independently global.",
+        "gamma": "Audience identifies a recipient.",
+        "delta": "Issuance time is not a stable identity key."
+      },
+      "reason": "Bind the verified subject to its verified issuer.",
+      "rubric": [],
+      "topics": [
+        "study-subject",
+        "study-issuer",
+        "study-claims"
+      ]
+    },
+    "claims-contract": {
+      "anchor": "study-registered-claims",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "The profile requires an expiry.",
+        "beta": "Those claims have distinct meanings.",
+        "gamma": "Registered semantics do not eliminate application requirements.",
+        "delta": "Key lifetime and the token’s local policy are separate."
+      },
+      "reason": "Require the claims mandated by your token profile.",
+      "rubric": [],
+      "topics": [
+        "study-registered-claims",
+        "study-expires",
+        "study-jwt-signature"
+      ]
+    },
+    "start-boundary": {
+      "anchor": "study-not-before",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "An earlier issue time is expected.",
+        "beta": "nbf defines the lower use boundary.",
+        "gamma": "They represent different events.",
+        "delta": "Activation is evaluated after trust checks."
+      },
+      "reason": "The issue timestamp alone does not make the token active.",
+      "rubric": [],
+      "topics": [
+        "study-not-before",
+        "study-issued-at"
+      ]
+    },
+    "verify-intended-audience": {
+      "anchor": "study-audience",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "A valid issuer signature does not make the token intended for this API.",
+        "beta": "The receiver mismatch must stop before policy decisions.",
+        "gamma": "Audience is a payload claim.",
+        "delta": "Issuer and intended recipient are independent checks."
+      },
+      "reason": "Check the recipient even when services share an issuer.",
+      "rubric": [],
+      "topics": [
+        "study-audience",
+        "study-issuer",
+        "study-jwt-header"
+      ]
+    },
+    "share-capability": {
+      "anchor": "study-symmetric",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "HMAC verification uses the same secret as tag creation.",
+        "beta": "HMAC does not provide encryption.",
+        "gamma": "Every holder can generate an authenticator under the same key.",
+        "delta": "Shared secrets can still be exposed and need lifecycle controls."
+      },
+      "reason": "Limit which services receive signing capability.",
+      "rubric": [],
+      "topics": [
+        "study-symmetric",
+        "study-jwt-signature"
+      ]
+    },
+    "publish-verifier-data": {
+      "anchor": "study-asymmetric",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "This unnecessarily gives signing capability.",
+        "beta": "Verification does not require the issuer’s private key.",
+        "gamma": "Claims cannot configure trusted verification.",
+        "delta": "The resource must establish key trust separately."
+      },
+      "reason": "Distribute trusted public verification keys and retain private signing keys at the issuer.",
+      "rubric": [],
+      "topics": [
+        "study-asymmetric",
+        "study-algorithm"
+      ]
+    },
+    "expiry-comparison": {
+      "anchor": "study-expired",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "The deadline is exclusive.",
+        "beta": "Issuer checks cannot override time.",
+        "gamma": "The code checks the expiry boundary.",
+        "delta": "Exact equality fails isBefore."
+      },
+      "reason": "Treat expiry as an exclusive upper boundary.",
+      "rubric": [],
+      "topics": [
+        "study-expired",
+        "study-expires"
+      ]
+    },
+    "unexpected-algorithm": {
+      "anchor": "study-algorithm-confusion",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "The token header does not expand the verifier’s trust policy.",
+        "beta": "Pin the allowed algorithm and bind it to trusted key material and its purpose.",
+        "gamma": "Claims cannot repair an unaccepted signature scheme.",
+        "delta": "JWT type is not proof of the expected integrity mechanism."
+      },
+      "reason": "Choose accepted algorithms independently of incoming metadata.",
+      "rubric": [],
+      "topics": [
+        "study-algorithm-confusion",
+        "study-algorithm",
+        "study-jwt-header"
+      ]
+    },
+    "rejected-integrity": {
+      "anchor": "study-invalid-signature",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "The claims have not passed integrity verification.",
+        "beta": "A previous observation does not validate this evidence.",
+        "gamma": "Application roles must also come from trusted evidence.",
+        "delta": "A failed integrity check leaves those claims untrusted."
+      },
+      "reason": "A readable payload provides no substitute for verified issuer evidence.",
+      "rubric": [],
+      "topics": [
+        "study-invalid-signature",
+        "study-jwt-payload",
+        "study-jwt-signature"
+      ]
+    },
+    "choose-session-state": {
+      "anchor": "study-jwt-or-session",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "The next lookup sees authoritative invalidation.",
+        "beta": "Browser cleanup does not change resource acceptance.",
+        "gamma": "This bounds a possible delay but does not remove it.",
+        "delta": "Changing carriers does not change validity policy."
+      },
+      "reason": "Match the state model to required cancellation visibility.",
+      "rubric": [],
+      "topics": [
+        "study-jwt-or-session"
+      ]
+    },
+    "jwt-decision-record": {
+      "anchor": "study-jwt-or-session",
+      "correct": [],
+      "feedback": {},
+      "reason": "Use a shared session lookup for the portal under the stated requirements. A token-based API can verify issuer evidence under its configured signature profile, with trusted key material tied to its issuer and purpose. Reject algorithm and integrity mismatches. Validate the required issuer, audience, subject profile and time bounds before using claims for policy. Avoid putting confidential values into a signed readable payload. Add a current state check if the API later requires immediate withdrawal. Keep local-only verification and portal invalidation semantics distinct.",
+      "rubric": [
+        "Explain the portal’s current-state requirement.",
+        "Match trusted key material to an approved algorithm and issuer.",
+        "Require integrity before relying on any claim.",
+        "Cover intended audience and exact time-window behavior.",
+        "Explain what readable payloads reveal and how immediate withdrawal would change the design."
+      ],
+      "topics": [
+        "study-jwt-or-session",
+        "study-claims",
+        "study-audience",
+        "study-not-before",
+        "study-algorithm-confusion",
+        "study-payload-readability",
+        "study-signing-and-encryption"
+      ]
+    }
+  }
+}

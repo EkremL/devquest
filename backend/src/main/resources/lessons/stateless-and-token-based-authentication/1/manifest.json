@@ -1,0 +1,187 @@
+{
+  "key": "stateless-and-token-based-authentication",
+  "release": 1,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 1 — Authentication Foundations",
+    "sessionTitle": "Session 1.5 — Stateless and Token-Based Authentication"
+  },
+  "objectives": {
+    "place-credentials": "Trace issuer, access and refresh responsibilities across requests.",
+    "validate-evidence": "Choose trustworthy validation inputs for opaque and self-contained evidence.",
+    "manage-lifecycle": "Reason about expiry, withdrawal, rotation and reuse.",
+    "design-state-boundaries": "Design where authentication and grant state are checked for operational guarantees."
+  },
+  "sections": [
+    {
+      "anchor": "dispatch-evidence",
+      "title": "Dispatch the evidence",
+      "objectives": [
+        "place-credentials"
+      ]
+    },
+    {
+      "anchor": "check-window",
+      "title": "Check format and time",
+      "objectives": [
+        "validate-evidence",
+        "manage-lifecycle"
+      ]
+    },
+    {
+      "anchor": "trace-withdrawal",
+      "title": "Trace grant withdrawal",
+      "objectives": [
+        "design-state-boundaries",
+        "manage-lifecycle"
+      ]
+    },
+    {
+      "anchor": "review-rotation",
+      "title": "Inspect refresh rotation",
+      "objectives": [
+        "manage-lifecycle"
+      ]
+    },
+    {
+      "anchor": "token-launch-gate",
+      "title": "Meet the withdrawal guarantee",
+      "objectives": [
+        "design-state-boundaries"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 115,
+      "sourceLabel": "Meaning of stateless request authentication",
+      "objectives": [
+        "place-credentials"
+      ],
+      "passages": [
+        "study-stateless-request"
+      ]
+    },
+    {
+      "sourceLine": 116,
+      "sourceLabel": "Opaque tokens",
+      "objectives": [
+        "validate-evidence"
+      ],
+      "passages": [
+        "study-opaque"
+      ]
+    },
+    {
+      "sourceLine": 117,
+      "sourceLabel": "Self-contained tokens",
+      "objectives": [
+        "validate-evidence"
+      ],
+      "passages": [
+        "study-self-contained"
+      ]
+    },
+    {
+      "sourceLine": 118,
+      "sourceLabel": "Access tokens",
+      "objectives": [
+        "place-credentials"
+      ],
+      "passages": [
+        "study-access"
+      ]
+    },
+    {
+      "sourceLine": 119,
+      "sourceLabel": "Refresh tokens",
+      "objectives": [
+        "place-credentials"
+      ],
+      "passages": [
+        "study-refresh"
+      ]
+    },
+    {
+      "sourceLine": 120,
+      "sourceLabel": "Token issuance",
+      "objectives": [
+        "place-credentials"
+      ],
+      "passages": [
+        "study-issuance"
+      ]
+    },
+    {
+      "sourceLine": 121,
+      "sourceLabel": "Token validation",
+      "objectives": [
+        "validate-evidence"
+      ],
+      "passages": [
+        "study-validation"
+      ]
+    },
+    {
+      "sourceLine": 122,
+      "sourceLabel": "Token expiration",
+      "objectives": [
+        "manage-lifecycle"
+      ],
+      "passages": [
+        "study-expiration"
+      ]
+    },
+    {
+      "sourceLine": 123,
+      "sourceLabel": "Token revocation",
+      "objectives": [
+        "manage-lifecycle"
+      ],
+      "passages": [
+        "study-revocation"
+      ]
+    },
+    {
+      "sourceLine": 124,
+      "sourceLabel": "Token rotation",
+      "objectives": [
+        "manage-lifecycle"
+      ],
+      "passages": [
+        "study-rotation"
+      ]
+    },
+    {
+      "sourceLine": 125,
+      "sourceLabel": "Token replay",
+      "objectives": [
+        "manage-lifecycle"
+      ],
+      "passages": [
+        "study-replay"
+      ]
+    },
+    {
+      "sourceLine": 126,
+      "sourceLabel": "Token introspection",
+      "objectives": [
+        "design-state-boundaries"
+      ],
+      "passages": [
+        "study-introspection"
+      ]
+    },
+    {
+      "sourceLine": 127,
+      "sourceLabel": "Why token-based does not always mean fully stateless",
+      "objectives": [
+        "design-state-boundaries"
+      ],
+      "passages": [
+        "study-state-boundaries"
+      ]
+    }
+  ]
+}
