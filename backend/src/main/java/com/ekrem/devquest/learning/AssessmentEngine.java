@@ -45,10 +45,18 @@ class AssessmentEngine {
     @Value static class Feedback { String question; String outcome; Key guide; }
 
     private static final String PILOT = "http-401-and-403";
-    private static final Map<String, Integer> ACTIVE_RELEASES = Map.of(
-            PILOT, 3, "identity-and-access-vocabulary", 1, "security-philosophy", 1,
-            "http-authentication-basics", 1, "stateful-authentication", 1, "stateless-and-token-based-authentication", 1,
-            "jwt-foundations", 1, "authentication-mechanism-comparison", 1, "common-authentication-threats", 1);
+    private static final Map<String, Integer> ACTIVE_RELEASES = Map.ofEntries(
+            Map.entry(PILOT, 3),
+            Map.entry("identity-and-access-vocabulary", 1),
+            Map.entry("security-philosophy", 1),
+            Map.entry("http-authentication-basics", 1),
+            Map.entry("stateful-authentication", 1),
+            Map.entry("stateless-and-token-based-authentication", 1),
+            Map.entry("jwt-foundations", 1),
+            Map.entry("authentication-mechanism-comparison", 1),
+            Map.entry("common-authentication-threats", 1),
+            Map.entry("what-spring-security-does", 1),
+            Map.entry("servlet-filter-architecture", 1));
     private final Map<String, Map<Integer, Package>> releases = new HashMap<>();
 
     AssessmentEngine(ObjectMapper mapper, LessonPackage lessons) {

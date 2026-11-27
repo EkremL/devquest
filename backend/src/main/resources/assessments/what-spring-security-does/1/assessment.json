@@ -1,0 +1,398 @@
+{
+  "paper": {
+    "key": "what-spring-security-does",
+    "release": 1,
+    "readingRelease": 1,
+    "title": "What Spring Security Does",
+    "context": "Review a fictional Servlet-based Spring MVC application. Apply the stated security and business policies at their own boundaries.",
+    "objectives": {
+      "cross-servlet-boundary": "Identify where security runs relative to the controller.",
+      "inspect-evidence": "Distinguish verified authentication from authority and permission.",
+      "inspect-protection": "Explain how an enabled protection applies to a specific request.",
+      "separate-policy": "Keep request-level authority checks and record-level rules distinct.",
+      "review-deployment": "Explain how a framework applies a protocol and checks a deployment contract."
+    },
+    "questions": [
+      {
+        "id": "verified-caller",
+        "objective": "inspect-evidence",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A Servlet authentication filter receives a username and submitted evidence. What should establish the authenticated principal?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The submitted username if the account exists",
+          "beta": "A successful result from the configured authentication components",
+          "gamma": "The existence of an anonymous context",
+          "delta": "The route’s required authority string"
+        }
+      },
+      {
+        "id": "authority-name",
+        "objective": "inspect-evidence",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "The route requires hasAuthority(\"invoice:read\"). The verified caller has invoice:view. No authority hierarchy is configured. What follows?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Verified identity satisfies every guarded route",
+          "beta": "Matching the invoice prefix grants access",
+          "gamma": "The route requirement is unmet",
+          "delta": "The response must come from the controller"
+        }
+      },
+      {
+        "id": "servlet-owner",
+        "objective": "cross-servlet-boundary",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "Which component initially invokes Spring Security’s registered Servlet filter in a standard Servlet deployment?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The Servlet container",
+          "beta": "The MVC controller constructor",
+          "gamma": "The domain service",
+          "delta": "The remote identity provider"
+        }
+      },
+      {
+        "id": "mvc-marker",
+        "objective": "cross-servlet-boundary",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A controller marker is absent after a configured request guard denies an update. Which interpretation follows from this evidence?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The controller necessarily threw an exception",
+          "beta": "The absence proves the controller mapping is missing",
+          "gamma": "The request must have skipped Spring Security",
+          "delta": "The downstream MVC handler can be skipped by the filter chain"
+        }
+      },
+      {
+        "id": "post-guard",
+        "objective": "inspect-protection",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A verified browser session has the required route authority. POST has no valid CSRF evidence and default protection applies. Which outcome fits?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The cookie satisfies both checks",
+          "beta": "The CSRF gate can stop the request before the handler",
+          "gamma": "GET and POST both require a CSRF token under the default matcher",
+          "delta": "The service should decide whether CSRF evidence is valid"
+        }
+      },
+      {
+        "id": "record-policy",
+        "objective": "separate-policy",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A route allows verified invoice readers. Two invoices belong to different accounts. What is the next required input for a record-level decision?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The stored account for the requested invoice and the caller’s verified scope",
+          "beta": "The public route pattern only",
+          "gamma": "The account name submitted by the client alone",
+          "delta": "Whether the HTTP transport encrypted the path"
+        }
+      },
+      {
+        "id": "wire-contract",
+        "objective": "review-deployment",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A team migrates from a different HTTP framework to Spring Security. Which part should remain the responsibility of the protocol?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The sequence of Spring Security filters",
+          "beta": "Which database field means invoice owner",
+          "gamma": "The semantics of the HTTP method and response interface",
+          "delta": "Which Authentication subclass is created"
+        }
+      },
+      {
+        "id": "anonymous-context",
+        "objective": "inspect-evidence",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A sanitized trace shows a non-null AnonymousAuthenticationToken. A reporting method requires a verified user. What should a reviewer conclude?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The user completed identity verification",
+          "beta": "The route permits access because the token exists",
+          "gamma": "The reporting service can trust claims in the request body",
+          "delta": "The trace alone does not establish a verified user"
+        }
+      },
+      {
+        "id": "case-sensitive",
+        "objective": "inspect-evidence",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "In the isolated example, what happens when the granted authority is REPORT:READ and the requirement is report:read?",
+        "sample": "AuthorityAuthorizationManager.<String>hasAuthority(\"report:read\")\n        .authorize(() -> identity, \"report route\");",
+        "language": "java",
+        "choices": {
+          "alpha": "The decision denies because the exact spelling differs",
+          "beta": "The decision permits because authority names ignore case",
+          "gamma": "The decision requires a second AuthenticationManager call",
+          "delta": "The decision uses the display name instead"
+        }
+      },
+      {
+        "id": "locate-regression",
+        "objective": "separate-policy",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A refactoring retains route policy but removes the check linking reports to the current workspace. Which test specifically detects this regression?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Send an unauthenticated request to the reporting route",
+          "beta": "Use a verified report reader requesting a record outside its authorized workspace",
+          "gamma": "Use a reader and a record from its workspace",
+          "delta": "Validate that the reporting route still appears in MVC mappings"
+        }
+      },
+      {
+        "id": "correct-layer",
+        "objective": "cross-servlet-boundary",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "Both a rejected CSRF request and a domain refusal give a denial in a test environment. Which trace differentiates the two under the stated design?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The response code alone",
+          "beta": "The length of the URL",
+          "gamma": "Filter policy decision plus controller and service reachability",
+          "delta": "A full dump of cookies and credentials"
+        }
+      },
+      {
+        "id": "release-plan",
+        "objective": "review-deployment",
+        "type": "written",
+        "difficulty": "Advanced",
+        "prompt": "Describe how to verify a browser export release where authenticated staff need a route authority, a valid POST, and a record within their workspace. Explain which layers run, what evidence each uses, and which failures should reach the controller.",
+        "sample": "",
+        "language": "text",
+        "choices": {}
+      }
+    ]
+  },
+  "keys": {
+    "verified-caller": {
+      "anchor": "study-authentication-support",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Account lookup alone does not verify evidence.",
+        "beta": "Verified evidence establishes the returned identity for the configured mechanism.",
+        "gamma": "An anonymous token represents an unverified caller.",
+        "delta": "A rule declares a requirement without establishing identity."
+      },
+      "reason": "Inspect the verified Authentication rather than the submitted identifier.",
+      "rubric": [],
+      "topics": [
+        "study-authentication-support"
+      ]
+    },
+    "authority-name": {
+      "anchor": "study-authorization-support",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "Authentication alone does not grant this action.",
+        "beta": "The supplied authority name is checked directly.",
+        "gamma": "invoice:view is distinct from the exact configured authority.",
+        "delta": "Request authorization can stop first."
+      },
+      "reason": "Compare granted and required names exactly, including case.",
+      "rubric": [],
+      "topics": [
+        "study-authorization-support"
+      ]
+    },
+    "servlet-owner": {
+      "anchor": "study-servlet-integration",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "The container dispatches through its mapped filter chain.",
+        "beta": "Controllers are reached downstream.",
+        "gamma": "Business logic runs within application handling.",
+        "delta": "An external provider may verify some evidence, but does not invoke the container’s filter."
+      },
+      "reason": "Locate the container registration and its Spring delegate during startup review.",
+      "rubric": [],
+      "topics": [
+        "study-servlet-integration"
+      ]
+    },
+    "mvc-marker": {
+      "anchor": "study-before-controller",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "The marker is consistent with the controller never running.",
+        "beta": "The guard can stop before handler lookup.",
+        "gamma": "The described guard ran.",
+        "delta": "A filter can handle or stop the request without invoking downstream processing."
+      },
+      "reason": "Use test markers to distinguish route enforcement from MVC execution.",
+      "rubric": [],
+      "topics": [
+        "study-before-controller"
+      ]
+    },
+    "post-guard": {
+      "anchor": "study-common-protection",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Session identity and CSRF validation are independent.",
+        "beta": "The default matcher applies to POST.",
+        "gamma": "The default excludes safe methods such as GET.",
+        "delta": "This fixture provides a filter-level CSRF check."
+      },
+      "reason": "Keep CSRF enabled for the stated browser flow and test the rejected path.",
+      "rubric": [],
+      "topics": [
+        "study-common-protection"
+      ]
+    },
+    "record-policy": {
+      "anchor": "study-business-rules",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "That binds the requested record to authoritative ownership.",
+        "beta": "It identifies the endpoint, not ownership.",
+        "gamma": "Caller input is not authoritative scope.",
+        "delta": "TLS does not establish application ownership."
+      },
+      "reason": "Retain resource checks when route authorization succeeds.",
+      "rubric": [],
+      "topics": [
+        "study-business-rules"
+      ]
+    },
+    "wire-contract": {
+      "anchor": "study-framework-protocol",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "That order is framework configuration.",
+        "beta": "That is domain data and policy.",
+        "gamma": "The protocol defines the interface independent of the implementation.",
+        "delta": "That choice depends on the configured mechanism."
+      },
+      "reason": "Use protocol specifications for the wire and the Spring reference for mechanisms.",
+      "rubric": [],
+      "topics": [
+        "study-framework-protocol"
+      ]
+    },
+    "anonymous-context": {
+      "anchor": "study-authentication-support",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "The class represents anonymous state.",
+        "beta": "Permission depends on policy and trustworthy identity.",
+        "gamma": "Those claims do not prove who sent them.",
+        "delta": "The anonymous object is infrastructure context."
+      },
+      "reason": "Test the actual trust level and policy rather than checking for a non-null object.",
+      "rubric": [],
+      "topics": [
+        "study-authentication-support"
+      ]
+    },
+    "case-sensitive": {
+      "anchor": "study-authorization-support",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "No normalization or matching role hierarchy is configured in the example.",
+        "beta": "The fixture requires the exact string.",
+        "gamma": "The decision uses the supplied Authentication.",
+        "delta": "Principal display text does not supply a missing authority."
+      },
+      "reason": "Treat authority names as a reviewed contract between verification and the guard.",
+      "rubric": [],
+      "topics": [
+        "study-authorization-support"
+      ]
+    },
+    "locate-regression": {
+      "anchor": "study-business-rules",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "That tests the outer guard.",
+        "beta": "This passes route authorization and exercises the independent domain denial.",
+        "gamma": "That verifies the positive path alone.",
+        "delta": "Mapping says nothing about record scope."
+      },
+      "reason": "Use matched positive and negative domain cases with the same route authority.",
+      "rubric": [],
+      "topics": [
+        "study-business-rules"
+      ]
+    },
+    "correct-layer": {
+      "anchor": "study-before-controller",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "Different layers can use the same code.",
+        "beta": "It does not show execution.",
+        "gamma": "The boundary markers tell whether execution entered MVC and the domain.",
+        "delta": "Secret material is unnecessary to identify the boundary."
+      },
+      "reason": "Assert the reached layer with a sanitized test marker.",
+      "rubric": [],
+      "topics": [
+        "study-before-controller"
+      ]
+    },
+    "release-plan": {
+      "anchor": "study-framework-protocol",
+      "correct": [],
+      "feedback": {},
+      "reason": "Use Servlet request filters for configured protection, authentication and route authorization. CSRF validation independently protects the POST. The authorization manager evaluates the verified identity and required authority. A rejected filter does not continue to MVC in this fixture. MVC dispatches approved requests, then the service compares verified scope with authoritative record ownership. HTTP defines method and response semantics. Test absent identity, invalid CSRF evidence, missing authority, wrong stored workspace and successful export with redacted boundary markers.",
+      "rubric": [
+        "Separate framework policy from HTTP semantics.",
+        "Identify Servlet filtering before MVC for this route.",
+        "Distinguish authentication, CSRF and authority evidence.",
+        "Use trusted stored record and workspace scope.",
+        "Include allowed and denied paths and expected controller reachability."
+      ],
+      "topics": [
+        "study-framework-protocol"
+      ]
+    }
+  }
+}

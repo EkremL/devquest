@@ -1,0 +1,126 @@
+{
+  "key": "what-spring-security-does",
+  "release": 1,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 2 — Spring Security Foundations",
+    "sessionTitle": "Session 2.1 — What Spring Security Does"
+  },
+  "objectives": {
+    "cross-servlet-boundary": "Identify where security runs relative to the controller.",
+    "inspect-evidence": "Distinguish verified authentication from authority and permission.",
+    "inspect-protection": "Explain how an enabled protection applies to a specific request.",
+    "separate-policy": "Keep request-level authority checks and record-level rules distinct.",
+    "review-deployment": "Explain how a framework applies a protocol and checks a deployment contract."
+  },
+  "sections": [
+    {
+      "anchor": "cross-servlet-boundary",
+      "title": "Trace a protected request",
+      "objectives": [
+        "cross-servlet-boundary"
+      ]
+    },
+    {
+      "anchor": "inspect-evidence",
+      "title": "Inspect identity and authority",
+      "objectives": [
+        "inspect-evidence"
+      ]
+    },
+    {
+      "anchor": "inspect-protection",
+      "title": "Check the protection gate",
+      "objectives": [
+        "inspect-protection"
+      ]
+    },
+    {
+      "anchor": "separate-policy",
+      "title": "Place the domain decision",
+      "objectives": [
+        "separate-policy"
+      ]
+    },
+    {
+      "anchor": "review-deployment",
+      "title": "Review the release boundary",
+      "objectives": [
+        "review-deployment"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 197,
+      "sourceLabel": "Servlet security integration",
+      "objectives": [
+        "cross-servlet-boundary"
+      ],
+      "passages": [
+        "study-servlet-integration"
+      ]
+    },
+    {
+      "sourceLine": 198,
+      "sourceLabel": "Security before controller execution",
+      "objectives": [
+        "cross-servlet-boundary"
+      ],
+      "passages": [
+        "study-before-controller"
+      ]
+    },
+    {
+      "sourceLine": 194,
+      "sourceLabel": "Authentication support",
+      "objectives": [
+        "inspect-evidence"
+      ],
+      "passages": [
+        "study-authentication-support"
+      ]
+    },
+    {
+      "sourceLine": 195,
+      "sourceLabel": "Authorization support",
+      "objectives": [
+        "inspect-evidence"
+      ],
+      "passages": [
+        "study-authorization-support"
+      ]
+    },
+    {
+      "sourceLine": 196,
+      "sourceLabel": "Protection against common attacks",
+      "objectives": [
+        "inspect-protection"
+      ],
+      "passages": [
+        "study-common-protection"
+      ]
+    },
+    {
+      "sourceLine": 199,
+      "sourceLabel": "Security configuration versus business rules",
+      "objectives": [
+        "separate-policy"
+      ],
+      "passages": [
+        "study-business-rules"
+      ]
+    },
+    {
+      "sourceLine": 200,
+      "sourceLabel": "Spring Security as a framework implementation, not a protocol",
+      "objectives": [
+        "review-deployment"
+      ],
+      "passages": [
+        "study-framework-protocol"
+      ]
+    }
+  ]
+}

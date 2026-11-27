@@ -10,6 +10,8 @@ export const missionIds = [
   'inspect-jwt-envelope', 'evaluate-jwt-claims', 'compare-jwt-keys', 'verify-jwt-policy', 'review-jwt-architecture',
   'route-mechanism', 'probe-withdrawal', 'trace-mechanism-state', 'audit-mechanism-storage', 'review-mechanism-choice',
   'triage-auth-signals', 'verify-session-boundary', 'review-auth-observability', 'probe-auth-containment', 'confirm-auth-incident',
+  'cross-spring-boundary', 'inspect-spring-evidence', 'compare-spring-protections', 'audit-spring-policy', 'review-spring-boundary',
+  'follow-servlet-call', 'inspect-servlet-delegates', 'route-servlet-chain', 'order-servlet-observer', 'confirm-servlet-evidence',
 ] as const
 
 export type MissionId = typeof missionIds[number]

@@ -1,0 +1,398 @@
+{
+  "paper": {
+    "key": "servlet-filter-architecture",
+    "release": 1,
+    "readingRelease": 1,
+    "title": "Servlet Filter Architecture",
+    "context": "Use the stated filter and request-matching configuration. Separate chain selection, invocation order and MVC handler execution.",
+    "objectives": {
+      "follow-filter-call": "Trace how a Servlet filter wraps and delegates downstream execution.",
+      "locate-mvc": "Distinguish the container bridge, security proxy and MVC front controller.",
+      "select-servlet-chain": "Predict the first matching chain and distinguish it from an authorization rule.",
+      "order-servlet-filters": "Place a diagnostic filter after the stage that produces its input.",
+      "observe-servlet-chain": "Correlate startup configuration, request-time invocations and MVC reachability."
+    },
+    "questions": [
+      {
+        "id": "return-order",
+        "objective": "follow-filter-call",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A timing filter records start, invokes chain.doFilter and then records finish. The downstream request returns normally. What does its elapsed time include?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Only time before handler lookup",
+          "beta": "The downstream execution between the two markers",
+          "gamma": "Only the filter’s own initial logic",
+          "delta": "Every subsequent asynchronous operation"
+        }
+      },
+      {
+        "id": "mvc-handler",
+        "objective": "locate-mvc",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A mapped Servlet request reaches DispatcherServlet. Which step uses MVC handler mappings?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The TLS endpoint chooses a client certificate",
+          "beta": "FilterChainProxy chooses the security list",
+          "gamma": "MVC resolves which handler can process the request",
+          "delta": "The container registers the filter bean"
+        }
+      },
+      {
+        "id": "early-stop",
+        "objective": "locate-mvc",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A configured request guard handles a request without delegating. What can the test assert for this normal REQUEST dispatch?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The MVC handler marker is absent",
+          "beta": "The handler ran but suppressed its marker",
+          "gamma": "The service check selected the security guard",
+          "delta": "The authorization matcher changed the servlet mapping"
+        }
+      },
+      {
+        "id": "bridge-bean",
+        "objective": "locate-mvc",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A custom Servlet registration uses DelegatingFilterProxy to look up a Spring filter. Which relationship should a startup diagnostic verify?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The Spring filter must discover the MVC controller itself",
+          "beta": "The proxy must retrieve a controller by route",
+          "gamma": "The container must inject a list of SecurityFilterChains directly",
+          "delta": "The registered proxy can resolve the intended Spring Filter bean"
+        }
+      },
+      {
+        "id": "selected-framework",
+        "objective": "locate-mvc",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A request enters the usual springSecurityFilterChain delegate. Which component applies the configured firewall and chooses the security chain?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "DelegatingFilterProxy",
+          "beta": "FilterChainProxy",
+          "gamma": "DispatcherServlet",
+          "delta": "The first controller method"
+        }
+      },
+      {
+        "id": "chain-shape",
+        "objective": "select-servlet-chain",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "What should a diagnostic show for each configured SecurityFilterChain?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "A request matcher and its ordered filter list",
+          "beta": "A single global list of all filters from all chains",
+          "gamma": "The ordered list of MVC controllers",
+          "delta": "A mapping between response status and controllers"
+        }
+      },
+      {
+        "id": "overlap",
+        "objective": "select-servlet-chain",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "Two ordered security chains match a report request. The first contains a trace observer and the second contains a different observer. Which can run on the selected path?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Both because both match",
+          "beta": "The second only if it is more specific",
+          "gamma": "The first chain’s observer if execution reaches its position",
+          "delta": "Neither because Spring rejects every overlapping matcher"
+        }
+      },
+      {
+        "id": "different-matchers",
+        "objective": "select-servlet-chain",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A chain’s securityMatcher excludes a path. A rule inside authorizeHttpRequests in that chain names that path. What follows?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The inner rule broadens chain selection",
+          "beta": "MVC prioritizes the inner rule over the chain matcher",
+          "gamma": "The route is evaluated by all other matching chain rules",
+          "delta": "The inner rule is not evaluated for that request in this chain"
+        }
+      },
+      {
+        "id": "trace-after",
+        "objective": "order-servlet-filters",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A diagnostic filter sees no request marker. The active chain includes a filter that writes the marker before delegating, but the observer runs first. Which change addresses this evidence?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Move the observer after the marker producer within that chain",
+          "beta": "Move the observer to a different matching chain",
+          "gamma": "Move the MVC handler before container filters",
+          "delta": "Register the same observer again with the container"
+        }
+      },
+      {
+        "id": "runtime-evidence",
+        "objective": "observe-servlet-chain",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "Startup logging lists an export observer. A single export request has no observer event. What is the strongest next diagnostic step?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Assume the observer ran because it is listed",
+          "beta": "Correlate the selected chain, reached filter markers and MVC marker for that request",
+          "gamma": "Enable full credential payload logging",
+          "delta": "Reorder all chains and filters at once"
+        }
+      },
+      {
+        "id": "code-order",
+        "objective": "select-servlet-chain",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "Both fixture chains are configured with different trace markers. The order shown selects a single list. Which marker is selected for /exports/march?",
+        "sample": "new FilterChainProxy(List.of(fallback, exports)).getFilters(\"/exports/march\");",
+        "language": "java",
+        "choices": {
+          "alpha": "Only the exports marker",
+          "beta": "Both markers",
+          "gamma": "Only the fallback marker",
+          "delta": "Neither marker because the patterns overlap"
+        }
+      },
+      {
+        "id": "diagnostic-plan",
+        "objective": "observe-servlet-chain",
+        "type": "written",
+        "difficulty": "Advanced",
+        "prompt": "Create a debugging plan for an approved report request that reaches MVC but no longer emits its sanitized route marker. Two chains overlap. Explain what evidence distinguishes chain selection from filter order and verify the repair.",
+        "sample": "",
+        "language": "text",
+        "choices": {}
+      }
+    ]
+  },
+  "keys": {
+    "return-order": {
+      "anchor": "study-servlet-filters",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "The downstream call can include the handler and response work.",
+        "beta": "The outer call waits for the synchronous downstream chain to return.",
+        "gamma": "The second marker is after the delegation.",
+        "delta": "The scenario specifies a normal synchronous return."
+      },
+      "reason": "Put required cleanup in finally when a downstream exception is possible.",
+      "rubric": [],
+      "topics": [
+        "study-servlet-filters"
+      ]
+    },
+    "mvc-handler": {
+      "anchor": "study-mvc-processing",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "That occurs outside MVC.",
+        "beta": "That uses a different set of matchers.",
+        "gamma": "Handler mappings take part in resolution before invocation.",
+        "delta": "Registration precedes dispatch."
+      },
+      "reason": "Distinguish the security matcher from MVC handler resolution.",
+      "rubric": [],
+      "topics": [
+        "study-mvc-processing"
+      ]
+    },
+    "early-stop": {
+      "anchor": "study-pre-dispatch",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "The mapped servlet was not invoked through the downstream chain.",
+        "beta": "MVC did not receive the request in the stated path.",
+        "gamma": "The service lies downstream.",
+        "delta": "A filter can stop without changing mapping."
+      },
+      "reason": "Record a benign downstream marker to demonstrate reachability.",
+      "rubric": [],
+      "topics": [
+        "study-pre-dispatch"
+      ]
+    },
+    "bridge-bean": {
+      "anchor": "study-delegating-filter",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "MVC is downstream.",
+        "beta": "It delegates to a Filter bean.",
+        "gamma": "Chain routing belongs to the Spring delegate.",
+        "delta": "The bridge joins container registration to Spring-managed behavior."
+      },
+      "reason": "Inspect bean resolution before debugging inner filter ordering.",
+      "rubric": [],
+      "topics": [
+        "study-delegating-filter"
+      ]
+    },
+    "selected-framework": {
+      "anchor": "study-chain-proxy",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "This bridge delegates to the Spring bean.",
+        "beta": "The delegate owns firewall and chain selection responsibilities.",
+        "gamma": "It uses MVC handler mappings farther downstream.",
+        "delta": "Controller code cannot choose which filters have already run."
+      },
+      "reason": "Distinguish the registered bridge from the security dispatcher.",
+      "rubric": [],
+      "topics": [
+        "study-chain-proxy"
+      ]
+    },
+    "chain-shape": {
+      "anchor": "study-security-filter-chain",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "Those describe applicability and the filters supplied by that chain.",
+        "beta": "Only the chosen list is invoked.",
+        "gamma": "These are not the security filters.",
+        "delta": "It describes requests and filters, not response selection."
+      },
+      "reason": "Inspect the list attached to the matching chain.",
+      "rubric": [],
+      "topics": [
+        "study-security-filter-chain"
+      ]
+    },
+    "overlap": {
+      "anchor": "study-multiple-chains",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "Spring does not merge the two lists.",
+        "beta": "Selection is by first match, not inherent specificity.",
+        "gamma": "Only the selected list participates.",
+        "delta": "Overlap is supported, so ordering matters."
+      },
+      "reason": "Verify the chosen chain before diagnosing observer invocation.",
+      "rubric": [],
+      "topics": [
+        "study-multiple-chains"
+      ]
+    },
+    "different-matchers": {
+      "anchor": "study-request-matching",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "Inner authorization rules do not change the chain matcher.",
+        "beta": "MVC handler resolution does not apply those rules.",
+        "gamma": "Only the first matching chain supplies its rule set.",
+        "delta": "The request must first enter the chain."
+      },
+      "reason": "Test chain selection separately from authorization rules.",
+      "rubric": [],
+      "topics": [
+        "study-request-matching"
+      ]
+    },
+    "trace-after": {
+      "anchor": "study-filter-ordering",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "The producer must run first on the inbound path.",
+        "beta": "Only the selected chain matters here.",
+        "gamma": "Servlet dispatch cannot be corrected through controller order.",
+        "delta": "That can cause duplicate execution and does not establish dependency order."
+      },
+      "reason": "Use an explicit filter position relative to the confirmed producer.",
+      "rubric": [],
+      "topics": [
+        "study-filter-ordering"
+      ]
+    },
+    "runtime-evidence": {
+      "anchor": "study-observe-chain",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Startup inventory does not prove execution.",
+        "beta": "This separates absence from a nonselected chain, short circuit and downstream issues.",
+        "gamma": "Secrets are unnecessary for correlation.",
+        "delta": "Several simultaneous changes make the cause harder to isolate."
+      },
+      "reason": "Compare configured lists and actual invocation on a sanitized fixture.",
+      "rubric": [],
+      "topics": [
+        "study-observe-chain"
+      ]
+    },
+    "code-order": {
+      "anchor": "study-multiple-chains",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "The broad fallback is listed first.",
+        "beta": "Matching lists are never merged.",
+        "gamma": "It matches first and ends evaluation.",
+        "delta": "Overlap does not prevent matching."
+      },
+      "reason": "Order the specific export matcher before the broad fallback when it should win.",
+      "rubric": [],
+      "topics": [
+        "study-multiple-chains"
+      ]
+    },
+    "diagnostic-plan": {
+      "anchor": "study-observe-chain",
+      "correct": [],
+      "feedback": {},
+      "reason": "Compare the startup chain matchers and list order to request-time evidence for one correlation ID. Confirm which first-match chain handled the report and whether the observer ran. If it belongs to a different chain, fix the selection order and check the fallback route too. If the observer runs before its producer, move it within the selected list and verify it receives the marker. Assert MVC still runs and disable temporary diagnostics.",
+      "rubric": [
+        "Name the container bridge and the Spring selection boundary.",
+        "Distinguish first matching chain from filter execution order.",
+        "Correlate sanitized startup and request-time evidence.",
+        "Verify both the report request and a fallback route after correction.",
+        "Avoid recording credentials and confirm MVC reachability."
+      ],
+      "topics": [
+        "study-observe-chain"
+      ]
+    }
+  }
+}

@@ -274,7 +274,7 @@ class LearningIT {
         assertThat(catalog.statusCode()).isEqualTo(200);
         assertThat(catalog.body()).isEqualTo(new tools.jackson.databind.ObjectMapper().writeValueAsString(
                 List.of(vocabulary, philosophySession(), httpAuthenticationSession(), statefulSession(), tokenSession(),
-                        jwtSession(), mechanismSession(), threatSession(), id)));
+                        jwtSession(), mechanismSession(), threatSession(), boundarySession(), servletSession(), id)));
         var lesson = get("/sessions/" + id + "/lesson");
         assertThat(lesson.statusCode()).isEqualTo(200);
         assertThat(lesson.body()).contains("http-401-and-403", "predict-the-response",
@@ -328,7 +328,8 @@ class LearningIT {
         assertThat(links).hasSize(16);
         assertThat(get("/sessions/" + id + "/topics").statusCode()).isEqualTo(200);
         assertThat(learning.assessmentCatalog()).containsExactly(id, philosophySession(), httpAuthenticationSession(),
-                statefulSession(), tokenSession(), jwtSession(), mechanismSession(), threatSession(), pilotSession());
+                statefulSession(), tokenSession(), jwtSession(), mechanismSession(), threatSession(),
+                boundarySession(), servletSession(), pilotSession());
         var paper = get("/sessions/" + id + "/assessment");
         assertThat(paper.statusCode()).isEqualTo(200);
         assertThat(paper.body()).contains("identity-and-access-vocabulary", "\"release\":1", "\"readingRelease\":4")
@@ -440,7 +441,7 @@ class LearningIT {
 
     @Test @Transactional void identicalLabelInAnotherSessionDoesNotAcquireLink() {
         UUID id = pilotSession();
-        UUID other = session("Session 2.1 — What Spring Security Does");
+        UUID other = session("Session 2.3 — Security Context and Authentication Model");
         jdbc.update("""
                 UPDATE devquest.source_item_mapping m SET label='Meaning of 401 Unauthorized', source_line=257
                 FROM devquest.curriculum_node n WHERE n.id=m.node_id AND n.stable_id=? AND m.position=0
@@ -478,6 +479,14 @@ class LearningIT {
         return session("Session 1.7 — Authentication Mechanism Comparison");
     }
 
+    private UUID boundarySession() {
+        return session("Session 2.1 — What Spring Security Does");
+    }
+
+    private UUID servletSession() {
+        return session("Session 2.2 — Servlet Filter Architecture");
+    }
+
     private UUID threatSession() {
         return session("Session 1.8 — Common Authentication Threats");
     }
@@ -506,7 +515,12 @@ class LearningIT {
                     + "session-reference, beta, server-sessions;opaque-access;jwt-access;api-keys;mutual-tls;identity-providers;revoke;scaling;storage;client-context;choose-mechanism",
             "Session 1.8 — Common Authentication Threats, common-authentication-threats, 1, Session 1.7 — Authentication Mechanism Comparison, "
                     + "exposure-triage, beta, credential-theft;password-reuse;brute-force;stuffing;token-leakage;replay;fixation;hijacking;"
-                    + "enumeration;logging;expiration;missing-revocation;broken-flow"
+                    + "enumeration;logging;expiration;missing-revocation;broken-flow",
+            "Session 2.1 — What Spring Security Does, what-spring-security-does, 1, Session 1.8 — Common Authentication Threats, "
+                    + "verified-caller, beta, authentication-support;authorization-support;common-protection;servlet-integration;before-controller;business-rules;framework-protocol",
+            "Session 2.2 — Servlet Filter Architecture, servlet-filter-architecture, 1, Session 2.1 — What Spring Security Does, "
+                    + "return-order, beta, servlet-filters;mvc-processing;pre-dispatch;delegating-filter;chain-proxy;security-filter-chain;"
+                    + "multiple-chains;request-matching;filter-ordering;observe-chain"
     })
     void servesBatchTopicsAndKeepsDraftsAndAttemptsSessionScoped(String title, String key, int readingRelease, String otherTitle,
             String question, String option, String anchors) throws Exception {

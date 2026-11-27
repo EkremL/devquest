@@ -1,0 +1,156 @@
+{
+  "key": "servlet-filter-architecture",
+  "release": 1,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 2 — Spring Security Foundations",
+    "sessionTitle": "Session 2.2 — Servlet Filter Architecture"
+  },
+  "objectives": {
+    "follow-filter-call": "Trace how a Servlet filter wraps and delegates downstream execution.",
+    "locate-mvc": "Distinguish the container bridge, security proxy and MVC front controller.",
+    "select-servlet-chain": "Predict the first matching chain and distinguish it from an authorization rule.",
+    "order-servlet-filters": "Place a diagnostic filter after the stage that produces its input.",
+    "observe-servlet-chain": "Correlate startup configuration, request-time invocations and MVC reachability."
+  },
+  "sections": [
+    {
+      "anchor": "follow-filter-call",
+      "title": "Follow the nested call",
+      "objectives": [
+        "follow-filter-call"
+      ]
+    },
+    {
+      "anchor": "locate-mvc",
+      "title": "Locate the Spring and MVC boundaries",
+      "objectives": [
+        "locate-mvc"
+      ]
+    },
+    {
+      "anchor": "select-servlet-chain",
+      "title": "Route into one security chain",
+      "objectives": [
+        "select-servlet-chain"
+      ]
+    },
+    {
+      "anchor": "order-servlet-filters",
+      "title": "Order the filter dependencies",
+      "objectives": [
+        "order-servlet-filters"
+      ]
+    },
+    {
+      "anchor": "observe-servlet-chain",
+      "title": "Diagnose the missing observer",
+      "objectives": [
+        "observe-servlet-chain"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 204,
+      "sourceLabel": "Servlet filters",
+      "objectives": [
+        "follow-filter-call"
+      ],
+      "passages": [
+        "study-servlet-filters"
+      ]
+    },
+    {
+      "sourceLine": 205,
+      "sourceLabel": "Normal Spring MVC request processing",
+      "objectives": [
+        "locate-mvc"
+      ],
+      "passages": [
+        "study-mvc-processing"
+      ]
+    },
+    {
+      "sourceLine": 206,
+      "sourceLabel": "Security processing before `DispatcherServlet`",
+      "objectives": [
+        "locate-mvc"
+      ],
+      "passages": [
+        "study-pre-dispatch"
+      ]
+    },
+    {
+      "sourceLine": 207,
+      "sourceLabel": "`DelegatingFilterProxy`",
+      "objectives": [
+        "locate-mvc"
+      ],
+      "passages": [
+        "study-delegating-filter"
+      ]
+    },
+    {
+      "sourceLine": 208,
+      "sourceLabel": "`FilterChainProxy`",
+      "objectives": [
+        "locate-mvc"
+      ],
+      "passages": [
+        "study-chain-proxy"
+      ]
+    },
+    {
+      "sourceLine": 209,
+      "sourceLabel": "`SecurityFilterChain`",
+      "objectives": [
+        "select-servlet-chain"
+      ],
+      "passages": [
+        "study-security-filter-chain"
+      ]
+    },
+    {
+      "sourceLine": 210,
+      "sourceLabel": "Multiple security filter chains",
+      "objectives": [
+        "select-servlet-chain"
+      ],
+      "passages": [
+        "study-multiple-chains"
+      ]
+    },
+    {
+      "sourceLine": 211,
+      "sourceLabel": "Request matching for filter chains",
+      "objectives": [
+        "select-servlet-chain"
+      ],
+      "passages": [
+        "study-request-matching"
+      ]
+    },
+    {
+      "sourceLine": 212,
+      "sourceLabel": "Filter ordering",
+      "objectives": [
+        "order-servlet-filters"
+      ],
+      "passages": [
+        "study-filter-ordering"
+      ]
+    },
+    {
+      "sourceLine": 213,
+      "sourceLabel": "Observing the active filter chain",
+      "objectives": [
+        "observe-servlet-chain"
+      ],
+      "passages": [
+        "study-observe-chain"
+      ]
+    }
+  ]
+}

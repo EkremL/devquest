@@ -12,6 +12,8 @@ import { FilterPathDebugger, HandlerRouting, MatcherExplorer, MissingChallengeLa
   ResponseContractLab, SecurityIncident } from './SecurityResponseLab'
 import { MechanismReview, MechanismRoute, StatePlacement, StorageAudit, WithdrawalBench } from './MechanismLab'
 import { AuthIncident, ContainmentProbe, ObservabilityAudit, SessionBoundary, SignalTriage } from './ThreatLab'
+import { BoundaryTrace, SpringContract, SpringDomain, SpringIdentity, SpringProtection } from './SpringBoundaryLab'
+import { ChainRouter, FilterOrder, ObserveChain, ServletCall, ServletDelegates } from './ServletFlowLab'
 import type { MissionId, ReportActivity } from './missionIds'
 import './missions.css'
 
@@ -350,6 +352,16 @@ const activities = {
   'review-auth-observability': ObservabilityAudit,
   'probe-auth-containment': ContainmentProbe,
   'confirm-auth-incident': AuthIncident,
+  'cross-spring-boundary': BoundaryTrace,
+  'inspect-spring-evidence': SpringIdentity,
+  'compare-spring-protections': SpringProtection,
+  'audit-spring-policy': SpringDomain,
+  'review-spring-boundary': SpringContract,
+  'follow-servlet-call': ServletCall,
+  'inspect-servlet-delegates': ServletDelegates,
+  'route-servlet-chain': ChainRouter,
+  'order-servlet-observer': FilterOrder,
+  'confirm-servlet-evidence': ObserveChain,
 } satisfies Record<MissionId, ComponentType<{ report: ReportActivity }>>
 
 export function MissionActivity({ id, report }: { id: MissionId; report: ReportActivity }) {
