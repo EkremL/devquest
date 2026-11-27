@@ -1,0 +1,398 @@
+{
+  "paper": {
+    "key": "authentication-components",
+    "release": 1,
+    "readingRelease": 1,
+    "title": "Authentication Components",
+    "context": "Reason about configured Spring Security 7.1 components, fictional account data and the separation between provider output and authorization.",
+    "objectives": {
+      "route-authentication": "Trace token type, manager delegation and provider outcomes.",
+      "inspect-account-load": "Read the account snapshot and its policy inputs.",
+      "compare-password": "Distinguish account lookup from password verification.",
+      "trace-provider-outcomes": "Separate account eligibility, successful results and safe failure handling.",
+      "verify-provider-contract": "Build and validate a contract that preserves identity, proof and eligibility boundaries."
+    },
+    "questions": [
+      {
+        "id": "api-contract",
+        "objective": "route-authentication",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A custom Servlet integration receives a successful result from AuthenticationManager.authenticate. Which operation is still owned by the integration?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Select the provider by inspecting database rows",
+          "beta": "Associate the returned result with the required security context",
+          "gamma": "Reverse the password encoding for downstream code",
+          "delta": "Convert each authority into a user account"
+        }
+      },
+      {
+        "id": "ordered-providers",
+        "objective": "route-authentication",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "Two providers both support a token type. The first returns null from authenticate and the second verifies the fixture. No parent exists. What does ProviderManager return?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The input token unchanged",
+          "beta": "A merged object assembled from both providers",
+          "gamma": "The second provider’s successful result",
+          "delta": "ProviderNotFoundException as soon as the first returns null"
+        }
+      },
+      {
+        "id": "support-method",
+        "objective": "route-authentication",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A diagnostic records supports(token.getClass()) == true. The provider has not called authenticate. What has the diagnostic established?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The configured provider can consider this type",
+          "beta": "Password evidence was accepted",
+          "gamma": "The current account is enabled",
+          "delta": "The result should be placed in the context"
+        }
+      },
+      {
+        "id": "mechanism-fit",
+        "objective": "route-authentication",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A bearer-token integration creates a bearer request token, but the manager has only a DAO password provider and no parent. What should an engineer inspect first?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The application’s report authority mapper",
+          "beta": "The password row for the bearer subject",
+          "gamma": "The public error string for the controller",
+          "delta": "The authentication chain’s configured manager and supported providers"
+        }
+      },
+      {
+        "id": "snapshot-read",
+        "objective": "inspect-account-load",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A username lookup returned a UserDetails with isEnabled() true and report:read. The password check has not run. What is justified?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The incoming caller owns the account",
+          "beta": "The account projection carries policy inputs but verification is still pending",
+          "gamma": "The route authorization result is already known",
+          "delta": "The projection proves the record is current forever"
+        }
+      },
+      {
+        "id": "user-service",
+        "objective": "inspect-account-load",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A service implementation cannot find the user under the configured lookup rules. What should its loadUserByUsername contract do?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Throw UsernameNotFoundException",
+          "beta": "Return null for the provider to treat as a match",
+          "gamma": "Return a generic account with default grants",
+          "delta": "Write a response using a controller status code"
+        }
+      },
+      {
+        "id": "granted-authority",
+        "objective": "inspect-account-load",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "The database grants invoice:view. An incoming form includes a field named invoice:approve. Where should returned grants come from?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The incoming field if it matches an authority-like name",
+          "beta": "Every capability listed in the controller",
+          "gamma": "Trusted authorities derived by the configured provider and account mapping",
+          "delta": "All authorities owned by the same database team"
+        }
+      },
+      {
+        "id": "salted-match",
+        "objective": "compare-password",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A developer compares encoder.encode(presented) to an existing BCrypt string and sees different values for a known matching fixture. What should the test do?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Decode the stored string into the original password",
+          "beta": "Treat every different string as a mismatch",
+          "gamma": "Store a raw password copy for comparisons",
+          "delta": "Call encoder.matches(presented, storedEncoding)"
+        }
+      },
+      {
+        "id": "locked-stops",
+        "objective": "trace-provider-outcomes",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A provider throws LockedException. A later provider supports the same type. Under Spring Security 7.1.0 ProviderManager behavior, what happens?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The manager continues after every AuthenticationException",
+          "beta": "The locked failure is propagated without trying the later provider",
+          "gamma": "The manager returns null so MVC can retry in the controller",
+          "delta": "The later provider decides because the first did not return a token"
+        }
+      },
+      {
+        "id": "success-proof",
+        "objective": "trace-provider-outcomes",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "The DAO fixture returns a verified token whose credentials are null and whose authorities include report:read. What does the result show?",
+        "sample": "Authentication accepted = manager.authenticate(submitted);\nObject credentials = accepted.getCredentials();",
+        "language": "java",
+        "choices": {
+          "alpha": "The successful manager path can erase credentials and retain trusted grants",
+          "beta": "The password comparison must have been skipped",
+          "gamma": "The principal was granted permission to every stored report",
+          "delta": "The manager already persisted the Servlet session"
+        }
+      },
+      {
+        "id": "failure-visibility",
+        "objective": "verify-provider-contract",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "Unknown accounts and incorrect passwords should appear the same to an external client. A new handler prints underlying exception details. What change addresses the defect?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Turn both failures into a successful anonymous login result",
+          "beta": "Report the account existence in a separate header",
+          "gamma": "Restore a consistent public failure with sanitized internal correlation",
+          "delta": "Log the submitted password so the internal dashboard can classify it"
+        }
+      },
+      {
+        "id": "deployment-review",
+        "objective": "verify-provider-contract",
+        "type": "written",
+        "difficulty": "Advanced",
+        "prompt": "Write a verification plan for a Servlet application with password and bearer integrations. Identify who creates each request token, what the provider evaluates, how denied and accepted results are handled, and what your tests should inspect.",
+        "sample": "",
+        "language": "text",
+        "choices": {}
+      }
+    ]
+  },
+  "keys": {
+    "api-contract": {
+      "anchor": "study-authentication-manager",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Provider routing belongs to the configured manager.",
+        "beta": "A manager call alone does not install the result.",
+        "gamma": "The password encoder implements one-way verification.",
+        "delta": "Authority and caller identity serve different purposes."
+      },
+      "reason": "Treat result verification and context association as separate boundaries.",
+      "rubric": [],
+      "topics": [
+        "study-authentication-manager"
+      ]
+    },
+    "ordered-providers": {
+      "anchor": "study-provider-manager",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "The submitted token is not the verification result.",
+        "beta": "The first did not produce a result.",
+        "gamma": "A null result lets the search continue.",
+        "delta": "The manager still considers later candidates."
+      },
+      "reason": "Distinguish declining to decide from a terminal exception.",
+      "rubric": [],
+      "topics": [
+        "study-provider-manager"
+      ]
+    },
+    "support-method": {
+      "anchor": "study-authentication-provider",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "Support is a type-level check.",
+        "beta": "Evidence is processed by authenticate.",
+        "gamma": "This call only receives a class.",
+        "delta": "No verified result exists yet."
+      },
+      "reason": "Record provider selection and verification outcome separately.",
+      "rubric": [],
+      "topics": [
+        "study-authentication-provider"
+      ]
+    },
+    "mechanism-fit": {
+      "anchor": "study-multiple-mechanisms",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "No provider has accepted the input type yet.",
+        "beta": "The configured DAO path expects a different token type.",
+        "gamma": "That does not provide the missing verifier.",
+        "delta": "This integration needs a verifier for the input it creates."
+      },
+      "reason": "Verify input token type and configured manager before changing authorization.",
+      "rubric": [],
+      "topics": [
+        "study-multiple-mechanisms"
+      ]
+    },
+    "snapshot-read": {
+      "anchor": "study-user-details",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Finding the account does not verify the caller.",
+        "beta": "These fields are inputs to the provider.",
+        "gamma": "Request and domain scope have not been evaluated.",
+        "delta": "The projection reflects a lookup at a particular boundary."
+      },
+      "reason": "Trace lookup, account checks and proof verification as separate steps.",
+      "rubric": [],
+      "topics": [
+        "study-user-details"
+      ]
+    },
+    "user-service": {
+      "anchor": "study-user-details-service",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "The provider can translate that internal result to its failure policy.",
+        "beta": "The service contract expects a user or an exception.",
+        "gamma": "That could give the provider unrelated account data.",
+        "delta": "The data lookup is separate from HTTP failure handling."
+      },
+      "reason": "Keep account lookup and public error policy in their own layers.",
+      "rubric": [],
+      "topics": [
+        "study-user-details-service"
+      ]
+    },
+    "granted-authority": {
+      "anchor": "study-granted-authority",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "User-controlled fields do not grant permissions.",
+        "beta": "A controller specifies requirements, not per-user grants.",
+        "gamma": "Return only grants established through the authentication configuration and account data.",
+        "delta": "Team membership is not equivalent to every capability."
+      },
+      "reason": "Trace a grant to its trusted source and test it independently of identity acceptance.",
+      "rubric": [],
+      "topics": [
+        "study-granted-authority"
+      ]
+    },
+    "salted-match": {
+      "anchor": "study-password-encoder",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "BCrypt has no password decryption operation.",
+        "beta": "Independent encodings can contain different salts.",
+        "gamma": "That defeats password storage protections.",
+        "delta": "The verifier uses the parameters encoded with the stored representation."
+      },
+      "reason": "Use the configured matching API with the original stored representation.",
+      "rubric": [],
+      "topics": [
+        "study-password-encoder"
+      ]
+    },
+    "locked-stops": {
+      "anchor": "study-account-status",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "AccountStatusException is a terminal case.",
+        "beta": "LockedException is an AccountStatusException.",
+        "gamma": "The terminal failure is thrown.",
+        "delta": "The first provider raised a terminating account failure."
+      },
+      "reason": "Verify terminal account failures explicitly when multiple providers can support one type.",
+      "rubric": [],
+      "topics": [
+        "study-account-status"
+      ]
+    },
+    "success-proof": {
+      "anchor": "study-success",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "Credential erasure and authority mapping serve independent purposes.",
+        "beta": "Erasing after verification does not imply a skipped check.",
+        "gamma": "A grant does not replace resource policy.",
+        "delta": "Association and persistence are separate from authentication."
+      },
+      "reason": "Assert the verified identity and grant without expecting raw proof to survive.",
+      "rubric": [],
+      "topics": [
+        "study-success"
+      ]
+    },
+    "failure-visibility": {
+      "anchor": "study-failure",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "A failure should not establish verified state.",
+        "beta": "That also exposes the distinction.",
+        "gamma": "The public contract can remain uniform while engineering retains diagnostic context.",
+        "delta": "Credential material should not enter logs."
+      },
+      "reason": "Assert equivalent public behavior for representative failures and test redacted diagnostics.",
+      "rubric": [],
+      "topics": [
+        "study-failure"
+      ]
+    },
+    "deployment-review": {
+      "anchor": "study-failure",
+      "correct": [],
+      "feedback": {},
+      "reason": "The integration creates a typed request Authentication. Configure the manager for those types and verify DAO lookup, password matching, and rejection of locked or disabled accounts. Bearer verification belongs to its configured resource-server provider. On successful return check trusted identity and grants, assert credential erasure where supported, and let the integration install the result. On failure establish no verified principal, use uniform public feedback and correlate sanitized internal reason codes. Test unsupported types, wrong proof, locked and valid accounts, and verify separate authorization.",
+      "rubric": [
+        "Distinguish manager, provider and Servlet integration.",
+        "Cover account lookup, proof and eligibility.",
+        "Specify trusted principals, authorities and credential erasure.",
+        "Test no-result and negative paths with a consistent public response.",
+        "Distinguish provider success and downstream authorization."
+      ],
+      "topics": [
+        "study-failure"
+      ]
+    }
+  }
+}

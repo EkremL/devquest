@@ -31,7 +31,8 @@ class AssessmentEngineTest {
     @CsvSource({"http-401-and-403, 3", "identity-and-access-vocabulary, 1", "security-philosophy, 1",
             "http-authentication-basics, 1", "stateful-authentication, 1", "stateless-and-token-based-authentication, 1",
             "jwt-foundations, 1", "authentication-mechanism-comparison, 1", "common-authentication-threats, 1",
-            "what-spring-security-does, 1", "servlet-filter-architecture, 1"})
+            "what-spring-security-does, 1", "servlet-filter-architecture, 1", "security-context-and-authentication-model, 1",
+            "authentication-components, 1"})
     void activePaperUsesTheSingleAnswerBlueprint(String key, int release) {
         var mapper = new ObjectMapper();
         var engine = new AssessmentEngine(mapper, new LessonPackage(mapper));
@@ -53,7 +54,8 @@ class AssessmentEngineTest {
     @CsvSource({"identity-and-access-vocabulary, 4, 16", "security-philosophy, 1, 12",
             "http-authentication-basics, 1, 11", "stateful-authentication, 1, 15", "stateless-and-token-based-authentication, 1, 13",
             "jwt-foundations, 1, 20", "authentication-mechanism-comparison, 1, 11", "common-authentication-threats, 1, 13",
-            "what-spring-security-does, 1, 7", "servlet-filter-architecture, 1, 10"})
+            "what-spring-security-does, 1, 7", "servlet-filter-architecture, 1, 10", "security-context-and-authentication-model, 1, 11",
+            "authentication-components, 1, 11"})
     void authoredReleaseGradesEachChoiceAgainstItsOwnAnswerKey(String key, int readingRelease, int topicCount) throws Exception {
         var mapper = new ObjectMapper();
         var engine = new AssessmentEngine(mapper, new LessonPackage(mapper));

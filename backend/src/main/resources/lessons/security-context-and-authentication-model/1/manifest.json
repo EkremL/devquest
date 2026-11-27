@@ -1,0 +1,166 @@
+{
+  "key": "security-context-and-authentication-model",
+  "release": 1,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 2 — Spring Security Foundations",
+    "sessionTitle": "Session 2.3 — Security Context and Authentication Model"
+  },
+  "objectives": {
+    "open-context": "Inspect identity, credentials and granted authorities through the Spring Security object model.",
+    "compare-trust": "Distinguish absent, unauthenticated, anonymous and verified evidence.",
+    "trace-context-life": "Trace holder, context and repository responsibilities across a synchronous request.",
+    "compare-thread-context": "Compare thread-local isolation with explicit task-scoped propagation.",
+    "verify-context-cleanup": "Validate downstream trust, explicit propagation and cleanup on failure."
+  },
+  "sections": [
+    {
+      "anchor": "open-context",
+      "title": "Open the context cabinet",
+      "objectives": [
+        "open-context"
+      ]
+    },
+    {
+      "anchor": "compare-trust",
+      "title": "Compare trust states",
+      "objectives": [
+        "compare-trust"
+      ]
+    },
+    {
+      "anchor": "trace-context-life",
+      "title": "Trace the request lifetime",
+      "objectives": [
+        "trace-context-life"
+      ]
+    },
+    {
+      "anchor": "compare-thread-context",
+      "title": "Cross the worker boundary",
+      "objectives": [
+        "compare-thread-context"
+      ]
+    },
+    {
+      "anchor": "verify-context-cleanup",
+      "title": "Verify the cleanup contract",
+      "objectives": [
+        "verify-context-cleanup"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 217,
+      "sourceLabel": "`SecurityContext`",
+      "objectives": [
+        "open-context"
+      ],
+      "passages": [
+        "study-security-context"
+      ]
+    },
+    {
+      "sourceLine": 219,
+      "sourceLabel": "`Authentication`",
+      "objectives": [
+        "open-context"
+      ],
+      "passages": [
+        "study-authentication"
+      ]
+    },
+    {
+      "sourceLine": 220,
+      "sourceLabel": "Principal",
+      "objectives": [
+        "open-context"
+      ],
+      "passages": [
+        "study-principal"
+      ]
+    },
+    {
+      "sourceLine": 221,
+      "sourceLabel": "Credentials",
+      "objectives": [
+        "open-context"
+      ],
+      "passages": [
+        "study-credentials"
+      ]
+    },
+    {
+      "sourceLine": 222,
+      "sourceLabel": "Authorities",
+      "objectives": [
+        "open-context"
+      ],
+      "passages": [
+        "study-authorities"
+      ]
+    },
+    {
+      "sourceLine": 223,
+      "sourceLabel": "Anonymous authentication",
+      "objectives": [
+        "compare-trust"
+      ],
+      "passages": [
+        "study-anonymous"
+      ]
+    },
+    {
+      "sourceLine": 224,
+      "sourceLabel": "Authenticated versus unauthenticated `Authentication`",
+      "objectives": [
+        "compare-trust"
+      ],
+      "passages": [
+        "study-authenticated-state"
+      ]
+    },
+    {
+      "sourceLine": 218,
+      "sourceLabel": "`SecurityContextHolder`",
+      "objectives": [
+        "trace-context-life"
+      ],
+      "passages": [
+        "study-holder"
+      ]
+    },
+    {
+      "sourceLine": 225,
+      "sourceLabel": "Security context lifecycle",
+      "objectives": [
+        "trace-context-life"
+      ],
+      "passages": [
+        "study-context-lifecycle"
+      ]
+    },
+    {
+      "sourceLine": 226,
+      "sourceLabel": "Thread-local behavior",
+      "objectives": [
+        "compare-thread-context"
+      ],
+      "passages": [
+        "study-thread-local"
+      ]
+    },
+    {
+      "sourceLine": 227,
+      "sourceLabel": "Clearing security context safely",
+      "objectives": [
+        "verify-context-cleanup"
+      ],
+      "passages": [
+        "study-safe-clearing"
+      ]
+    }
+  ]
+}

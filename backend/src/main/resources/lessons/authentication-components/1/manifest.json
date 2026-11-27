@@ -1,0 +1,166 @@
+{
+  "key": "authentication-components",
+  "release": 1,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 2 — Spring Security Foundations",
+    "sessionTitle": "Session 2.4 — Authentication Components"
+  },
+  "objectives": {
+    "route-authentication": "Trace token type, manager delegation and provider outcomes.",
+    "inspect-account-load": "Read the account snapshot and its policy inputs.",
+    "compare-password": "Distinguish account lookup from password verification.",
+    "trace-provider-outcomes": "Separate account eligibility, successful results and safe failure handling.",
+    "verify-provider-contract": "Build and validate a contract that preserves identity, proof and eligibility boundaries."
+  },
+  "sections": [
+    {
+      "anchor": "route-authentication",
+      "title": "Route the incoming token",
+      "objectives": [
+        "route-authentication"
+      ]
+    },
+    {
+      "anchor": "inspect-account-load",
+      "title": "Inspect the account projection",
+      "objectives": [
+        "inspect-account-load"
+      ]
+    },
+    {
+      "anchor": "compare-password",
+      "title": "Check proof against the stored representation",
+      "objectives": [
+        "compare-password"
+      ]
+    },
+    {
+      "anchor": "trace-provider-outcomes",
+      "title": "Inspect the terminal outcome",
+      "objectives": [
+        "trace-provider-outcomes"
+      ]
+    },
+    {
+      "anchor": "verify-provider-contract",
+      "title": "Validate the provider release",
+      "objectives": [
+        "verify-provider-contract"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 231,
+      "sourceLabel": "`AuthenticationManager`",
+      "objectives": [
+        "route-authentication"
+      ],
+      "passages": [
+        "study-authentication-manager"
+      ]
+    },
+    {
+      "sourceLine": 232,
+      "sourceLabel": "`ProviderManager`",
+      "objectives": [
+        "route-authentication"
+      ],
+      "passages": [
+        "study-provider-manager"
+      ]
+    },
+    {
+      "sourceLine": 233,
+      "sourceLabel": "`AuthenticationProvider`",
+      "objectives": [
+        "route-authentication"
+      ],
+      "passages": [
+        "study-authentication-provider"
+      ]
+    },
+    {
+      "sourceLine": 234,
+      "sourceLabel": "Multiple authentication mechanisms",
+      "objectives": [
+        "route-authentication"
+      ],
+      "passages": [
+        "study-multiple-mechanisms"
+      ]
+    },
+    {
+      "sourceLine": 235,
+      "sourceLabel": "`UserDetails`",
+      "objectives": [
+        "inspect-account-load"
+      ],
+      "passages": [
+        "study-user-details"
+      ]
+    },
+    {
+      "sourceLine": 236,
+      "sourceLabel": "`UserDetailsService`",
+      "objectives": [
+        "inspect-account-load"
+      ],
+      "passages": [
+        "study-user-details-service"
+      ]
+    },
+    {
+      "sourceLine": 237,
+      "sourceLabel": "`GrantedAuthority`",
+      "objectives": [
+        "inspect-account-load"
+      ],
+      "passages": [
+        "study-granted-authority"
+      ]
+    },
+    {
+      "sourceLine": 238,
+      "sourceLabel": "`PasswordEncoder`",
+      "objectives": [
+        "compare-password"
+      ],
+      "passages": [
+        "study-password-encoder"
+      ]
+    },
+    {
+      "sourceLine": 239,
+      "sourceLabel": "Account-status checks",
+      "objectives": [
+        "trace-provider-outcomes"
+      ],
+      "passages": [
+        "study-account-status"
+      ]
+    },
+    {
+      "sourceLine": 240,
+      "sourceLabel": "Authentication success",
+      "objectives": [
+        "trace-provider-outcomes"
+      ],
+      "passages": [
+        "study-success"
+      ]
+    },
+    {
+      "sourceLine": 241,
+      "sourceLabel": "Authentication failure",
+      "objectives": [
+        "verify-provider-contract"
+      ],
+      "passages": [
+        "study-failure"
+      ]
+    }
+  ]
+}

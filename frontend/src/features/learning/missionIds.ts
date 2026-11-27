@@ -12,6 +12,8 @@ export const missionIds = [
   'triage-auth-signals', 'verify-session-boundary', 'review-auth-observability', 'probe-auth-containment', 'confirm-auth-incident',
   'cross-spring-boundary', 'inspect-spring-evidence', 'compare-spring-protections', 'audit-spring-policy', 'review-spring-boundary',
   'follow-servlet-call', 'inspect-servlet-delegates', 'route-servlet-chain', 'order-servlet-observer', 'confirm-servlet-evidence',
+  'open-auth-context', 'compare-context-trust', 'walk-context-lifecycle', 'compare-context-threads', 'review-context-cleanup',
+  'route-auth-provider', 'inspect-provider-account', 'compare-provider-proof', 'trace-provider-result', 'review-provider-wiring',
 ] as const
 
 export type MissionId = typeof missionIds[number]

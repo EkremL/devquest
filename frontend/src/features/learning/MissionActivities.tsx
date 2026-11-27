@@ -14,6 +14,8 @@ import { MechanismReview, MechanismRoute, StatePlacement, StorageAudit, Withdraw
 import { AuthIncident, ContainmentProbe, ObservabilityAudit, SessionBoundary, SignalTriage } from './ThreatLab'
 import { BoundaryTrace, SpringContract, SpringDomain, SpringIdentity, SpringProtection } from './SpringBoundaryLab'
 import { ChainRouter, FilterOrder, ObserveChain, ServletCall, ServletDelegates } from './ServletFlowLab'
+import { ContextCabinet, ContextLifecycle, ContextRelease, ContextThreads, ContextTrust } from './ContextLab'
+import { AccountProjection, PasswordComparison, ProviderOutcome, ProviderRelease, ProviderRouter } from './ProviderLab'
 import type { MissionId, ReportActivity } from './missionIds'
 import './missions.css'
 
@@ -362,6 +364,16 @@ const activities = {
   'route-servlet-chain': ChainRouter,
   'order-servlet-observer': FilterOrder,
   'confirm-servlet-evidence': ObserveChain,
+  'open-auth-context': ContextCabinet,
+  'compare-context-trust': ContextTrust,
+  'walk-context-lifecycle': ContextLifecycle,
+  'compare-context-threads': ContextThreads,
+  'review-context-cleanup': ContextRelease,
+  'route-auth-provider': ProviderRouter,
+  'inspect-provider-account': AccountProjection,
+  'compare-provider-proof': PasswordComparison,
+  'trace-provider-result': ProviderOutcome,
+  'review-provider-wiring': ProviderRelease,
 } satisfies Record<MissionId, ComponentType<{ report: ReportActivity }>>
 
 export function MissionActivity({ id, report }: { id: MissionId; report: ReportActivity }) {

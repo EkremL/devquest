@@ -36,7 +36,9 @@ class LessonPackage {
             "route-mechanism", "probe-withdrawal", "trace-mechanism-state", "audit-mechanism-storage", "review-mechanism-choice",
             "triage-auth-signals", "verify-session-boundary", "review-auth-observability", "probe-auth-containment", "confirm-auth-incident",
             "cross-spring-boundary", "inspect-spring-evidence", "compare-spring-protections", "audit-spring-policy", "review-spring-boundary",
-            "follow-servlet-call", "inspect-servlet-delegates", "route-servlet-chain", "order-servlet-observer", "confirm-servlet-evidence");
+            "follow-servlet-call", "inspect-servlet-delegates", "route-servlet-chain", "order-servlet-observer", "confirm-servlet-evidence",
+            "open-auth-context", "compare-context-trust", "walk-context-lifecycle", "compare-context-threads", "review-context-cleanup",
+            "route-auth-provider", "inspect-provider-account", "compare-provider-proof", "trace-provider-result", "review-provider-wiring");
     private final Optional<Content> pilot;
     private final List<Content> published;
     private final List<Content> archived;
@@ -48,7 +50,8 @@ class LessonPackage {
                 load(json, "stateful-authentication", 2), load(json, "stateless-and-token-based-authentication", 1),
                 load(json, "jwt-foundations", 1), load(json, "authentication-mechanism-comparison", 1),
                 load(json, "common-authentication-threats", 1),
-                load(json, "what-spring-security-does", 1), load(json, "servlet-filter-architecture", 1), pilot).flatMap(Optional::stream).toList();
+                load(json, "what-spring-security-does", 1), load(json, "servlet-filter-architecture", 1),
+                load(json, "security-context-and-authentication-model", 1), load(json, "authentication-components", 1), pilot).flatMap(Optional::stream).toList();
         archived = java.util.stream.Stream.concat(
                 java.util.stream.Stream.of("identity-and-access-vocabulary", "http-401-and-403")
                         .flatMap(key -> java.util.stream.IntStream.rangeClosed(1, 4).mapToObj(release -> load(json, key, release))),

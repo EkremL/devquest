@@ -274,7 +274,7 @@ class LearningIT {
         assertThat(catalog.statusCode()).isEqualTo(200);
         assertThat(catalog.body()).isEqualTo(new tools.jackson.databind.ObjectMapper().writeValueAsString(
                 List.of(vocabulary, philosophySession(), httpAuthenticationSession(), statefulSession(), tokenSession(),
-                        jwtSession(), mechanismSession(), threatSession(), boundarySession(), servletSession(), id)));
+                        jwtSession(), mechanismSession(), threatSession(), boundarySession(), servletSession(), contextSession(), providersSession(), id)));
         var lesson = get("/sessions/" + id + "/lesson");
         assertThat(lesson.statusCode()).isEqualTo(200);
         assertThat(lesson.body()).contains("http-401-and-403", "predict-the-response",
@@ -329,7 +329,7 @@ class LearningIT {
         assertThat(get("/sessions/" + id + "/topics").statusCode()).isEqualTo(200);
         assertThat(learning.assessmentCatalog()).containsExactly(id, philosophySession(), httpAuthenticationSession(),
                 statefulSession(), tokenSession(), jwtSession(), mechanismSession(), threatSession(),
-                boundarySession(), servletSession(), pilotSession());
+                boundarySession(), servletSession(), contextSession(), providersSession(), pilotSession());
         var paper = get("/sessions/" + id + "/assessment");
         assertThat(paper.statusCode()).isEqualTo(200);
         assertThat(paper.body()).contains("identity-and-access-vocabulary", "\"release\":1", "\"readingRelease\":4")
@@ -441,7 +441,7 @@ class LearningIT {
 
     @Test @Transactional void identicalLabelInAnotherSessionDoesNotAcquireLink() {
         UUID id = pilotSession();
-        UUID other = session("Session 2.3 — Security Context and Authentication Model");
+        UUID other = session("Session 2.5 — Initial Secured REST API");
         jdbc.update("""
                 UPDATE devquest.source_item_mapping m SET label='Meaning of 401 Unauthorized', source_line=257
                 FROM devquest.curriculum_node n WHERE n.id=m.node_id AND n.stable_id=? AND m.position=0
@@ -483,6 +483,14 @@ class LearningIT {
         return session("Session 2.1 — What Spring Security Does");
     }
 
+    private UUID providersSession() {
+        return session("Session 2.4 — Authentication Components");
+    }
+
+    private UUID contextSession() {
+        return session("Session 2.3 — Security Context and Authentication Model");
+    }
+
     private UUID servletSession() {
         return session("Session 2.2 — Servlet Filter Architecture");
     }
@@ -520,7 +528,13 @@ class LearningIT {
                     + "verified-caller, beta, authentication-support;authorization-support;common-protection;servlet-integration;before-controller;business-rules;framework-protocol",
             "Session 2.2 — Servlet Filter Architecture, servlet-filter-architecture, 1, Session 2.1 — What Spring Security Does, "
                     + "return-order, beta, servlet-filters;mvc-processing;pre-dispatch;delegating-filter;chain-proxy;security-filter-chain;"
-                    + "multiple-chains;request-matching;filter-ordering;observe-chain"
+                    + "multiple-chains;request-matching;filter-ordering;observe-chain",
+            "Session 2.3 — Security Context and Authentication Model, security-context-and-authentication-model, 1, Session 2.2 — Servlet Filter Architecture, "
+                    + "empty-container, beta, security-context;holder;authentication;principal;credentials;authorities;anonymous;authenticated-state;"
+                    + "context-lifecycle;thread-local;safe-clearing",
+            "Session 2.4 — Authentication Components, authentication-components, 1, Session 2.3 — Security Context and Authentication Model, "
+                    + "api-contract, beta, authentication-manager;provider-manager;authentication-provider;multiple-mechanisms;user-details;user-details-service;"
+                    + "granted-authority;password-encoder;account-status;success;failure"
     })
     void servesBatchTopicsAndKeepsDraftsAndAttemptsSessionScoped(String title, String key, int readingRelease, String otherTitle,
             String question, String option, String anchors) throws Exception {

@@ -1,0 +1,398 @@
+{
+  "paper": {
+    "key": "security-context-and-authentication-model",
+    "release": 1,
+    "readingRelease": 1,
+    "title": "Security Context and Authentication Model",
+    "context": "Use the stated Servlet and thread model. Distinguish an object’s fields, its trust level and the lifetime of its association with the executing thread.",
+    "objectives": {
+      "open-context": "Inspect identity, credentials and granted authorities through the Spring Security object model.",
+      "compare-trust": "Distinguish absent, unauthenticated, anonymous and verified evidence.",
+      "trace-context-life": "Trace holder, context and repository responsibilities across a synchronous request.",
+      "compare-thread-context": "Compare thread-local isolation with explicit task-scoped propagation.",
+      "verify-context-cleanup": "Validate downstream trust, explicit propagation and cleanup on failure."
+    },
+    "questions": [
+      {
+        "id": "empty-container",
+        "objective": "open-context",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A context object is present at request entry, but getAuthentication() returns null. What can a downstream policy infer from this object?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "A successful provider call has already happened",
+          "beta": "This context does not supply a current Authentication",
+          "gamma": "The principal is necessarily anonymousUser",
+          "delta": "The repository has authenticated the request"
+        }
+      },
+      {
+        "id": "active-holder",
+        "objective": "trace-context-life",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "Code calls createEmptyContext() and sets a verified Authentication on the returned object. In the default strategy, unrelated code calling getContext() does not see it yet. What explains this?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The authority list must have more than one entry",
+          "beta": "The holder reads only persistent sessions",
+          "gamma": "Creating the object does not associate it with the holder",
+          "delta": "The context is attached on every principal read"
+        }
+      },
+      {
+        "id": "submitted-evidence",
+        "objective": "open-context",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "An authentication filter constructs a token from form input and passes it to the manager. Which distinction matters before using the token for authorization?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "All Authentication implementations represent the same verified state",
+          "beta": "The manager’s trusted result is distinct from the submitted token",
+          "gamma": "The URL determines whether the token is trusted",
+          "delta": "The presence of credentials makes the token verified"
+        }
+      },
+      {
+        "id": "principal-contract",
+        "objective": "open-context",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "Two configured mechanisms reach the same controller. One returns a UserDetails principal and the other a Jwt. What is an appropriate way to identify the caller?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Always cast getPrincipal() to UserDetails",
+          "beta": "Read the credentials as the username",
+          "gamma": "Use the supported name or a deliberate mapping from each accepted principal type",
+          "delta": "Treat the first granted authority as the username"
+        }
+      },
+      {
+        "id": "erased-proof",
+        "objective": "open-context",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "The manager returned an accepted token, and getCredentials() is null when an audit event is created. What should the event generator do?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Record a verified identity and redacted metadata if required",
+          "beta": "Reject the accepted identity because evidence must remain readable",
+          "gamma": "Recover the submitted secret for the log",
+          "delta": "Use the password hash as the principal"
+        }
+      },
+      {
+        "id": "permission-scope",
+        "objective": "open-context",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A verified token carries report:read. The endpoint receives a report ID from another team. What remains to be evaluated?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Nothing if the grant exists",
+          "beta": "Whether a request field claims the right team",
+          "gamma": "Only whether the principal name is nonblank",
+          "delta": "Whether the verified caller may read that stored report"
+        }
+      },
+      {
+        "id": "true-placeholder",
+        "objective": "compare-trust",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A support trace shows an AnonymousAuthenticationToken with isAuthenticated() true. A route requires a verified account. Which check addresses the distinction?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Require a non-null token",
+          "beta": "Use the framework’s anonymous-aware trust decision",
+          "gamma": "Require a display name",
+          "delta": "Treat any granted authority as a login result"
+        }
+      },
+      {
+        "id": "trusted-construction",
+        "objective": "compare-trust",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A test compares an unauthenticated UsernamePasswordAuthenticationToken and a verified result returned by a configured provider. What does the boolean tell the test?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The first marks proposed evidence and the second records accepted trust in this mechanism",
+          "beta": "A true boolean universally proves a verified human",
+          "gamma": "A false boolean proves the caller does not exist",
+          "delta": "The first token should be used for access because it still has credentials"
+        }
+      },
+      {
+        "id": "save-boundary",
+        "objective": "trace-context-life",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A custom authentication component changes the holder during a request. On a later request the context is missing. The configured SecurityContextHolderFilter uses explicit save. Which hypothesis fits?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Thread-local values should survive any later request",
+          "beta": "A later MVC mapping erased the password hash",
+          "gamma": "The updated context was never saved to its configured repository",
+          "delta": "A larger authority list would persist the context"
+        }
+      },
+      {
+        "id": "pool-context",
+        "objective": "compare-thread-context",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A normal pool worker executes a job submitted within a verified Servlet request. The default holder strategy is used. What should the developer assume?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The worker uses the most recent request context automatically",
+          "beta": "Propagation has to be explicit if the task needs the request identity",
+          "gamma": "Every job should switch the application to a global strategy",
+          "delta": "Authority scope transfers, but the principal does not"
+        }
+      },
+      {
+        "id": "exception-restore",
+        "objective": "verify-context-cleanup",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A nested operation temporarily uses a supplied context on a worker that already has a legitimate outer context. Its delegate throws. What should the supported wrapper do?",
+        "sample": "new DelegatingSecurityContextRunnable(job, selectedContext).run();",
+        "language": "java",
+        "choices": {
+          "alpha": "Restore the outer context while allowing the failure to propagate",
+          "beta": "Keep the supplied context for the next task",
+          "gamma": "Always erase the legitimate outer context",
+          "delta": "Return success after cleanup"
+        }
+      },
+      {
+        "id": "worker-review",
+        "objective": "verify-context-cleanup",
+        "type": "written",
+        "difficulty": "Advanced",
+        "prompt": "Write a test plan for a verified user’s report job on a reused worker. Explain how identity is established, how it reaches the worker and what to assert after normal and exceptional returns. Include the anonymous and no-propagation cases.",
+        "sample": "",
+        "language": "text",
+        "choices": {}
+      }
+    ]
+  },
+  "keys": {
+    "empty-container": {
+      "anchor": "study-security-context",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "The context can exist before any authentication.",
+        "beta": "A container can be present with an empty slot.",
+        "gamma": "A placeholder has to be installed separately.",
+        "delta": "The context does not establish how the current slot was populated."
+      },
+      "reason": "Check the contained authentication before using the context for a policy decision.",
+      "rubric": [],
+      "topics": [
+        "study-security-context"
+      ]
+    },
+    "active-holder": {
+      "anchor": "study-holder",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "Grant count does not associate the object with a thread.",
+        "beta": "The holder provides access through its configured execution strategy.",
+        "gamma": "A separate setContext call, or equivalent framework operation, is needed.",
+        "delta": "A principal read does not update holder state."
+      },
+      "reason": "Distinguish constructing a context from associating it with the execution boundary.",
+      "rubric": [],
+      "topics": [
+        "study-holder"
+      ]
+    },
+    "submitted-evidence": {
+      "anchor": "study-authentication",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "The interface has input and result roles.",
+        "beta": "The incoming token can carry unverified evidence.",
+        "gamma": "A route cannot verify a token by itself.",
+        "delta": "Submitted proof may be invalid."
+      },
+      "reason": "Trace the object returned by the manager and the point where it is associated with the context.",
+      "rubric": [],
+      "topics": [
+        "study-authentication"
+      ]
+    },
+    "principal-contract": {
+      "anchor": "study-principal",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "The Jwt path violates that assumption.",
+        "beta": "Credential material is proof, not an identity API.",
+        "gamma": "Choose an identity contract appropriate to the configured mechanisms.",
+        "delta": "A grant expresses policy input, not identity."
+      },
+      "reason": "Check the mechanism’s principal contract at the controller boundary.",
+      "rubric": [],
+      "topics": [
+        "study-principal"
+      ]
+    },
+    "erased-proof": {
+      "anchor": "study-credentials",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "Credential erasure is compatible with a successful result.",
+        "beta": "Security components may erase credentials after verification.",
+        "gamma": "Keeping secrets in audit records adds exposure without proving the event.",
+        "delta": "A stored verifier is not the caller identity."
+      },
+      "reason": "Audit outcomes and opaque correlation metadata, never raw proof.",
+      "rubric": [],
+      "topics": [
+        "study-credentials"
+      ]
+    },
+    "permission-scope": {
+      "anchor": "study-authorities",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "The grant alone does not establish stored team ownership.",
+        "beta": "A submitted claim is not authoritative team scope.",
+        "gamma": "That check is not resource authorization.",
+        "delta": "Evaluate the verified scope against application-owned resource data."
+      },
+      "reason": "Combine request-level authority with the record authorization policy.",
+      "rubric": [],
+      "topics": [
+        "study-authorities"
+      ]
+    },
+    "true-placeholder": {
+      "anchor": "study-anonymous",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "The anonymous object is non-null.",
+        "beta": "It distinguishes the placeholder from a verified account.",
+        "gamma": "Anonymous authentication can have a principal name.",
+        "delta": "Anonymous authentication can carry ROLE_ANONYMOUS."
+      },
+      "reason": "Use the trust semantics of your configured authorization mechanism.",
+      "rubric": [],
+      "topics": [
+        "study-anonymous"
+      ]
+    },
+    "trusted-construction": {
+      "anchor": "study-authenticated-state",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "The objects have different provenance and roles here.",
+        "beta": "Anonymous Authentication may also return true.",
+        "gamma": "It can represent evidence that has not yet been verified.",
+        "delta": "Readable proposed proof is not an authorization result."
+      },
+      "reason": "Interpret the flag together with provenance and concrete type.",
+      "rubric": [],
+      "topics": [
+        "study-authenticated-state"
+      ]
+    },
+    "save-boundary": {
+      "anchor": "study-context-lifecycle",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "Worker reuse is not a persistence contract.",
+        "beta": "The symptom concerns context storage, not the original proof.",
+        "gamma": "A holder assignment only affects the active execution strategy.",
+        "delta": "Grants do not control repository writes."
+      },
+      "reason": "Check repository save and load separately from request-local association.",
+      "rubric": [],
+      "topics": [
+        "study-context-lifecycle"
+      ]
+    },
+    "pool-context": {
+      "anchor": "study-thread-local",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Default thread-local state does not follow the Runnable.",
+        "beta": "The supported wrapper can scope a prepared context to this task.",
+        "gamma": "Global state is inappropriate for this boundary.",
+        "delta": "The context is thread-bound as a unit."
+      },
+      "reason": "Make a deliberate identity choice for asynchronous work.",
+      "rubric": [],
+      "topics": [
+        "study-thread-local"
+      ]
+    },
+    "exception-restore": {
+      "anchor": "study-safe-clearing",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "The wrapper scopes association and restores the prior baseline.",
+        "beta": "That extends trust beyond its task.",
+        "gamma": "Nested execution should restore previous state.",
+        "delta": "Restoring context does not change the delegate’s failure."
+      },
+      "reason": "Test both empty and pre-existing baselines where nested execution is legal.",
+      "rubric": [],
+      "topics": [
+        "study-safe-clearing"
+      ]
+    },
+    "worker-review": {
+      "anchor": "study-safe-clearing",
+      "correct": [],
+      "feedback": {},
+      "reason": "Require a verified result using anonymous-aware policy at the caller boundary. Decide whether the worker needs that identity and supply the intended context explicitly through a supported wrapper. On an otherwise empty pool worker, an ordinary job should see no caller. A wrapped job observes the selected verified identity only while running. A follow-up task must see the original worker state after successful and exceptional completion. Independently evaluate resource permissions and avoid logging raw credentials.",
+      "rubric": [
+        "Distinguish submitted, anonymous and verified trust.",
+        "Explain the holder strategy and explicit propagation.",
+        "Check an ordinary job and a wrapped job.",
+        "Assert cleanup or restoration after both exit paths.",
+        "Separate resource authorization and audit redaction from context propagation."
+      ],
+      "topics": [
+        "study-safe-clearing"
+      ]
+    }
+  }
+}
