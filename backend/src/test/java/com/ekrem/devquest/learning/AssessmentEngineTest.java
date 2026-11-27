@@ -32,7 +32,8 @@ class AssessmentEngineTest {
             "http-authentication-basics, 1", "stateful-authentication, 1", "stateless-and-token-based-authentication, 1",
             "jwt-foundations, 1", "authentication-mechanism-comparison, 1", "common-authentication-threats, 1",
             "what-spring-security-does, 1", "servlet-filter-architecture, 1", "security-context-and-authentication-model, 1",
-            "authentication-components, 1"})
+            "authentication-components, 1", "initial-secured-rest-api, 1",
+            "security-configuration-principles, 1"})
     void activePaperUsesTheSingleAnswerBlueprint(String key, int release) {
         var mapper = new ObjectMapper();
         var engine = new AssessmentEngine(mapper, new LessonPackage(mapper));
@@ -55,7 +56,8 @@ class AssessmentEngineTest {
             "http-authentication-basics, 1, 11", "stateful-authentication, 1, 15", "stateless-and-token-based-authentication, 1, 13",
             "jwt-foundations, 1, 20", "authentication-mechanism-comparison, 1, 11", "common-authentication-threats, 1, 13",
             "what-spring-security-does, 1, 7", "servlet-filter-architecture, 1, 10", "security-context-and-authentication-model, 1, 11",
-            "authentication-components, 1, 11"})
+            "authentication-components, 1, 11", "initial-secured-rest-api, 1, 9",
+            "security-configuration-principles, 1, 9"})
     void authoredReleaseGradesEachChoiceAgainstItsOwnAnswerKey(String key, int readingRelease, int topicCount) throws Exception {
         var mapper = new ObjectMapper();
         var engine = new AssessmentEngine(mapper, new LessonPackage(mapper));

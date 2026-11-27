@@ -1,0 +1,146 @@
+{
+  "key": "initial-secured-rest-api",
+  "release": 1,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 2 — Spring Security Foundations",
+    "sessionTitle": "Session 2.5 — Initial Secured REST API"
+  },
+  "objectives": {
+    "build-rest-chain": "Define explicit public and protected routes in a Spring Security filter chain.",
+    "send-rest-requests": "Compare the public path, Basic challenge and authenticated success.",
+    "inspect-rest-principal": "Read caller fields only after trusted request authentication.",
+    "trace-rest-request": "Explain the order of the filter, manager, route rule and controller.",
+    "approve-rest-release": "Verify the deployed route and response contract before allowing release."
+  },
+  "sections": [
+    {
+      "anchor": "build-rest-chain",
+      "title": "Build the route contract",
+      "objectives": [
+        "build-rest-chain"
+      ]
+    },
+    {
+      "anchor": "send-rest-requests",
+      "title": "Compare three HTTP exchanges",
+      "objectives": [
+        "send-rest-requests"
+      ]
+    },
+    {
+      "anchor": "inspect-rest-principal",
+      "title": "Inspect the accepted result",
+      "objectives": [
+        "inspect-rest-principal"
+      ]
+    },
+    {
+      "anchor": "trace-rest-request",
+      "title": "Follow authentication and dispatch",
+      "objectives": [
+        "trace-rest-request"
+      ]
+    },
+    {
+      "anchor": "approve-rest-release",
+      "title": "Approve the initial release",
+      "objectives": [
+        "approve-rest-release"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 245,
+      "sourceLabel": "Add `SecurityFilterChain`",
+      "objectives": [
+        "build-rest-chain"
+      ],
+      "passages": [
+        "study-add-chain"
+      ]
+    },
+    {
+      "sourceLine": 246,
+      "sourceLabel": "Configure public endpoints",
+      "objectives": [
+        "build-rest-chain"
+      ],
+      "passages": [
+        "study-public-routes"
+      ]
+    },
+    {
+      "sourceLine": 247,
+      "sourceLabel": "Configure authenticated endpoints",
+      "objectives": [
+        "build-rest-chain"
+      ],
+      "passages": [
+        "study-authenticated-routes"
+      ]
+    },
+    {
+      "sourceLine": 248,
+      "sourceLabel": "Configure Basic authentication for learning",
+      "objectives": [
+        "send-rest-requests"
+      ],
+      "passages": [
+        "study-basic-learning"
+      ]
+    },
+    {
+      "sourceLine": 249,
+      "sourceLabel": "Call a public endpoint",
+      "objectives": [
+        "send-rest-requests"
+      ],
+      "passages": [
+        "study-call-public"
+      ]
+    },
+    {
+      "sourceLine": 250,
+      "sourceLabel": "Call a protected endpoint without credentials",
+      "objectives": [
+        "send-rest-requests"
+      ],
+      "passages": [
+        "study-call-protected-empty"
+      ]
+    },
+    {
+      "sourceLine": 252,
+      "sourceLabel": "Inspect the authenticated principal",
+      "objectives": [
+        "inspect-rest-principal"
+      ],
+      "passages": [
+        "study-inspect-principal"
+      ]
+    },
+    {
+      "sourceLine": 251,
+      "sourceLabel": "Call a protected endpoint with valid credentials",
+      "objectives": [
+        "trace-rest-request"
+      ],
+      "passages": [
+        "study-call-protected-valid"
+      ]
+    },
+    {
+      "sourceLine": 253,
+      "sourceLabel": "Explain the complete request flow",
+      "objectives": [
+        "approve-rest-release"
+      ],
+      "passages": [
+        "study-complete-flow"
+      ]
+    }
+  ]
+}

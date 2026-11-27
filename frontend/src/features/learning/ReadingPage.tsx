@@ -111,13 +111,14 @@ function ReadingContent({ lesson, checklist, visibleAnchor, missingAnchor, hasAs
     missions[0] === 'follow-session-signin' ? 'sessions' : missions[0] === 'triage-security-request' ? 'spring-trace' :
       missions[0] === 'dispatch-token-pair' ? 'token-lifecycle' : missions[0] === 'inspect-jwt-envelope' ? 'jwt' : missions[0] === 'route-mechanism' ? 'mechanisms' : missions[0] === 'triage-auth-signals' ? 'threats' :
         missions[0] === 'cross-spring-boundary' ? 'spring-boundary' : missions[0] === 'follow-servlet-call' ? 'servlet-filters' :
-          missions[0] === 'open-auth-context' ? 'security-context' : missions[0] === 'route-auth-provider' ? 'auth-providers' : undefined
+          missions[0] === 'open-auth-context' ? 'security-context' : missions[0] === 'route-auth-provider' ? 'auth-providers' :
+            missions[0] === 'build-rest-chain' ? 'initial-rest' : missions[0] === 'audit-config-order' ? 'config-principles' : undefined
   const missionIntro = labStyle === 'policy' ? 'Build, break and repair a workspace export policy' :
     labStyle === 'http' ? 'Construct requests, trace transport and diagnose responses' :
       labStyle === 'sessions' ? 'Operate a session from sign-in through expiration and logout' :
         labStyle === 'spring-trace' ? 'Trace Spring Security calls, repair responses and prepare for the Coding Lab' :
           labStyle === 'token-lifecycle' ? 'Trace token issuance, expiration and withdrawal' :
-            labStyle === 'jwt' ? 'Inspect a JWT and defend the verifier’s trust decisions' : labStyle === 'mechanisms' ? 'Compare authentication designs against real operating requirements' : labStyle === 'threats' ? 'Classify incident evidence and verify authentication defenses' : labStyle === 'spring-boundary' ? 'Trace the path from the Spring Security boundary to domain policy' : labStyle === 'servlet-filters' ? 'Follow servlet calls, compare filter chains and diagnose an active trace' : labStyle === 'security-context' ? 'Inspect authentication objects and trace context through requests and tasks' : labStyle === 'auth-providers' ? 'Route evidence through providers and inspect the result' : 'Trace evidence, inspect a caller and decide access'
+            labStyle === 'jwt' ? 'Inspect a JWT and defend the verifier’s trust decisions' : labStyle === 'mechanisms' ? 'Compare authentication designs against real operating requirements' : labStyle === 'threats' ? 'Classify incident evidence and verify authentication defenses' : labStyle === 'spring-boundary' ? 'Trace the path from the Spring Security boundary to domain policy' : labStyle === 'servlet-filters' ? 'Follow servlet calls, compare filter chains and diagnose an active trace' : labStyle === 'security-context' ? 'Inspect authentication objects and trace context through requests and tasks' : labStyle === 'auth-providers' ? 'Route evidence through providers and inspect the result' : labStyle === 'initial-rest' ? 'Configure a small API and inspect its request and response contract' : labStyle === 'config-principles' ? 'Review matcher order, context policy and browser protections' : 'Trace evidence, inspect a caller and decide access'
 
   function report(id: MissionId, done = false) {
     setActivity(previous => {

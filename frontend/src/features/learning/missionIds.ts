@@ -14,6 +14,8 @@ export const missionIds = [
   'follow-servlet-call', 'inspect-servlet-delegates', 'route-servlet-chain', 'order-servlet-observer', 'confirm-servlet-evidence',
   'open-auth-context', 'compare-context-trust', 'walk-context-lifecycle', 'compare-context-threads', 'review-context-cleanup',
   'route-auth-provider', 'inspect-provider-account', 'compare-provider-proof', 'trace-provider-result', 'review-provider-wiring',
+  'build-rest-chain', 'send-rest-fixtures', 'inspect-rest-caller', 'trace-rest-chain', 'review-rest-release',
+  'audit-config-order', 'probe-config-inventory', 'compare-config-context', 'compare-config-browser', 'review-config-release',
 ] as const
 
 export type MissionId = typeof missionIds[number]

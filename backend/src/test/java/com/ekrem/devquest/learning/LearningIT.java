@@ -274,7 +274,7 @@ class LearningIT {
         assertThat(catalog.statusCode()).isEqualTo(200);
         assertThat(catalog.body()).isEqualTo(new tools.jackson.databind.ObjectMapper().writeValueAsString(
                 List.of(vocabulary, philosophySession(), httpAuthenticationSession(), statefulSession(), tokenSession(),
-                        jwtSession(), mechanismSession(), threatSession(), boundarySession(), servletSession(), contextSession(), providersSession(), id)));
+                        jwtSession(), mechanismSession(), threatSession(), boundarySession(), servletSession(), contextSession(), providersSession(), restSession(), configSession(), id)));
         var lesson = get("/sessions/" + id + "/lesson");
         assertThat(lesson.statusCode()).isEqualTo(200);
         assertThat(lesson.body()).contains("http-401-and-403", "predict-the-response",
@@ -329,7 +329,7 @@ class LearningIT {
         assertThat(get("/sessions/" + id + "/topics").statusCode()).isEqualTo(200);
         assertThat(learning.assessmentCatalog()).containsExactly(id, philosophySession(), httpAuthenticationSession(),
                 statefulSession(), tokenSession(), jwtSession(), mechanismSession(), threatSession(),
-                boundarySession(), servletSession(), contextSession(), providersSession(), pilotSession());
+                boundarySession(), servletSession(), contextSession(), providersSession(), restSession(), configSession(), pilotSession());
         var paper = get("/sessions/" + id + "/assessment");
         assertThat(paper.statusCode()).isEqualTo(200);
         assertThat(paper.body()).contains("identity-and-access-vocabulary", "\"release\":1", "\"readingRelease\":4")
@@ -441,7 +441,7 @@ class LearningIT {
 
     @Test @Transactional void identicalLabelInAnotherSessionDoesNotAcquireLink() {
         UUID id = pilotSession();
-        UUID other = session("Session 2.5 — Initial Secured REST API");
+        UUID other = session("Session 3.1 — Identity Data Model");
         jdbc.update("""
                 UPDATE devquest.source_item_mapping m SET label='Meaning of 401 Unauthorized', source_line=257
                 FROM devquest.curriculum_node n WHERE n.id=m.node_id AND n.stable_id=? AND m.position=0
@@ -481,6 +481,14 @@ class LearningIT {
 
     private UUID boundarySession() {
         return session("Session 2.1 — What Spring Security Does");
+    }
+
+    private UUID configSession() {
+        return session("Session 2.7 — Security Configuration Principles");
+    }
+
+    private UUID restSession() {
+        return session("Session 2.5 — Initial Secured REST API");
     }
 
     private UUID providersSession() {
@@ -534,7 +542,13 @@ class LearningIT {
                     + "context-lifecycle;thread-local;safe-clearing",
             "Session 2.4 — Authentication Components, authentication-components, 1, Session 2.3 — Security Context and Authentication Model, "
                     + "api-contract, beta, authentication-manager;provider-manager;authentication-provider;multiple-mechanisms;user-details;user-details-service;"
-                    + "granted-authority;password-encoder;account-status;success;failure"
+                    + "granted-authority;password-encoder;account-status;success;failure",
+            "Session 2.5 — Initial Secured REST API, initial-secured-rest-api, 1, Session 2.4 — Authentication Components, "
+                    + "configured-chain, beta, add-chain;public-routes;authenticated-routes;basic-learning;call-public;call-protected-empty;"
+                    + "call-protected-valid;inspect-principal;complete-flow",
+            "Session 2.7 — Security Configuration Principles, security-configuration-principles, 1, Session 2.5 — Initial Secured REST API, "
+                    + "lambda-scope, beta, lambda-config;matcher-order;deny-default;public-endpoints;stateless-session;csrf-defaults;"
+                    + "cors-placement;debug-logging;current-apis"
     })
     void servesBatchTopicsAndKeepsDraftsAndAttemptsSessionScoped(String title, String key, int readingRelease, String otherTitle,
             String question, String option, String anchors) throws Exception {

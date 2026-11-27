@@ -1,0 +1,398 @@
+{
+  "paper": {
+    "key": "security-configuration-principles",
+    "release": 1,
+    "readingRelease": 1,
+    "title": "Security Configuration Principles",
+    "context": "Review safe Servlet policy fixtures. Assume the requested chain is active unless stated otherwise, and separate browser, authentication, authorization and diagnostics concerns.",
+    "objectives": {
+      "review-policy-order": "Read the lambda policy and identify the first applicable request rule.",
+      "check-unlisted-routes": "Prove public scope and fallback policy using representative routes.",
+      "compare-context-storage": "Explain whether a new request can restore the authenticated context.",
+      "separate-browser-gates": "Diagnose CORS and CSRF as independent controls.",
+      "approve-reviewed-policy": "Connect current APIs and sanitized diagnostic evidence to a release decision."
+    },
+    "questions": [
+      {
+        "id": "lambda-scope",
+        "objective": "review-policy-order",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "Which Java shape defines request authorization with the current Spring Security 7.1 Servlet DSL?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "A controller adds annotations to the response body",
+          "beta": "A SecurityFilterChain bean configures authorizeHttpRequests with a lambda",
+          "gamma": "A repository registers the HTTP methods it serves",
+          "delta": "An MVC exception handler defines the chain for all requests"
+        }
+      },
+      {
+        "id": "first-rule",
+        "objective": "review-policy-order",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "The active chain contains an early rule for /reports/** and a later rule for /reports/summary. Which rule applies to a request matching both?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The earlier reports rule",
+          "beta": "The more specific summary rule irrespective of order",
+          "gamma": "Both rules are merged",
+          "delta": "Neither, because overlap invalidates the configuration"
+        }
+      },
+      {
+        "id": "reviewed-fallback",
+        "objective": "check-unlisted-routes",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A team adds a controller mapping but has not added a policy decision for it. The active chain ends with denyAll. What should an in-process test expect from a verified caller?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Public success because the route lacks an explicit rule",
+          "beta": "Automatic public access if the route is read-only",
+          "gamma": "Denial before the new handler runs",
+          "delta": "The startup sequence must reject the MVC mapping"
+        }
+      },
+      {
+        "id": "precise-open",
+        "objective": "check-unlisted-routes",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A public rule is intended only for GET /status. Which audit best detects an accidental expansion?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Check only that the GET still returns success",
+          "beta": "Check only anonymous GET /status with a browser session already present",
+          "gamma": "Compare the controller’s response body before and after deployment",
+          "delta": "Verify exact anonymous GET and assert denial for a different method and a sibling route"
+        }
+      },
+      {
+        "id": "context-save",
+        "objective": "compare-context-storage",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "Two requests use the same session cookie. A stateless security policy is configured and the second request has no independent authentication evidence. What follows?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The session always restores the first request’s identity",
+          "beta": "The second request must establish its own identity",
+          "gamma": "The first request could not have had an Authentication",
+          "delta": "No library can create an HTTP session in this app"
+        }
+      },
+      {
+        "id": "ambient-credentials",
+        "objective": "separate-browser-gates",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A JSON POST endpoint uses a browser cookie for authentication. The app does not use an HTTP session for its security context. What matters to the CSRF decision?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Whether the browser can automatically attach the credential",
+          "beta": "Whether the payload ends in .json",
+          "gamma": "Whether the route uses a long encoded identifier",
+          "delta": "Whether Spring stores the context locally in a thread"
+        }
+      },
+      {
+        "id": "preflight-scope",
+        "objective": "separate-browser-gates",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A permitted cross-origin preflight contains no session cookie. Where should approval of the origin and requested method be handled?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "After authentication of the preflight’s user session",
+          "beta": "Only inside the target POST controller",
+          "gamma": "At the CORS boundary before the protected request policy",
+          "delta": "By opening every OPTIONS and POST request to everyone"
+        }
+      },
+      {
+        "id": "trace-review",
+        "objective": "approve-reviewed-policy",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A test case stops before MVC. What diagnostic collection keeps evidence useful and appropriately scoped?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "All authorization headers and session cookies",
+          "beta": "A production-wide trace with unlimited retention",
+          "gamma": "Only MVC handler output",
+          "delta": "A temporary reviewable trace with active filter names and safe correlation IDs"
+        }
+      },
+      {
+        "id": "tutorial-upgrade",
+        "objective": "approve-reviewed-policy",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A tutorial uses WebSecurityConfigurerAdapter and an old chaining style. How should an engineer adopt its ideas in the installed Spring Security 7.1 project?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Translate the intended policy into a SecurityFilterChain bean with lambda customizers and compile it",
+          "beta": "Downgrade just Spring Security until the snippet compiles",
+          "gamma": "Keep all deprecated tutorial APIs through reflection",
+          "delta": "Move authorization entirely into the controller to avoid the configuration API"
+        }
+      },
+      {
+        "id": "inactive-chain",
+        "objective": "check-unlisted-routes",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A deny-all rule belongs to a chain whose securityMatcher selects only /api/**. A request to /internal/ready matches no other chain. What needs attention?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The deny-all rule also covers the internal request automatically",
+          "beta": "Verify coverage by a separate matching fallback chain",
+          "gamma": "The request will be denied because MVC always rejects paths outside /api",
+          "delta": "Add a stricter inner rule to the same chain"
+        }
+      },
+      {
+        "id": "code-boundary",
+        "objective": "review-policy-order",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "Under this configured rule order, what does request authorization do for GET /catalog/export?",
+        "sample": "routes.requestMatchers(HttpMethod.GET, \"/catalog\").permitAll()\n      .requestMatchers(\"/catalog/**\").denyAll()\n      .anyRequest().denyAll();",
+        "language": "java",
+        "choices": {
+          "alpha": "Permits it because all catalog paths are public",
+          "beta": "Skips the remaining rule because a GET rule is listed first",
+          "gamma": "Applies the explicit deny rule for the catalog subtree",
+          "delta": "Applies both entries and lets the controller decide"
+        }
+      },
+      {
+        "id": "policy-readiness",
+        "objective": "check-unlisted-routes",
+        "type": "written",
+        "difficulty": "Advanced",
+        "prompt": "Write a review plan for a new public status route and a browser-facing POST. The team wants a stateless security context, narrow cross-origin access, selected debug logging, and denial of unlisted routes. Explain how to prove each decision during release review.",
+        "sample": "",
+        "language": "text",
+        "choices": {}
+      }
+    ]
+  },
+  "keys": {
+    "lambda-scope": {
+      "anchor": "study-lambda-config",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "That does not configure the filter chain.",
+        "beta": "The lambda customizes the request policy within HttpSecurity.",
+        "gamma": "Repository methods are unrelated to request filtering.",
+        "delta": "The chain exists upstream of controller exception handling."
+      },
+      "reason": "Bind each lambda to the configurer it is customizing.",
+      "rubric": [],
+      "topics": [
+        "study-lambda-config"
+      ]
+    },
+    "first-rule": {
+      "anchor": "study-matcher-order",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "Request authorization applies the first matched rule in that chain.",
+        "beta": "Specificity does not reorder the declared rules.",
+        "gamma": "The manager evaluates the first selected rule.",
+        "delta": "Overlap is permitted and requires deliberate ordering."
+      },
+      "reason": "Review matcher order when an expected exception never applies.",
+      "rubric": [],
+      "topics": [
+        "study-matcher-order"
+      ]
+    },
+    "reviewed-fallback": {
+      "anchor": "study-deny-default",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "The fallback covers the request.",
+        "beta": "HTTP method safety does not grant endpoint permission.",
+        "gamma": "The verified caller cannot bypass the fallback.",
+        "delta": "The configuration can start and deny the route at runtime."
+      },
+      "reason": "Test an unlisted route with a verified caller to prove the fallback.",
+      "rubric": [],
+      "topics": [
+        "study-deny-default"
+      ]
+    },
+    "precise-open": {
+      "anchor": "study-public-endpoints",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "A wider policy could still pass the positive test.",
+        "beta": "Stored identity can hide a wrongly scoped rule.",
+        "gamma": "The body does not show which other requests are reachable.",
+        "delta": "Match public behavior at method and path boundaries."
+      },
+      "reason": "Verify authorization separately from any earlier CSRF rejection on the tested method.",
+      "rubric": [],
+      "topics": [
+        "study-public-endpoints"
+      ]
+    },
+    "context-save": {
+      "anchor": "study-stateless-session",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Spring Security does not use the session to obtain context in this mode.",
+        "beta": "The first request’s verified context is request-scoped under the stated policy.",
+        "gamma": "Stateless security can still authenticate the current request.",
+        "delta": "The policy is about Spring Security’s use of context."
+      },
+      "reason": "Verify the second request independently and distinguish other uses of sessions.",
+      "rubric": [],
+      "topics": [
+        "study-stateless-session"
+      ]
+    },
+    "ambient-credentials": {
+      "anchor": "study-csrf-defaults",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "Ambient credentials can create CSRF risk even with stateless server verification.",
+        "beta": "The handler’s response representation does not settle credential delivery.",
+        "gamma": "Identifier length does not supply the control’s security guarantee.",
+        "delta": "Per-request association does not change how a browser sends evidence."
+      },
+      "reason": "Decide from actual credential delivery and mutation boundaries.",
+      "rubric": [],
+      "topics": [
+        "study-csrf-defaults"
+      ]
+    },
+    "preflight-scope": {
+      "anchor": "study-cors-placement",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "A browser preflight does not carry the session cookie.",
+        "beta": "The preflight needs its own response before the POST.",
+        "gamma": "Preflight evaluates the browser’s origin and requested method.",
+        "delta": "That confuses protocol negotiation and application access."
+      },
+      "reason": "Keep CORS response validation separate from actual-request authentication and CSRF.",
+      "rubric": [],
+      "topics": [
+        "study-cors-placement"
+      ]
+    },
+    "trace-review": {
+      "anchor": "study-debug-logging",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "Those fields are sensitive and unnecessary for locating the boundary.",
+        "beta": "Broad permanent diagnostics increase exposure and noise.",
+        "gamma": "The handler may never execute.",
+        "delta": "A narrow trace can locate the stop without retaining raw credential values."
+      },
+      "reason": "Capture sufficient sanitized evidence, then disable temporary logging.",
+      "rubric": [],
+      "topics": [
+        "study-debug-logging"
+      ]
+    },
+    "tutorial-upgrade": {
+      "anchor": "study-current-apis",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "Preserve the reviewed behavior using the installed API.",
+        "beta": "Mixing versions can create compatibility and maintenance problems.",
+        "gamma": "That avoids neither API removal nor behavior drift.",
+        "delta": "A different layer changes where the policy is enforced."
+      },
+      "reason": "Check the pinned reference, compile and rerun positive and negative request tests.",
+      "rubric": [],
+      "topics": [
+        "study-current-apis"
+      ]
+    },
+    "inactive-chain": {
+      "anchor": "study-deny-default",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "The request is outside that chain’s applicability.",
+        "beta": "An inner fallback cannot protect a request that never enters its chain.",
+        "gamma": "MVC mappings are independent of security matchers.",
+        "delta": "A rule inside that chain is still unreachable for this request."
+      },
+      "reason": "Review chain coverage and inner authorization together.",
+      "rubric": [],
+      "topics": [
+        "study-deny-default"
+      ]
+    },
+    "code-boundary": {
+      "anchor": "study-matcher-order",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "Only the exact /catalog match is public.",
+        "beta": "The first rule does not match the export path.",
+        "gamma": "It is the first matching rule.",
+        "delta": "Authorization does not merge matching rules."
+      },
+      "reason": "Test the precise exception and nested-path denial.",
+      "rubric": [],
+      "topics": [
+        "study-matcher-order"
+      ]
+    },
+    "policy-readiness": {
+      "anchor": "study-public-endpoints",
+      "correct": [],
+      "feedback": {},
+      "reason": "Use the current lambda DSL and exact method and path exceptions before broader rules, with a covering deny-all fallback. Verify a second credential-free request does not recover identity from the session. Process permitted preflight before authentication and test a denied origin. On the actual POST verify authenticated identity and required CSRF evidence independently, especially for automatically attached credentials. Check method and path near misses with protection gates accounted for. Use short-lived, redacted diagnostic traces.",
+      "rubric": [
+        "Identify the explicit public and fallback rules.",
+        "Test narrow method, path and chain coverage.",
+        "Explain stateless context and replayed request identity.",
+        "Distinguish preflight, actual authentication and CSRF.",
+        "Use version-appropriate Java and scoped diagnostic evidence."
+      ],
+      "topics": [
+        "study-public-endpoints"
+      ]
+    }
+  }
+}

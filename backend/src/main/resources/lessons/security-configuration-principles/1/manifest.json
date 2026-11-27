@@ -1,0 +1,146 @@
+{
+  "key": "security-configuration-principles",
+  "release": 1,
+  "binding": {
+    "sourceKey": "spring-security-roadmap",
+    "sourceSha256": "a67bc6ba3d6d1cc5d0d9d54b5cb891cc21cd6b9a4002eeadcad76db28c1c1399",
+    "moduleTitle": "Module 2 — Spring Security Foundations",
+    "sessionTitle": "Session 2.7 — Security Configuration Principles"
+  },
+  "objectives": {
+    "review-policy-order": "Read the lambda policy and identify the first applicable request rule.",
+    "check-unlisted-routes": "Prove public scope and fallback policy using representative routes.",
+    "compare-context-storage": "Explain whether a new request can restore the authenticated context.",
+    "separate-browser-gates": "Diagnose CORS and CSRF as independent controls.",
+    "approve-reviewed-policy": "Connect current APIs and sanitized diagnostic evidence to a release decision."
+  },
+  "sections": [
+    {
+      "anchor": "review-policy-order",
+      "title": "Review the rule stack",
+      "objectives": [
+        "review-policy-order"
+      ]
+    },
+    {
+      "anchor": "check-unlisted-routes",
+      "title": "Check the policy boundary",
+      "objectives": [
+        "check-unlisted-routes"
+      ]
+    },
+    {
+      "anchor": "compare-context-storage",
+      "title": "Compare identity continuity",
+      "objectives": [
+        "compare-context-storage"
+      ]
+    },
+    {
+      "anchor": "separate-browser-gates",
+      "title": "Separate the browser gates",
+      "objectives": [
+        "separate-browser-gates"
+      ]
+    },
+    {
+      "anchor": "approve-reviewed-policy",
+      "title": "Approve the reviewed revision",
+      "objectives": [
+        "approve-reviewed-policy"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "sourceLine": 269,
+      "sourceLabel": "Lambda-based configuration",
+      "objectives": [
+        "review-policy-order"
+      ],
+      "passages": [
+        "study-lambda-config"
+      ]
+    },
+    {
+      "sourceLine": 270,
+      "sourceLabel": "Request matcher ordering",
+      "objectives": [
+        "review-policy-order"
+      ],
+      "passages": [
+        "study-matcher-order"
+      ]
+    },
+    {
+      "sourceLine": 271,
+      "sourceLabel": "Deny-by-default configuration",
+      "objectives": [
+        "check-unlisted-routes"
+      ],
+      "passages": [
+        "study-deny-default"
+      ]
+    },
+    {
+      "sourceLine": 272,
+      "sourceLabel": "Avoiding accidental public endpoints",
+      "objectives": [
+        "check-unlisted-routes"
+      ],
+      "passages": [
+        "study-public-endpoints"
+      ]
+    },
+    {
+      "sourceLine": 273,
+      "sourceLabel": "Stateless versus session configuration",
+      "objectives": [
+        "compare-context-storage"
+      ],
+      "passages": [
+        "study-stateless-session"
+      ]
+    },
+    {
+      "sourceLine": 274,
+      "sourceLabel": "CSRF defaults and why they exist",
+      "objectives": [
+        "separate-browser-gates"
+      ],
+      "passages": [
+        "study-csrf-defaults"
+      ]
+    },
+    {
+      "sourceLine": 275,
+      "sourceLabel": "CORS placement",
+      "objectives": [
+        "separate-browser-gates"
+      ],
+      "passages": [
+        "study-cors-placement"
+      ]
+    },
+    {
+      "sourceLine": 276,
+      "sourceLabel": "Security debug logging",
+      "objectives": [
+        "approve-reviewed-policy"
+      ],
+      "passages": [
+        "study-debug-logging"
+      ]
+    },
+    {
+      "sourceLine": 277,
+      "sourceLabel": "Avoiding obsolete tutorials and deprecated APIs",
+      "objectives": [
+        "approve-reviewed-policy"
+      ],
+      "passages": [
+        "study-current-apis"
+      ]
+    }
+  ]
+}

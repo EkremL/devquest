@@ -58,7 +58,9 @@ class AssessmentEngine {
             Map.entry("what-spring-security-does", 1),
             Map.entry("servlet-filter-architecture", 1),
             Map.entry("security-context-and-authentication-model", 1),
-            Map.entry("authentication-components", 1));
+            Map.entry("authentication-components", 1),
+            Map.entry("initial-secured-rest-api", 1),
+            Map.entry("security-configuration-principles", 1));
     private final Map<String, Map<Integer, Package>> releases = new HashMap<>();
 
     AssessmentEngine(ObjectMapper mapper, LessonPackage lessons) {

@@ -1,0 +1,398 @@
+{
+  "paper": {
+    "key": "initial-secured-rest-api",
+    "release": 1,
+    "readingRelease": 1,
+    "title": "Initial Secured REST API",
+    "context": "Use the stated fictional Servlet REST API contract. The browser models fixed GET requests, while the Java example can be tested entirely in process.",
+    "objectives": {
+      "build-rest-chain": "Define explicit public and protected routes in a Spring Security filter chain.",
+      "send-rest-requests": "Compare the public path, Basic challenge and authenticated success.",
+      "inspect-rest-principal": "Read caller fields only after trusted request authentication.",
+      "trace-rest-request": "Explain the order of the filter, manager, route rule and controller.",
+      "approve-rest-release": "Verify the deployed route and response contract before allowing release."
+    },
+    "questions": [
+      {
+        "id": "configured-chain",
+        "objective": "build-rest-chain",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A Servlet application already has MVC controllers. Where should a reviewed Java request policy become part of Spring Security?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "In each controller’s response DTO",
+          "beta": "In a SecurityFilterChain bean built from HttpSecurity",
+          "gamma": "In a repository’s lookup method",
+          "delta": "In the username’s authority name"
+        }
+      },
+      {
+        "id": "public-meaning",
+        "objective": "build-rest-chain",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "An exact GET status route is configured with permitAll inside the active chain. What follows?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "No Servlet security filters can run",
+          "beta": "All methods on the status path are public",
+          "gamma": "That request can pass route authorization without a verified caller",
+          "delta": "Every route under the status prefix is public"
+        }
+      },
+      {
+        "id": "minimum-auth",
+        "objective": "build-rest-chain",
+        "type": "single",
+        "difficulty": "Foundation",
+        "prompt": "A profile endpoint has an authenticated() rule. What remains if profiles belong to different users?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "A check linking the requested profile to the authorized caller",
+          "beta": "Nothing once a principal is present",
+          "gamma": "A second password in the response",
+          "delta": "A broader public route rule"
+        }
+      },
+      {
+        "id": "wire-protection",
+        "objective": "send-rest-requests",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A team wants to keep Basic for a limited lab. Which condition addresses its wire exposure?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Use Base64 twice on the same header",
+          "beta": "Put the header in the URL to make inspection easier",
+          "gamma": "Only send the header on approved paths over plaintext",
+          "delta": "Use TLS for real transport and redact the header from diagnostic output"
+        }
+      },
+      {
+        "id": "public-probe",
+        "objective": "send-rest-requests",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "A public readiness endpoint unexpectedly returns a Basic challenge. Which test first isolates the intended public contract?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Send a valid password and check for a 200",
+          "beta": "Send the exact configured GET without any stored context or header",
+          "gamma": "Send an OPTIONS request with service management credentials",
+          "delta": "Only inspect the controller annotation"
+        }
+      },
+      {
+        "id": "challenge-probe",
+        "objective": "send-rest-requests",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "With the example chain and an ordinary client, an anonymous GET to the protected route returns 401. Which additional assertion demonstrates the expected mechanism?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "Assert a Basic challenge and no controller invocation",
+          "beta": "Assert the body contains a verified username",
+          "gamma": "Assert absence of all response headers",
+          "delta": "Assert the account repository rejected a password"
+        }
+      },
+      {
+        "id": "accepted-probe",
+        "objective": "trace-rest-request",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "An in-process test submits valid fictional Basic evidence to a route requiring authentication. Which observation best confirms the success path?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The header matches a Basic-looking format",
+          "beta": "The HTTP client constructed the request",
+          "gamma": "The route returns success with the intended framework-derived caller",
+          "delta": "The response echoes the encoded header"
+        }
+      },
+      {
+        "id": "caller-projection",
+        "objective": "inspect-rest-principal",
+        "type": "single",
+        "difficulty": "Intermediate",
+        "prompt": "An endpoint returns the current user’s name. Which data should it read?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "A username supplied in a query parameter",
+          "beta": "The raw Authorization header",
+          "gamma": "The first entry in the granted-authority list",
+          "delta": "The framework-provided accepted Authentication"
+        }
+      },
+      {
+        "id": "fallback-test",
+        "objective": "approve-rest-release",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A verified fixture requests an unlisted GET. Under the example’s denyAll fallback, what establishes the expected behavior?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "The header was missing and the response challenged",
+          "beta": "The controller ran and then removed the anonymous principal",
+          "gamma": "An access denial occurs before the unlisted controller executes",
+          "delta": "The request reaches MVC because no explicit rule matched"
+        }
+      },
+      {
+        "id": "code-match",
+        "objective": "build-rest-chain",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "The policy below permits GET on the public status route. Does it also permit POST /status under request authorization?",
+        "sample": "routes.requestMatchers(HttpMethod.GET, \"/status\").permitAll()\n      .anyRequest().denyAll();",
+        "language": "java",
+        "choices": {
+          "alpha": "No. POST falls through to denyAll if it reaches this policy",
+          "beta": "Yes. A path match ignores the method when permitAll is used",
+          "gamma": "Yes, if the client is already authenticated",
+          "delta": "No, because all POST methods are forbidden by the HTTP protocol"
+        }
+      },
+      {
+        "id": "authentication-order",
+        "objective": "approve-rest-release",
+        "type": "single",
+        "difficulty": "Advanced",
+        "prompt": "A protected GET with a missing Authorization header never reaches the profile controller. Which trace is consistent with this chain?",
+        "sample": "",
+        "language": "text",
+        "choices": {
+          "alpha": "MVC rejected the resource, then Basic parsed the missing header",
+          "beta": "Basic continued without password verification, then authorization required identity",
+          "gamma": "The provider accepted missing evidence and the handler rejected it",
+          "delta": "The public rule applies if a request has no header"
+        }
+      },
+      {
+        "id": "release-plan",
+        "objective": "approve-rest-release",
+        "type": "written",
+        "difficulty": "Advanced",
+        "prompt": "Write a release checklist for a public status route and a protected profile route using Basic in a fictional environment. Include the exact matcher scope, unexpected routes, the accepted principal and the expected anonymous request behavior.",
+        "sample": "",
+        "language": "text",
+        "choices": {}
+      }
+    ]
+  },
+  "keys": {
+    "configured-chain": {
+      "anchor": "study-add-chain",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Response DTOs are used after request filtering.",
+        "beta": "The configured chain participates in Servlet security filtering.",
+        "gamma": "Repository code has no role in filter registration.",
+        "delta": "An authority is input to policy, not chain wiring."
+      },
+      "reason": "Check that the built chain applies to the intended requests.",
+      "rubric": [],
+      "topics": [
+        "study-add-chain"
+      ]
+    },
+    "public-meaning": {
+      "anchor": "study-public-routes",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "The request still passes through its configured chain.",
+        "beta": "The rule is method-specific.",
+        "gamma": "The authorization rule grants that specific request.",
+        "delta": "An exact allow rule does not describe other paths."
+      },
+      "reason": "Test the named method and path, plus a neighboring method or route.",
+      "rubric": [],
+      "topics": [
+        "study-public-routes"
+      ]
+    },
+    "minimum-auth": {
+      "anchor": "study-authenticated-routes",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "Authentication alone does not establish ownership.",
+        "beta": "A verified caller can still lack permission for a specific record.",
+        "gamma": "Authentication evidence should not be returned to the client.",
+        "delta": "That would not protect resource access."
+      },
+      "reason": "Separate request identity from record policy.",
+      "rubric": [],
+      "topics": [
+        "study-authenticated-routes"
+      ]
+    },
+    "wire-protection": {
+      "anchor": "study-basic-learning",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "Additional reversible encoding is not encryption.",
+        "beta": "URLs can be retained across many systems.",
+        "gamma": "An approved path does not provide transport confidentiality.",
+        "delta": "Basic encoding itself does not protect the credentials."
+      },
+      "reason": "Keep real credentials out of log and trace payloads.",
+      "rubric": [],
+      "topics": [
+        "study-basic-learning"
+      ]
+    },
+    "public-probe": {
+      "anchor": "study-call-public",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "Valid identity can hide a wrongly protected route.",
+        "beta": "The test verifies whether this route is truly available to anonymous callers.",
+        "gamma": "That differs from the declared route and state.",
+        "delta": "Servlet policy may stop before MVC."
+      },
+      "reason": "Verify public access with a clean anonymous request.",
+      "rubric": [],
+      "topics": [
+        "study-call-public"
+      ]
+    },
+    "challenge-probe": {
+      "anchor": "study-call-protected-empty",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "This confirms the entry point was reached before dispatch.",
+        "beta": "The request did not establish an identity.",
+        "gamma": "The Basic challenge belongs in a response header.",
+        "delta": "No password evidence was supplied."
+      },
+      "reason": "A protected route can require authentication without a credential-check failure.",
+      "rubric": [],
+      "topics": [
+        "study-call-protected-empty"
+      ]
+    },
+    "accepted-probe": {
+      "anchor": "study-call-protected-valid",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "The representation may still carry invalid evidence.",
+        "beta": "That verifies only the test setup.",
+        "gamma": "This connects the configured chain and the protected handler.",
+        "delta": "Echoing submitted proof would expose sensitive material."
+      },
+      "reason": "Check status and a minimal caller projection together.",
+      "rubric": [],
+      "topics": [
+        "study-call-protected-valid"
+      ]
+    },
+    "caller-projection": {
+      "anchor": "study-inspect-principal",
+      "correct": [
+        "delta"
+      ],
+      "feedback": {
+        "alpha": "The parameter is not established identity.",
+        "beta": "Raw proof is neither the trusted object nor appropriate response data.",
+        "gamma": "An authority is not an identity contract.",
+        "delta": "Its name is established by the configured authentication mechanism."
+      },
+      "reason": "Return a narrowly scoped projection of verified data.",
+      "rubric": [],
+      "topics": [
+        "study-inspect-principal"
+      ]
+    },
+    "fallback-test": {
+      "anchor": "study-complete-flow",
+      "correct": [
+        "gamma"
+      ],
+      "feedback": {
+        "alpha": "The fixture explicitly established verified identity.",
+        "beta": "The fallback is a request policy decision before MVC.",
+        "gamma": "The verified identity does not bypass the allowlist.",
+        "delta": "The fallback applies to unmatched requests."
+      },
+      "reason": "Include a verified request to an unlisted route in release tests.",
+      "rubric": [],
+      "topics": [
+        "study-complete-flow"
+      ]
+    },
+    "code-match": {
+      "anchor": "study-public-routes",
+      "correct": [
+        "alpha"
+      ],
+      "feedback": {
+        "alpha": "The method constraint is part of the matcher.",
+        "beta": "The matcher explicitly includes GET.",
+        "gamma": "This fallback denies every unmatched request.",
+        "delta": "The reviewed application policy supplies the restriction."
+      },
+      "reason": "Verify method boundaries and keep the fallback even when routes are public.",
+      "rubric": [],
+      "topics": [
+        "study-public-routes"
+      ]
+    },
+    "authentication-order": {
+      "anchor": "study-complete-flow",
+      "correct": [
+        "beta"
+      ],
+      "feedback": {
+        "alpha": "The request never reached the controller.",
+        "beta": "A route rule can trigger the authentication entry point even without submitted proof.",
+        "gamma": "No provider verification happens merely because evidence is absent.",
+        "delta": "The route rules use the configured method and path."
+      },
+      "reason": "Trace authentication and authorization separately to identify the stop.",
+      "rubric": [],
+      "topics": [
+        "study-complete-flow"
+      ]
+    },
+    "release-plan": {
+      "anchor": "study-complete-flow",
+      "correct": [],
+      "feedback": {},
+      "reason": "Declare the chain with precise GET matchers, permit the status endpoint, require verified identity for the profile and deny unmatched requests. Use the configured Basic mechanism with fictional accounts in local tests. Assert anonymous public success, a Basic challenge and skipped handler on anonymous profile, verified principal projection on the accepted profile, and denial for a verified request to an unlisted route. Keep credential values out of responses and logs and require TLS for real Basic transport.",
+      "rubric": [
+        "Tie both routes to the exact method and path.",
+        "Explain the anonymous protected challenge and omitted handler.",
+        "Test verified identity and a minimal response projection.",
+        "Test the unmatched fallback under a verified caller.",
+        "Explain transport and redaction requirements."
+      ],
+      "topics": [
+        "study-complete-flow"
+      ]
+    }
+  }
+}

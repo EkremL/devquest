@@ -16,6 +16,8 @@ import { BoundaryTrace, SpringContract, SpringDomain, SpringIdentity, SpringProt
 import { ChainRouter, FilterOrder, ObserveChain, ServletCall, ServletDelegates } from './ServletFlowLab'
 import { ContextCabinet, ContextLifecycle, ContextRelease, ContextThreads, ContextTrust } from './ContextLab'
 import { AccountProjection, PasswordComparison, ProviderOutcome, ProviderRelease, ProviderRouter } from './ProviderLab'
+import { RestCaller, RestChain, RestExchanges, RestRelease, RestTrace } from './RestFixtureLab'
+import { BrowserGates, ConfigRelease, RouteInventory, RuleStack, SessionContinuity } from './ConfigReviewLab'
 import type { MissionId, ReportActivity } from './missionIds'
 import './missions.css'
 
@@ -374,6 +376,16 @@ const activities = {
   'compare-provider-proof': PasswordComparison,
   'trace-provider-result': ProviderOutcome,
   'review-provider-wiring': ProviderRelease,
+  'build-rest-chain': RestChain,
+  'send-rest-fixtures': RestExchanges,
+  'inspect-rest-caller': RestCaller,
+  'trace-rest-chain': RestTrace,
+  'review-rest-release': RestRelease,
+  'audit-config-order': RuleStack,
+  'probe-config-inventory': RouteInventory,
+  'compare-config-context': SessionContinuity,
+  'compare-config-browser': BrowserGates,
+  'review-config-release': ConfigRelease,
 } satisfies Record<MissionId, ComponentType<{ report: ReportActivity }>>
 
 export function MissionActivity({ id, report }: { id: MissionId; report: ReportActivity }) {
